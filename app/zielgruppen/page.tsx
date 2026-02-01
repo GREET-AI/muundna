@@ -1,0 +1,123 @@
+import Header from '../components/Header';
+import HeroSection from '../components/HeroSection';
+import Footer from '../components/Footer';
+import CookieBanner from '../components/CookieBanner';
+import StatsSection from '../components/StatsSection';
+import BenefitsSection from '../components/BenefitsSection';
+import CTASection from '../components/CTASection';
+import ExpertiseCTABanner from '../components/ExpertiseCTABanner';
+import Link from 'next/link';
+import { getRoute } from '../utils/routes';
+import AnimatedCard3D from '../components/ui/AnimatedCard3D';
+
+export default function ZielgruppenPage() {
+  const zielgruppen = [
+    {
+      title: 'Handwerksbetriebe',
+      description: 'Professionelle Bürodienstleistungen speziell für Handwerksbetriebe',
+      icon: '🔧',
+      href: '/zielgruppen/handwerksbetriebe'
+    },
+    {
+      title: 'Bauunternehmen',
+      description: 'Effiziente Lösungen für Bauunternehmen aller Größen',
+      icon: '🏗️',
+      href: '/zielgruppen/bauunternehmen'
+    },
+    {
+      title: 'Hoch- & Tiefbau',
+      description: 'Spezialisiert auf Hoch- und Tiefbauunternehmen',
+      icon: '🏢',
+      href: '/zielgruppen/hoch-tiefbau'
+    },
+    {
+      title: 'Straßen- & Brückenbau',
+      description: 'Bürodienstleistungen für Straßen- und Brückenbauunternehmen',
+      icon: '🛣️',
+      href: '/zielgruppen/strassen-brueckenbau'
+    },
+    {
+      title: 'Sanierung & Renovierung',
+      description: 'Unterstützung für Sanierungs- und Renovierungsbetriebe',
+      icon: '🔨',
+      href: '/zielgruppen/sanierung'
+    },
+    {
+      title: 'Dachdecker & Zimmermänner',
+      description: 'Professionelle Betreuung für Dachdecker und Zimmermänner',
+      icon: '🏠',
+      href: '/zielgruppen/dachdecker-zimmermaenner'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen">
+      <Header />
+      <main>
+        <HeroSection
+          title="Zielgruppen"
+          subtitle="Ihre Branche"
+          description="Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen in allen Bereichen"
+          backgroundImage="/images/herobackgeneral2.png"
+        />
+        <ExpertiseCTABanner />
+        <section className="py-20 bg-white dark:bg-black">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                Für wen arbeiten wir?
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Wir betreuen Handwerksbetriebe und Bauunternehmen in verschiedenen Branchen
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {zielgruppen.map((item, index) => (
+                <AnimatedCard3D key={index}>
+                  <Link
+                    href={item.href}
+                    className="block p-8 border-2 border-gray-200 dark:border-gray-800 rounded-lg hover:border-[#cb530a] dark:hover:border-[#182c30] hover:shadow-xl transition-all bg-white dark:bg-gray-900 group h-full"
+                  >
+                    <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                      {item.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-[#cb530a] dark:group-hover:text-[#182c30] transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {item.description}
+                    </p>
+                    <span className="inline-block mt-4 text-[#cb530a] dark:text-[#182c30] font-medium group-hover:translate-x-2 transition-transform">
+                      Mehr erfahren →
+                    </span>
+                  </Link>
+                </AnimatedCard3D>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <StatsSection
+          stats={[
+            { value: 6, suffix: '', label: 'Zielgruppen', icon: '🎯' },
+            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
+            { value: 3, suffix: '', label: 'DACH-Länder', icon: '🌍' },
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung', icon: '🏗️' }
+          ]}
+          title="Unsere Zielgruppen in Zahlen"
+        />
+
+        <BenefitsSection />
+
+        <CTASection
+          title="Finden Sie Ihre passende Lösung"
+          description="Wir betreuen Handwerksbetriebe und Bauunternehmen in allen Bereichen. Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch."
+          variant="gradient"
+        />
+      </main>
+      <Footer />
+      <CookieBanner />
+    </div>
+  );
+}
+

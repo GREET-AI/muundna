@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Südbau Website
 
-## Getting Started
+Eine vollständige Nachbildung der Südbau-Website, erstellt mit Next.js, TypeScript und Tailwind CSS.
 
-First, run the development server:
+## Features
+
+- 🎨 Modernes, responsives Design
+- 📱 Mobile-optimierte Navigation
+- 🖼️ Hero-Slider mit automatischem Wechsel
+- 🚀 Optimiert für Vercel Deployment
+- ⚡ Schnelle Ladezeiten durch Next.js
+
+## Technologien
+
+- **Next.js 16** - React Framework
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS Framework
+- **React 19** - UI Library
+
+## Installation
 
 ```bash
+# Dependencies installieren
+npm install
+
+# Development Server starten
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Die Website ist dann unter [http://localhost:3000](http://localhost:3000) erreichbar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment auf Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Erstelle ein Konto auf [Vercel](https://vercel.com)
+2. Verbinde dein GitHub Repository
+3. Vercel erkennt automatisch Next.js und konfiguriert das Projekt
+4. Klicke auf "Deploy"
 
-## Learn More
+Alternativ mit Vercel CLI:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Vercel CLI installieren
+npm i -g vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Deployment starten
+vercel
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Projektstruktur
 
-## Deploy on Vercel
+```
+jahnbau/
+├── app/
+│   ├── components/
+│   │   ├── Header.tsx          # Navigation und Header
+│   │   ├── HeroSlider.tsx      # Hero-Slider Komponente
+│   │   ├── AboutSection.tsx    # Über uns Sektion
+│   │   ├── ContentSection.tsx  # Content-Bereiche
+│   │   └── Footer.tsx          # Footer Komponente
+│   ├── layout.tsx              # Root Layout
+│   ├── page.tsx                # Hauptseite
+│   └── globals.css             # Globale Styles
+├── public/
+│   └── images/                 # Bilder für die Website
+└── vercel.json                 # Vercel Konfiguration
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Bilder hinzufügen
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Um die Hero-Slider Bilder zu verwenden, füge die folgenden Bilder in `public/images/` ein:
+
+- `hero-1.jpg` - Betreutes Wohnen Oberderdingen
+- `hero-2.jpg` - Gesundheitscampus Rechberg
+- `hero-3.jpg` - Ärztehaus Bruchsal
+- `hero-4.jpg` - Dienstleistungszentrum Bretten
+- `hero-5.jpg` - Kindergarten Kraichgau Hüpfer
+
+Die Website funktioniert auch ohne diese Bilder (zeigt Platzhalter).
+
+## Anpassungen
+
+### Farben anpassen
+
+Die Farben können in den Komponenten-Dateien angepasst werden. Die Hauptfarben sind:
+- Grau: `bg-gray-600`, `text-gray-800`
+- Gelb: `bg-yellow-400` (für Highlight-Boxen)
+- Weiß: `bg-white`
+
+### Inhalte bearbeiten
+
+Die Inhalte können direkt in den Komponenten-Dateien bearbeitet werden:
+- Navigation: `app/components/Header.tsx`
+- Slider-Inhalte: `app/components/HeroSlider.tsx`
+- Footer: `app/components/Footer.tsx`
+
+## License
+
+Dieses Projekt ist eine Nachbildung der Südbau-Website für Lern- und Demonstrationszwecke.
