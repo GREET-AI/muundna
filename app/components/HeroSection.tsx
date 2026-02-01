@@ -44,11 +44,11 @@ export default function HeroSection({
                 </span>
               </div>
             )}
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight break-words">
               {title}
             </h1>
             {description && (
-              <p className="text-xl md:text-2xl text-gray-200 max-w-3xl leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 max-w-3xl leading-relaxed break-words">
                 {description}
               </p>
             )}

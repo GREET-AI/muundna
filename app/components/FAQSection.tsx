@@ -46,10 +46,10 @@ export default function FAQSection() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-4 break-words">
               Häufige Fragen
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 break-words">
               Sind bei Ihnen noch Fragen offen?
             </p>
           </div>
@@ -68,7 +68,7 @@ export default function FAQSection() {
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
                   className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <span className="font-semibold text-gray-800 dark:text-white pr-4">
+                  <span className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white pr-4 break-words">
                     {faq.question}
                   </span>
                   <svg
@@ -111,7 +111,7 @@ export default function FAQSection() {
               Weitere Fragen? Wir helfen Ihnen gerne weiter.
             </p>
             <a
-              href="mailto:info@muckenfuss-nagel.de"
+              href="mailto:info@muckenfussundnagel.de"
               className="inline-flex items-center text-[#cb530a] dark:text-[#182c30] font-semibold hover:underline"
             >
               Kontakt aufnehmen

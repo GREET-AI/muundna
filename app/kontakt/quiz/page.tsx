@@ -186,15 +186,15 @@ export default function QuizPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-12 text-center"
+                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 sm:p-8 md:p-12 text-center"
                 >
-                  <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600 dark:text-green-400" />
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3 sm:mb-4 break-words">
                     Vielen Dank! 🎉
                   </h2>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6 sm:mb-8 break-words px-2">
                     Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich bei Ihnen.
                   </p>
                   <a
@@ -210,13 +210,13 @@ export default function QuizPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 md:p-12"
+                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12"
                 >
-                  <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+                  <div className="mb-6 md:mb-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2 break-words">
                       Letzter Schritt 👋
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">
                       Bitte teilen Sie uns Ihre Kontaktdaten mit, damit wir mit Ihnen in Kontakt treten können.
                     </p>
                   </div>
@@ -312,22 +312,22 @@ export default function QuizPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-4 pt-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-4">
                       <button
                         type="button"
                         onClick={handleBack}
-                        className="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors"
+                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors"
                       >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Zurück
                       </button>
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 flex items-center justify-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#cb530a] text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
                         {isSubmitting ? 'Wird gesendet...' : 'Jetzt anfragen'}
-                        {!isSubmitting && <ArrowRight className="w-5 h-5 ml-2" />}
+                        {!isSubmitting && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />}
                       </button>
                     </div>
                   </form>
@@ -341,11 +341,11 @@ export default function QuizPage() {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-12"
                 >
                   {/* Left: Info Section */}
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
-                    <h2 className="text-3xl font-bold text-[#cb530a] mb-4">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#cb530a] mb-4 break-words">
                       Qualität aus Verantwortung.
                     </h2>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-4 break-words">
                       Warum für Muckenfuss & Nagel entscheiden?
                     </h3>
                     <p className="text-gray-700 dark:text-gray-300 mb-6">
@@ -370,17 +370,17 @@ export default function QuizPage() {
                   </div>
 
                   {/* Right: Quiz Section */}
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2 break-words">
                       {currentStepData.title}
                     </h2>
                     {currentStepData.subtitle && (
-                      <p className="text-gray-600 dark:text-gray-400 mb-8">
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 md:mb-8 break-words">
                         {currentStepData.subtitle}
                       </p>
                     )}
 
-                    <div className={`grid ${currentStepData.options.length === 4 ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-8`}>
+                    <div className={`grid ${currentStepData.options.length === 4 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4 mb-6 md:mb-8`}>
                       {currentStepData.options.map((option) => {
                         const Icon = 'icon' in option ? option.icon : undefined;
                         const isSelected = Array.isArray(selectedOptions)
@@ -392,22 +392,22 @@ export default function QuizPage() {
                             key={option.id}
                             type="button"
                             onClick={() => handleOptionSelect(currentStepData.id, option.id, currentStepData.type)}
-                            className={`p-6 rounded-lg border-2 transition-all text-left ${
+                            className={`p-3 sm:p-4 md:p-6 rounded-lg border-2 transition-all text-left w-full ${
                               isSelected
                                 ? 'border-[#cb530a] bg-[#fef3ed] dark:bg-gray-800'
                                 : 'border-gray-300 dark:border-gray-700 hover:border-[#cb530a]/50'
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                {Icon && <Icon className="w-6 h-6 text-[#cb530a] mr-3" />}
-                                <span className="font-semibold text-gray-800 dark:text-white">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center flex-1 min-w-0">
+                                {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#cb530a] mr-2 sm:mr-3 flex-shrink-0" />}
+                                <span className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white break-words">
                                   {option.label}
                                 </span>
                               </div>
                               {isSelected && (
-                                <div className="w-6 h-6 bg-[#cb530a] rounded-full flex items-center justify-center">
-                                  <Check className="w-4 h-4 text-white" />
+                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#cb530a] rounded-full flex items-center justify-center flex-shrink-0">
+                                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                 </div>
                               )}
                             </div>
@@ -416,14 +416,14 @@ export default function QuizPage() {
                       })}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                       <button
                         type="button"
                         onClick={handleBack}
                         disabled={currentStep === 0}
-                        className="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Zurück
                       </button>
                       <button
@@ -434,10 +434,11 @@ export default function QuizPage() {
                             ? (selectedOptions as string[]).length === 0
                             : !selectedOptions
                         }
-                        className="flex items-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#cb530a] text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
-                        {currentStep === steps.length - 1 ? 'Weiter zum Formular' : 'Weiter'}
-                        <ArrowRight className="w-5 h-5 ml-2" />
+                        <span className="hidden sm:inline">{currentStep === steps.length - 1 ? 'Weiter zum Formular' : 'Weiter'}</span>
+                        <span className="sm:hidden">{currentStep === steps.length - 1 ? 'Zum Formular' : 'Weiter'}</span>
+                        <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                       </button>
                     </div>
                   </div>

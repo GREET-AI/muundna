@@ -9,10 +9,10 @@ export default function AboutSection() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-6 break-words">
               Muckenfuss & Nagel
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 break-words">
               Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen
             </p>
           </div>

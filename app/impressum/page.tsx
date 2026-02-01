@@ -31,7 +31,7 @@ export default function ImpressumPage() {
                   </p>
                   <p>
                     <strong>Kontakt:</strong><br />
-                    E-Mail: info@muckenfuss-nagel.de
+                    E-Mail: info@muckenfussundnagel.de
                   </p>
                   <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
                     <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">

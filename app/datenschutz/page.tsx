@@ -39,7 +39,7 @@ export default function DatenschutzPage() {
                     <p className="mt-2">
                       <strong>Muckenfuss & Nagel</strong><br />
                       Oberderdingen<br />
-                      E-Mail: info@muckenfuss-nagel.de
+                      E-Mail: info@muckenfussundnagel.de
                     </p>
                   </div>
                   <div>

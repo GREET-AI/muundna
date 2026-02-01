@@ -112,18 +112,18 @@ export default function HeroSlider() {
 
       {/* Content Overlay */}
       <div className="absolute inset-0 flex items-center">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-2xl">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full">
+          <div className="max-w-2xl w-full">
             {/* Title Box */}
             <div className="mb-4">
-              <div className="inline-block bg-gray-800 bg-opacity-90 px-6 py-3 mb-2">
-                <h2 className="text-white text-3xl font-bold uppercase tracking-wide">
+              <div className="inline-block bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3 mb-2 max-w-full">
+                <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-wide break-words">
                   {currentSlideData.title}
                 </h2>
               </div>
               {currentSlideData.subtitle && (
-                <div className="inline-block bg-gray-800 bg-opacity-90 px-6 py-3">
-                  <h3 className="text-white text-2xl font-semibold">
+                <div className="inline-block bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3 max-w-full">
+                  <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-semibold break-words">
                     {currentSlideData.subtitle}
                   </h3>
                 </div>
@@ -131,23 +131,23 @@ export default function HeroSlider() {
             </div>
 
             {/* Description Box */}
-            <div className="bg-[#cb530a] px-6 py-4 inline-block shadow-lg mb-6">
-              <p className="text-white text-lg font-medium leading-relaxed">
+            <div className="bg-[#cb530a] px-3 sm:px-4 md:px-6 py-3 sm:py-4 inline-block shadow-lg mb-6 max-w-full">
+              <p className="text-white text-sm sm:text-base md:text-lg font-medium leading-relaxed break-words">
                 {currentSlideData.description}
               </p>
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link
                 href={getRoute('Kontakt')}
-                className="inline-flex items-center justify-center px-8 py-4 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors text-lg"
+                className="inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 bg-[#cb530a] text-white text-sm sm:text-base md:text-lg font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors whitespace-nowrap"
               >
                 Jetzt Anfragen
               </Link>
               <Link
                 href={getRoute('Dienstleistungen')}
-                className="inline-flex items-center justify-center px-8 py-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 font-semibold rounded-lg shadow-lg transition-all"
+                className="inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 text-sm sm:text-base md:text-lg font-semibold rounded-lg shadow-lg transition-all whitespace-nowrap"
               >
                 Mehr erfahren
               </Link>

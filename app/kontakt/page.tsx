@@ -90,9 +90,9 @@ export default function KontaktPage() {
     {
       icon: Mail,
       title: 'E-Mail',
-      content: 'info@muckenfuss-nagel.de',
+      content: 'info@muckenfussundnagel.de',
       description: 'Wir antworten schnellstmöglich.',
-      link: 'mailto:info@muckenfuss-nagel.de',
+      link: 'mailto:info@muckenfussundnagel.de',
       color: 'text-[#cb530a]'
     },
     {

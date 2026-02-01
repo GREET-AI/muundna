@@ -40,16 +40,16 @@ export default function CTASection({
     <section className={`py-20 ${variants[variant]}`}>
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${textColor}`}>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-6 break-words ${textColor}`}>
             {title}
           </h2>
-          <p className={`text-xl mb-8 leading-relaxed ${descColor}`}>
+          <p className={`text-base sm:text-lg md:text-xl mb-8 leading-relaxed break-words ${descColor}`}>
             {description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href={primaryButtonLink || getRoute('Kontakt')}
-              className={`inline-flex items-center justify-center px-8 py-4 font-semibold rounded-lg shadow-lg transition-colors text-lg ${
+              className={`inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 font-semibold rounded-lg shadow-lg transition-colors text-sm sm:text-base md:text-lg whitespace-nowrap ${
                 variant === 'gradient' || variant === 'dark'
                   ? 'bg-white text-[#cb530a] hover:bg-gray-100'
                   : 'bg-[#cb530a] text-white hover:bg-[#a84308]'

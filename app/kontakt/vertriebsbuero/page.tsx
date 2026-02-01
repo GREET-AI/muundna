@@ -24,7 +24,7 @@ export default function VertriebsbueroPage() {
                 <strong>Fax:</strong> +49 123 456791
               </p>
               <p className="text-gray-700">
-                <strong>E-Mail:</strong> vertrieb@suedbau.de
+                <strong>E-Mail:</strong> vertrieb@muckenfussundnagel.de
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-md">

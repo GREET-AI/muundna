@@ -24,7 +24,7 @@ export default function PlanungsbueroPage() {
                 <strong>Fax:</strong> +49 123 456788
               </p>
               <p className="text-gray-700">
-                <strong>E-Mail:</strong> planung@suedbau.de
+                <strong>E-Mail:</strong> planung@muckenfussundnagel.de
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-md">
