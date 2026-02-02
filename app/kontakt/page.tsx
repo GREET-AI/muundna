@@ -10,6 +10,7 @@ import StatefulButton from '../components/ui/StatefulButton';
 import VanishInput from '../components/ui/VanishInput';
 import IconInput from '../components/ui/IconInput';
 import Confetti from '../components/ui/Confetti';
+import Toast from '../components/ui/Toast';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, CheckCircle2, MessageSquare, Calendar, Users, User, Home } from 'lucide-react';
 import ExpertiseCTABanner from '../components/ExpertiseCTABanner';
@@ -26,6 +27,9 @@ export default function KontaktPage() {
     message: ''
   });
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -52,6 +56,9 @@ export default function KontaktPage() {
 
       if (response.ok) {
         setShowConfetti(true);
+        setToastMessage('Ihre Anfrage wurde erfolgreich übermittelt! Wir melden uns schnellstmöglich bei Ihnen.');
+        setToastType('success');
+        setShowToast(true);
         // Formular zurücksetzen
         setFormData({
           firstName: '',
@@ -66,11 +73,18 @@ export default function KontaktPage() {
         setPrivacyAccepted(false);
         // Confetti wird automatisch nach 3 Sekunden ausgeblendet
       } else {
+        setToastMessage(data.error || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+        setToastType('error');
+        setShowToast(true);
         setSubmitError(data.error || 'Ein Fehler ist aufgetreten.');
       }
     } catch (error) {
       console.error('Fehler beim Absenden:', error);
-      setSubmitError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+      const errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -275,15 +289,26 @@ export default function KontaktPage() {
               <GlowingEffect className="mb-8">
                 <div className="bg-white rounded-lg shadow-xl p-8 border-2 border-gray-200 hover:border-[#cb530a]/50 transition-all duration-300 hover:shadow-2xl">
                   <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-                    <IconInput
-                      icon={<User className="w-5 h-5" />}
-                      name="firstName"
-                      type="text"
-                      placeholder="Ihr Name"
-                      required
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange(e)}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <IconInput
+                        icon={<User className="w-5 h-5" />}
+                        name="firstName"
+                        type="text"
+                        placeholder="Vorname"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange(e)}
+                      />
+                      <IconInput
+                        icon={<User className="w-5 h-5" />}
+                        name="lastName"
+                        type="text"
+                        placeholder="Nachname"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange(e)}
+                      />
+                    </div>
                     
                     <IconInput
                       icon={<Mail className="w-5 h-5" />}
@@ -512,6 +537,13 @@ export default function KontaktPage() {
       </main>
       <Footer />
       <Confetti trigger={showConfetti} duration={3000} />
+      <Toast
+        show={showToast}
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setShowToast(false)}
+        duration={5000}
+      />
     </div>
   );
 }

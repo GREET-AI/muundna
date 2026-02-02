@@ -47,6 +47,9 @@ export const routes = {
   'Impressum': '/impressum',
   'Datenschutz': '/datenschutz',
   'Cookies': '/cookies',
+  
+  // Admin
+  'Admin': '/admin',
 };
 
 export function getRoute(item: string): string {

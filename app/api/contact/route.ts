@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
             street: body.street || null,
             city: body.city || null,
             quiz_data: body.quizData || null,
+            status: 'neu',
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
         ])
         .select();

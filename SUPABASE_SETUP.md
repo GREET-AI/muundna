@@ -25,7 +25,10 @@ CREATE TABLE contact_submissions (
   street TEXT,
   city TEXT,
   quiz_data JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT DEFAULT 'neu' CHECK (status IN ('neu', 'kontaktiert', 'in_bearbeitung', 'abgeschlossen')),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Index für bessere Performance

@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Building2, Wrench, Users, Calendar, MapPin, Phone, Mail, Home, User } from 'lucide-react';
 import IconInput from '../../components/ui/IconInput';
+import Toast from '../../components/ui/Toast';
 
 interface QuizData {
   targetGroup?: string[];
@@ -30,6 +31,9 @@ export default function QuizPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const steps = [
     {
@@ -138,12 +142,21 @@ export default function QuizPage() {
 
       if (response.ok) {
         setSubmitSuccess(true);
+        setToastMessage('Ihre Anfrage wurde erfolgreich übermittelt! Wir melden uns schnellstmöglich bei Ihnen.');
+        setToastType('success');
+        setShowToast(true);
       } else {
-        alert(data.error || 'Ein Fehler ist aufgetreten.');
+        const errorMessage = data.error || 'Ein Fehler ist aufgetreten.';
+        setToastMessage(errorMessage);
+        setToastType('error');
+        setShowToast(true);
       }
     } catch (error) {
       console.error('Fehler beim Absenden:', error);
-      alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+      const errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -223,15 +236,26 @@ export default function QuizPage() {
                   </div>
 
                   <form onSubmit={handleFormSubmit} className="space-y-6">
-                    <IconInput
-                      icon={<User className="w-5 h-5" />}
-                      name="firstName"
-                      type="text"
-                      placeholder="Ihr Name"
-                      required
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <IconInput
+                        icon={<User className="w-5 h-5" />}
+                        name="firstName"
+                        type="text"
+                        placeholder="Vorname"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      />
+                      <IconInput
+                        icon={<User className="w-5 h-5" />}
+                        name="lastName"
+                        type="text"
+                        placeholder="Nachname"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      />
+                    </div>
                     
                     <IconInput
                       icon={<Mail className="w-5 h-5" />}
@@ -430,6 +454,13 @@ export default function QuizPage() {
         </div>
       </main>
       <Footer />
+      <Toast
+        show={showToast}
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setShowToast(false)}
+        duration={5000}
+      />
     </div>
   );
 }
