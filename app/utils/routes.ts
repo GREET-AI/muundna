@@ -46,6 +46,7 @@ export const routes = {
   // Rechtliches
   'Impressum': '/impressum',
   'Datenschutz': '/datenschutz',
+  'Cookies': '/cookies',
 };
 
 export function getRoute(item: string): string {

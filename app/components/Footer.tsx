@@ -124,18 +124,40 @@ export default function Footer() {
                     Datenschutz
                   </Link>
                 </li>
+                <li>
+                  <Link href={getRoute('Cookies')} className="text-gray-300 hover:text-[#cb530a] text-sm">
+                    Cookies
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-700 text-center">
-          <p className="text-gray-400 text-sm mb-2">
-            &copy; {new Date().getFullYear()} Muckenfuss & Nagel. Alle Rechte vorbehalten.
-          </p>
-          <p className="text-gray-500 text-xs">
-            Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen | Oberderdingen
-          </p>
+        <div className="mt-12 pt-8 border-t border-gray-700">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-center md:text-left">
+              <p className="text-gray-400 text-sm mb-2">
+                &copy; {new Date().getFullYear()} Muckenfuss & Nagel. Alle Rechte vorbehalten.
+              </p>
+              <p className="text-gray-500 text-xs">
+                Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen | Oberderdingen
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <Link href={getRoute('Impressum')} className="text-gray-400 hover:text-[#cb530a] transition-colors">
+                Impressum
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link href={getRoute('Datenschutz')} className="text-gray-400 hover:text-[#cb530a] transition-colors">
+                Datenschutz
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link href={getRoute('Cookies')} className="text-gray-400 hover:text-[#cb530a] transition-colors">
+                Cookies
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

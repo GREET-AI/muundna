@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Building2, Wrench, Users, Calendar, MapPin, Phone, Mail, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Building2, Wrench, Users, Calendar, MapPin, Phone, Mail, Home, User } from 'lucide-react';
+import IconInput from '../../components/ui/IconInput';
 
 interface QuizData {
   targetGroup?: string[];
@@ -222,81 +223,52 @@ export default function QuizPage() {
                   </div>
 
                   <form onSubmit={handleFormSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-gray-700 font-medium mb-2">
-                          Vorname *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 font-medium mb-2">
-                          Nachname *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">
-                        E-Mail Adresse *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">
-                        Ihre Telefonnummer
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">
-                        Straße & Haus-Nr.
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.street}
-                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">
-                        Ihr Wohnort
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
-                      />
-                    </div>
+                    <IconInput
+                      icon={<User className="w-5 h-5" />}
+                      name="firstName"
+                      type="text"
+                      placeholder="Ihr Name"
+                      required
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    />
+                    
+                    <IconInput
+                      icon={<Mail className="w-5 h-5" />}
+                      name="email"
+                      type="email"
+                      placeholder="E-Mail Adresse"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                    
+                    <IconInput
+                      icon={<Phone className="w-5 h-5" />}
+                      name="phone"
+                      type="tel"
+                      placeholder="Ihre Telefonnummer"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                    
+                    <IconInput
+                      icon={<Home className="w-5 h-5" />}
+                      name="street"
+                      type="text"
+                      placeholder="Straße & Haus-Nr."
+                      value={formData.street}
+                      onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                    />
+                    
+                    <IconInput
+                      icon={<MapPin className="w-5 h-5" />}
+                      name="city"
+                      type="text"
+                      placeholder="Ihr Wohnort"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    />
 
                     <div className="flex items-start">
                       <input
@@ -304,11 +276,14 @@ export default function QuizPage() {
                         id="privacy"
                         checked={formData.privacyAccepted}
                         onChange={(e) => setFormData({ ...formData, privacyAccepted: e.target.checked })}
-                        className="mt-1 mr-3 w-4 h-4 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a]"
+                        className="mt-1 mr-3 w-5 h-5 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a] cursor-pointer"
                         required
                       />
-                      <label htmlFor="privacy" className="text-sm text-gray-700">
+                      <label htmlFor="privacy" className="text-sm text-gray-700 cursor-pointer">
                         Datenschutzbestimmungen gelesen und akzeptiert *
+                        <a href="/datenschutz" className="text-[#182c30] hover:underline ml-1">
+                          (Datenschutzerklärung)
+                        </a>
                       </label>
                     </div>
 
@@ -326,8 +301,14 @@ export default function QuizPage() {
                         disabled={isSubmitting}
                         className="flex-1 flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#cb530a] text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
-                        {isSubmitting ? 'Wird gesendet...' : 'Jetzt anfragen'}
-                        {!isSubmitting && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />}
+                        {isSubmitting ? 'Wird gesendet...' : (
+                          <>
+                            Jetzt anfragen
+                            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>

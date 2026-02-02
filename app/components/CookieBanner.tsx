@@ -93,6 +93,13 @@ export default function CookieBanner() {
                       >
                         Impressum
                       </Link>
+                      <span className="text-gray-400">•</span>
+                      <Link
+                        href={getRoute('Cookies')}
+                        className="text-[#cb530a] hover:underline"
+                      >
+                        Cookies
+                      </Link>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">

@@ -8,9 +8,10 @@ import CTASection from '../components/CTASection';
 import GlowingEffect from '../components/ui/GlowingEffect';
 import StatefulButton from '../components/ui/StatefulButton';
 import VanishInput from '../components/ui/VanishInput';
+import IconInput from '../components/ui/IconInput';
 import Confetti from '../components/ui/Confetti';
 import { motion } from 'framer-motion';
-import { Phone, Mail, MapPin, Clock, CheckCircle2, MessageSquare, Calendar, Users } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, CheckCircle2, MessageSquare, Calendar, Users, User, Home } from 'lucide-react';
 import ExpertiseCTABanner from '../components/ExpertiseCTABanner';
 
 export default function KontaktPage() {
@@ -19,6 +20,8 @@ export default function KontaktPage() {
     lastName: '',
     email: '',
     phone: '',
+    street: '',
+    city: '',
     service: '',
     message: ''
   });
@@ -55,6 +58,8 @@ export default function KontaktPage() {
           lastName: '',
           email: '',
           phone: '',
+          street: '',
+          city: '',
           service: '',
           message: ''
         });
@@ -270,43 +275,50 @@ export default function KontaktPage() {
               <GlowingEffect className="mb-8">
                 <div className="bg-white rounded-lg shadow-xl p-8 border-2 border-gray-200 hover:border-[#cb530a]/50 transition-all duration-300 hover:shadow-2xl">
                   <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <VanishInput
-                        name="firstName"
-                        label="Vorname"
-                        type="text"
-                        required
-                        placeholder="Ihr Vorname"
-                        value={formData.firstName}
-                        onChange={(e) => handleInputChange(e)}
-                      />
-                      <VanishInput
-                        name="lastName"
-                        label="Nachname"
-                        type="text"
-                        required
-                        placeholder="Ihr Nachname"
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange(e)}
-                      />
-                    </div>
-                    
-                    <VanishInput
-                      name="email"
-                      label="E-Mail"
-                      type="email"
+                    <IconInput
+                      icon={<User className="w-5 h-5" />}
+                      name="firstName"
+                      type="text"
+                      placeholder="Ihr Name"
                       required
-                      placeholder="ihre@email.de"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange(e)}
+                    />
+                    
+                    <IconInput
+                      icon={<Mail className="w-5 h-5" />}
+                      name="email"
+                      type="email"
+                      placeholder="E-Mail Adresse"
+                      required
                       value={formData.email}
                       onChange={(e) => handleInputChange(e)}
                     />
                     
-                    <VanishInput
+                    <IconInput
+                      icon={<Phone className="w-5 h-5" />}
                       name="phone"
-                      label="Telefon"
                       type="tel"
-                      placeholder="+49 123 456789"
+                      placeholder="Ihre Telefonnummer"
                       value={formData.phone}
+                      onChange={(e) => handleInputChange(e)}
+                    />
+                    
+                    <IconInput
+                      icon={<Home className="w-5 h-5" />}
+                      name="street"
+                      type="text"
+                      placeholder="Straße & Haus-Nr."
+                      value={formData.street || ''}
+                      onChange={(e) => handleInputChange(e)}
+                    />
+                    
+                    <IconInput
+                      icon={<MapPin className="w-5 h-5" />}
+                      name="city"
+                      type="text"
+                      placeholder="Ihr Wohnort"
+                      value={formData.city || ''}
                       onChange={(e) => handleInputChange(e)}
                     />
                     
@@ -351,15 +363,14 @@ export default function KontaktPage() {
                         id="privacy"
                         checked={privacyAccepted}
                         onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                        className="mt-1 mr-3 w-4 h-4 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a]"
+                        className="mt-1 mr-3 w-5 h-5 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a] cursor-pointer"
                         required
                       />
-                      <label htmlFor="privacy" className="text-sm text-gray-700">
-                        Ich bin mit der Speicherung meiner Daten gemäß{' '}
-                        <a href="/datenschutz" className="text-[#cb530a] hover:underline">
-                          Datenschutzerklärung
-                        </a>{' '}
-                        einverstanden. *
+                      <label htmlFor="privacy" className="text-sm text-gray-700 cursor-pointer">
+                        Datenschutzbestimmungen gelesen und akzeptiert *
+                        <a href="/datenschutz" className="text-[#182c30] hover:underline ml-1">
+                          (Datenschutzerklärung)
+                        </a>
                       </label>
                     </div>
                     
@@ -368,14 +379,20 @@ export default function KontaktPage() {
                         <p className="text-red-800 text-sm">{submitError}</p>
                       </div>
                     )}
-                    <StatefulButton
+                    <button
                       type="submit"
-                      onClick={handleSubmit}
-                      className="w-full text-lg"
                       disabled={isSubmitting}
+                      className="w-full flex items-center justify-center px-6 py-4 bg-[#cb530a] text-white text-lg font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? 'Wird gesendet...' : 'Nachricht senden'}
-                    </StatefulButton>
+                      {isSubmitting ? 'Wird gesendet...' : (
+                        <>
+                          Jetzt anfragen
+                          <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
                   </form>
                 </div>
               </GlowingEffect>
