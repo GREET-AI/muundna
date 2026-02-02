@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabase';
 
-// E-Mail-Benachrichtigung senden (asynchron)
-async function sendEmailNotification(contactData: any) {
+// E-Mail-Benachrichtigung bei neuen Leads
+// Kostenfreie Optionen:
+// 1. Resend (empfohlen): 3000 E-Mails/Monat kostenfrei
+// 2. SendGrid: 100 E-Mails/Tag kostenfrei
+// 3. Nodemailer mit Gmail SMTP: kostenfrei, aber limitiert
+
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const { contactData, type = 'new_lead' } = body;
+
+    // E-Mail-Empfänger (kann aus .env.local kommen)
     const recipientEmail = process.env.NOTIFICATION_EMAIL || 'info@muckenfussundnagel.de';
-    const emailSubject = `🆕 Neuer Lead: ${contactData.first_name} ${contactData.last_name}`;
-    
+
     // E-Mail-Inhalt erstellen
+    const emailSubject = type === 'new_lead' 
+      ? `🆕 Neuer Lead: ${contactData.first_name} ${contactData.last_name}`
+      : `📧 Neue Kontaktanfrage: ${contactData.first_name} ${contactData.last_name}`;
+
     const emailBody = `
       <!DOCTYPE html>
       <html>
@@ -66,10 +77,10 @@ async function sendEmailNotification(contactData: any) {
               </div>
               ` : ''}
               
-              ${contactData.quiz_data ? `
+              ${contactData.quizData ? `
               <div class="quiz-data">
                 <h3>📋 Quiz-Daten</h3>
-                ${formatQuizData(contactData.quiz_data)}
+                ${formatQuizData(contactData.quizData)}
               </div>
               ` : ''}
               
@@ -86,7 +97,7 @@ async function sendEmailNotification(contactData: any) {
       </html>
     `;
 
-    // Option 1: Resend (empfohlen)
+    // Option 1: Resend (empfohlen - kostenfrei bis 3000/Monat)
     if (process.env.RESEND_API_KEY) {
       const resendResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -103,12 +114,11 @@ async function sendEmailNotification(contactData: any) {
       });
 
       if (resendResponse.ok) {
-        console.log('✅ E-Mail-Benachrichtigung per Resend gesendet');
-        return;
+        return NextResponse.json({ success: true, provider: 'resend' });
       }
     }
 
-    // Option 2: SendGrid
+    // Option 2: SendGrid (kostenfrei bis 100/Tag)
     if (process.env.SENDGRID_API_KEY) {
       const sendGridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
@@ -130,19 +140,28 @@ async function sendEmailNotification(contactData: any) {
       });
 
       if (sendGridResponse.ok) {
-        console.log('✅ E-Mail-Benachrichtigung per SendGrid gesendet');
-        return;
+        return NextResponse.json({ success: true, provider: 'sendgrid' });
       }
     }
 
-    // Fallback: Loggen
+    // Fallback: Loggen (für Entwicklung)
     console.log('📧 E-Mail-Benachrichtigung (kein E-Mail-Service konfiguriert):');
     console.log('Empfänger:', recipientEmail);
     console.log('Betreff:', emailSubject);
-    
+    console.log('Daten:', contactData);
+
+    return NextResponse.json({ 
+      success: true, 
+      provider: 'console',
+      message: 'E-Mail wurde geloggt (kein E-Mail-Service konfiguriert)' 
+    });
+
   } catch (error) {
     console.error('Fehler beim Senden der E-Mail:', error);
-    // Fehler wird nicht weitergegeben, damit die Kontaktanfrage trotzdem gespeichert wird
+    return NextResponse.json(
+      { error: 'Fehler beim Senden der E-Mail-Benachrichtigung' },
+      { status: 500 }
+    );
   }
 }
 
@@ -169,103 +188,5 @@ function formatQuizData(quizData: any): string {
   
   html += '</ul>';
   return html;
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    
-    // Validierung
-    if (!body.firstName || !body.lastName || !body.email) {
-      return NextResponse.json(
-        { error: 'Bitte füllen Sie alle Pflichtfelder aus.' },
-        { status: 400 }
-      );
-    }
-
-    // Email-Validierung
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return NextResponse.json(
-        { error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.' },
-        { status: 400 }
-      );
-    }
-
-    // Daten in Supabase speichern (falls konfiguriert)
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('contact_submissions')
-        .insert([
-          {
-            first_name: body.firstName,
-            last_name: body.lastName,
-            email: body.email,
-            phone: body.phone || null,
-            service: body.service || null,
-            message: body.message || null,
-            street: body.street || null,
-            city: body.city || null,
-            quiz_data: body.quizData || null,
-            status: 'neu',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.error('Supabase Fehler:', error);
-        // Fallback: Daten trotzdem loggen
-        console.log('Neue Kontaktanfrage (Fallback):', {
-          firstName: body.firstName,
-          lastName: body.lastName,
-          email: body.email,
-          phone: body.phone || 'Nicht angegeben',
-          service: body.service || 'Nicht angegeben',
-          message: body.message || 'Keine Nachricht',
-          quizData: body.quizData || null,
-          timestamp: new Date().toISOString(),
-        });
-      } else {
-        console.log('Kontaktanfrage erfolgreich in Supabase gespeichert:', data);
-        
-        // E-Mail-Benachrichtigung senden (asynchron, blockiert nicht die Antwort)
-        if (data && data[0]) {
-          // Asynchron senden, blockiert nicht die Antwort
-          sendEmailNotification(data[0]).catch(err => {
-            console.error('Fehler beim Senden der E-Mail-Benachrichtigung:', err);
-            // Fehler wird nicht an den Client weitergegeben
-          });
-        }
-      }
-    } else {
-      // Fallback: Daten loggen, falls Supabase nicht konfiguriert ist
-      console.log('Neue Kontaktanfrage (Supabase nicht konfiguriert):', {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        email: body.email,
-        phone: body.phone || 'Nicht angegeben',
-        service: body.service || 'Nicht angegeben',
-        message: body.message || 'Keine Nachricht',
-        quizData: body.quizData || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    return NextResponse.json(
-      { 
-        success: true,
-        message: 'Ihre Nachricht wurde erfolgreich versendet. Wir melden uns schnellstmöglich bei Ihnen.'
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Fehler beim Verarbeiten der Kontaktanfrage:', error);
-    return NextResponse.json(
-      { error: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.' },
-      { status: 500 }
-    );
-  }
 }
 
