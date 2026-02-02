@@ -152,7 +152,7 @@ export default function QuizPage() {
   const selectedOptions = quizData[currentStepData?.id as keyof QuizData] as string[] || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="pt-20 pb-20">
         <div className="container mx-auto px-4">
@@ -161,14 +161,14 @@ export default function QuizPage() {
             {!showForm && !submitSuccess && (
               <div className="mb-8">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600">
                     Schritt {currentStep + 1} von {steps.length}
                   </span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600">
                     {Math.round(((currentStep + 1) / steps.length) * 100)}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <motion.div
                     className="bg-[#cb530a] h-2 rounded-full"
                     initial={{ width: 0 }}
@@ -186,15 +186,15 @@ export default function QuizPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 sm:p-8 md:p-12 text-center"
+                  className="bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12 text-center"
                 >
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                    <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600 dark:text-green-400" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3 sm:mb-4 break-words">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-3 sm:mb-4 break-words">
                     Vielen Dank! 🎉
                   </h2>
-                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6 sm:mb-8 break-words px-2">
+                  <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 break-words px-2">
                     Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich bei Ihnen.
                   </p>
                   <a
@@ -210,13 +210,13 @@ export default function QuizPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12"
+                  className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12"
                 >
                   <div className="mb-6 md:mb-8">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2 break-words">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 break-words">
                       Letzter Schritt 👋
                     </h2>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">
+                    <p className="text-sm sm:text-base text-gray-600 break-words">
                       Bitte teilen Sie uns Ihre Kontaktdaten mit, damit wir mit Ihnen in Kontakt treten können.
                     </p>
                   </div>
@@ -224,7 +224,7 @@ export default function QuizPage() {
                   <form onSubmit={handleFormSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                        <label className="block text-gray-700 font-medium mb-2">
                           Vorname *
                         </label>
                         <input
@@ -232,11 +232,11 @@ export default function QuizPage() {
                           required
                           value={formData.firstName}
                           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                        <label className="block text-gray-700 font-medium mb-2">
                           Nachname *
                         </label>
                         <input
@@ -244,13 +244,13 @@ export default function QuizPage() {
                           required
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         E-Mail Adresse *
                       </label>
                       <input
@@ -258,43 +258,43 @@ export default function QuizPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         Ihre Telefonnummer
                       </label>
                       <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         Straße & Haus-Nr.
                       </label>
                       <input
                         type="text"
                         value={formData.street}
                         onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         Ihr Wohnort
                       </label>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] dark:bg-gray-800 dark:text-white"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a]"
                       />
                     </div>
 
@@ -307,7 +307,7 @@ export default function QuizPage() {
                         className="mt-1 mr-3 w-4 h-4 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a]"
                         required
                       />
-                      <label htmlFor="privacy" className="text-sm text-gray-700 dark:text-gray-300">
+                      <label htmlFor="privacy" className="text-sm text-gray-700">
                         Datenschutzbestimmungen gelesen und akzeptiert *
                       </label>
                     </div>
@@ -316,7 +316,7 @@ export default function QuizPage() {
                       <button
                         type="button"
                         onClick={handleBack}
-                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors"
+                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:text-[#cb530a] transition-colors"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Zurück
@@ -341,14 +341,14 @@ export default function QuizPage() {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-12"
                 >
                   {/* Left: Info Section */}
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+                  <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
                     <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#cb530a] mb-4 break-words">
                       Qualität aus Verantwortung.
                     </h2>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-4 break-words">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 break-words">
                       Warum für Muckenfuss & Nagel entscheiden?
                     </h3>
-                    <p className="text-gray-700 dark:text-gray-300 mb-6">
+                    <p className="text-gray-700 mb-6">
                       Wählen Sie Muckenfuss & Nagel für innovative Lösungen und erstklassigen Service. 
                       Unsere Bürodienstleistungen kombinieren Branchenkenntnis mit modernster Technologie.
                     </p>
@@ -363,19 +363,19 @@ export default function QuizPage() {
                       ].map((item, index) => (
                         <li key={index} className="flex items-start">
                           <Check className="w-5 h-5 text-[#cb530a] mr-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-700 dark:text-gray-300">{item}</span>
+                          <span className="text-gray-700">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Right: Quiz Section */}
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2 break-words">
+                  <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 break-words">
                       {currentStepData.title}
                     </h2>
                     {currentStepData.subtitle && (
-                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 md:mb-8 break-words">
+                      <p className="text-sm sm:text-base text-gray-600 mb-6 md:mb-8 break-words">
                         {currentStepData.subtitle}
                       </p>
                     )}
@@ -394,14 +394,14 @@ export default function QuizPage() {
                             onClick={() => handleOptionSelect(currentStepData.id, option.id, currentStepData.type)}
                             className={`p-3 sm:p-4 md:p-6 rounded-lg border-2 transition-all text-left w-full ${
                               isSelected
-                                ? 'border-[#cb530a] bg-[#fef3ed] dark:bg-gray-800'
-                                : 'border-gray-300 dark:border-gray-700 hover:border-[#cb530a]/50'
+                                ? 'border-[#cb530a] bg-[#fef3ed]'
+                                : 'border-gray-300 hover:border-[#cb530a]/50'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center flex-1 min-w-0">
                                 {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#cb530a] mr-2 sm:mr-3 flex-shrink-0" />}
-                                <span className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white break-words">
+                                <span className="font-semibold text-sm sm:text-base text-gray-800 break-words">
                                   {option.label}
                                 </span>
                               </div>
@@ -421,7 +421,7 @@ export default function QuizPage() {
                         type="button"
                         onClick={handleBack}
                         disabled={currentStep === 0}
-                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-[#cb530a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:text-[#cb530a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Zurück

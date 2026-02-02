@@ -38,15 +38,15 @@ export default function CompanyInfoSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50 dark:bg-black">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
               Über Muckenfuss & Nagel
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Ihr verlässlicher Partner für Bürodienstleistungen im Bauwesen
             </p>
           </div>
@@ -60,13 +60,13 @@ export default function CompanyInfoSection() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-800 text-center"
+                className="bg-white p-6 rounded-lg shadow-md border border-gray-200 text-center"
               >
-                <div className="text-4xl font-bold text-[#cb530a] dark:text-[#182c30] mb-2">
-                  <NumberTicker value={stat.value} className="text-[#cb530a] dark:text-[#182c30]" />
+                <div className="text-4xl font-bold text-[#cb530a] mb-2">
+                  <NumberTicker value={stat.value} className="text-[#cb530a]" />
                   {stat.suffix}
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
+                <p className="text-gray-600 text-sm font-medium">
                   {stat.label}
                 </p>
               </motion.div>
@@ -83,11 +83,11 @@ export default function CompanyInfoSection() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-800">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+              <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
                   Standort & Betreuung
                 </h3>
-                <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                <div className="space-y-3 text-gray-700">
                   <div className="flex items-start">
                     <span className="text-2xl mr-3">📍</span>
                     <div>
@@ -121,24 +121,24 @@ export default function CompanyInfoSection() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-800">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+              <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
                   Unsere Geschichte
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                <p className="text-gray-700 leading-relaxed mb-4">
                   Mit über 10 Jahren Erfahrung im Bauwesen haben wir die Herausforderungen von 
                   Handwerksbetrieben und Bauunternehmen aus erster Hand kennengelernt. Aus dieser 
                   Erfahrung heraus haben wir Muckenfuss & Nagel gegründet – um anderen Unternehmen 
                   in der Branche zu helfen, sich auf ihr Kerngeschäft zu konzentrieren.
                 </p>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                <p className="text-gray-700 leading-relaxed mb-4">
                   Wir verstehen die Besonderheiten von Hoch- und Tiefbau, Straßenbau, Brückenbau, 
                   Sanierung und Renovierung. Diese Branchenkenntnis macht uns zu Ihrem idealen 
                   Partner für alle Bürodienstleistungen.
                 </p>
                 <Link
                   href={getRoute('Unternehmensgeschichte')}
-                  className="inline-flex items-center text-[#cb530a] dark:text-[#182c30] font-semibold hover:underline"
+                  className="inline-flex items-center text-[#cb530a] font-semibold hover:underline"
                 >
                   Mehr erfahren
                   <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,8 +147,8 @@ export default function CompanyInfoSection() {
                 </Link>
               </div>
 
-              <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-800">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">
                   Unsere Werte
                 </h3>
                 <div className="grid grid-cols-1 gap-6">
@@ -158,10 +158,10 @@ export default function CompanyInfoSection() {
                         {value.icon}
                       </span>
                       <div>
-                        <h4 className="font-bold text-gray-800 dark:text-white mb-1">
+                        <h4 className="font-bold text-gray-800 mb-1">
                           {value.title}
                         </h4>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        <p className="text-gray-600 text-sm">
                           {value.description}
                         </p>
                       </div>

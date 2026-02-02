@@ -25,14 +25,14 @@ export default function SocialMediaPage() {
           backgroundImage="/images/herobackgeneral5.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Warum Social Media für Handwerksbetriebe?
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Immer mehr Kunden suchen Handwerker und Bauunternehmen online. Eine professionelle
                 Social Media Präsenz hilft Ihnen, neue Kunden zu gewinnen und Ihr Unternehmen
                 positiv darzustellen. Wir übernehmen die komplette Betreuung Ihrer Social Media
@@ -41,57 +41,57 @@ export default function SocialMediaPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Unsere Leistungen
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">✍️</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">✍️</span>
                     Content-Erstellung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Professionelle Texte, Bilder und Videos für Ihre Social Media Kanäle.
                     Wir zeigen Ihre Projekte, Ihre Expertise und Ihr Team.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📅</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📅</span>
                     Posting & Scheduling
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Regelmäßige Posts zu optimalen Zeiten für maximale Reichweite.
                     Planung und Veröffentlichung Ihrer Inhalte.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">💬</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">💬</span>
                     Community Management
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Professionelle Beantwortung von Kommentaren und Nachrichten.
                     Aufbau und Pflege Ihrer Online-Community.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📊</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📊</span>
                     Analytics & Reporting
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Regelmäßige Auswertungen Ihrer Social Media Performance.
                     Monatliche Reports mit Kennzahlen und Optimierungsvorschlägen.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">🎯</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">🎯</span>
                     Markenaufbau
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Entwicklung einer konsistenten Markenidentität über alle Kanäle.
                     Steigerung Ihrer Bekanntheit und Reputation.
                   </p>
@@ -99,11 +99,11 @@ export default function SocialMediaPage() {
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Steigern Sie Ihre Online-Präsenz
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns gemeinsam Ihre Social Media Strategie entwickeln und umsetzen.
               </p>
               <Link

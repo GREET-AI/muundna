@@ -24,66 +24,66 @@ export default function HandwerksbetriebePage() {
           backgroundImage="/images/herobackgeneral3.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
 
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Die Herausforderungen von Handwerksbetrieben
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Als Handwerksbetrieb haben Sie viele Aufgaben zu bewältigen: Kundenbetreuung,
                 Terminplanung, Angebotserstellung, Materialbestellung und natürlich die
                 handwerkliche Arbeit selbst. Oft bleibt für Büroaufgaben wenig Zeit.
               </p>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 Wir übernehmen die Büroarbeit, damit Sie sich auf Ihr Handwerk konzentrieren können.
               </p>
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Unsere Lösungen für Handwerksbetriebe
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📞</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📞</span>
                     Telefonservice
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Keine verpassten Anrufe mehr, auch wenn Sie auf der Baustelle sind. Professionelle
                     Kundenbetreuung während Ihrer Arbeitszeiten.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📅</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📅</span>
                     Terminorganisation
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Optimale Planung Ihrer Kundentermine. Wir koordinieren Ihren Kalender und sorgen
                     für effiziente Terminverteilung.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📱</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📱</span>
                     Social Media
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Zeigen Sie Ihre Arbeit online. Professionelle Social Media Betreuung für mehr
                     Sichtbarkeit und neue Kunden.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">⭐</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">⭐</span>
                     Google Bewertungen
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Mehr positive Bewertungen und professionelles Bewertungsmanagement für ein
                     besseres Online-Image.
                   </p>
@@ -91,11 +91,11 @@ export default function HandwerksbetriebePage() {
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Mehr Zeit für Ihr Handwerk
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns Ihre Büroaufgaben übernehmen und gewinnen Sie wertvolle Zeit für
                 Ihre Kernkompetenzen.
               </p>

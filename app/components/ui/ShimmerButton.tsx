@@ -25,7 +25,7 @@ export default function ShimmerButton({
       )}
     >
       <span className="absolute inset-[-1000%] animate-[shimmer_3s_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#cb530a_0%,#182c30_50%,#cb530a_100%)]" />
-      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-lg bg-[#cb530a] px-8 py-3 text-sm font-semibold text-white backdrop-blur-xl transition-colors hover:bg-[#a84308] dark:bg-gray-900 dark:hover:bg-gray-800">
+      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-lg bg-[#cb530a] px-8 py-3 text-sm font-semibold text-white backdrop-blur-xl transition-colors hover:bg-[#a84308]">
         {children}
       </span>
       <style jsx>{`

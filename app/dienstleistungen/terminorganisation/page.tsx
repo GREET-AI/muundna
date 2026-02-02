@@ -25,14 +25,14 @@ export default function TerminorganisationPage() {
           backgroundImage="/images/herobackgeneral4.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Optimale Terminplanung für Ihr Unternehmen
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Als Handwerksbetrieb oder Bauunternehmen haben Sie viele Termine zu koordinieren:
                 Kundentermine, Baustellenbesichtigungen, Angebotserstellungen und mehr. Wir übernehmen
                 die komplette Terminorganisation und sorgen dafür, dass Ihr Kalender optimal ausgelastet ist.
@@ -40,73 +40,73 @@ export default function TerminorganisationPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Leistungsumfang
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📅</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📅</span>
                     Kalenderverwaltung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Zentrale Verwaltung aller Termine in einem übersichtlichen System
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">🔄</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">🔄</span>
                     Terminkoordination
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Abstimmung mit Kunden, Kollegen und Partnern für optimale Terminplanung
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">⏰</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">⏰</span>
                     Erinnerungsservice
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Automatische Erinnerungen für Sie und Ihre Kunden vor wichtigen Terminen
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">🚫</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">🚫</span>
                     Konfliktvermeidung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Prüfung auf Terminüberschneidungen und alternative Lösungsvorschläge
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📊</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📊</span>
                     Monatliche Übersichten
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Regelmäßige Reports mit Terminübersicht und Auslastungsanalyse
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📱</span>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📱</span>
                     Mobile Verfügbarkeit
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <p className="text-gray-700 text-sm">
                     Zugriff auf Ihren Kalender von überall - auch auf der Baustelle
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Mehr Zeit für Ihr Handwerk
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns Ihre Termine organisieren und gewinnen Sie wertvolle Zeit für Ihre Kernkompetenzen.
               </p>
               <Link

@@ -16,10 +16,10 @@ interface ProcessSectionProps {
 
 export default function ProcessSection({ steps, title = 'So funktioniert es' }: ProcessSectionProps) {
   return (
-    <section className="py-16 bg-gray-50 dark:bg-black">
+    <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-12 text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-12 text-center">
             {title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -32,20 +32,20 @@ export default function ProcessSection({ steps, title = 'So funktioniert es' }: 
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="relative"
               >
-                <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-800 text-center h-full">
+                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 text-center h-full">
                   <div className="text-5xl mb-4">{step.icon}</div>
-                  <div className="absolute -top-3 -right-3 w-10 h-10 bg-[#cb530a] dark:bg-[#182c30] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                  <div className="absolute -top-3 -right-3 w-10 h-10 bg-[#cb530a] text-white rounded-full flex items-center justify-center font-bold text-lg">
                     {step.number}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                  <h3 className="text-xl font-bold text-gray-800 mb-3">
                     {step.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-[#cb530a] dark:bg-[#182c30] transform -translate-y-1/2" />
+                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-[#cb530a] transform -translate-y-1/2" />
                 )}
               </motion.div>
             ))}

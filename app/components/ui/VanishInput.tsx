@@ -53,8 +53,8 @@ export default function VanishInput({
       <label
         className={`absolute left-4 transition-all duration-300 pointer-events-none font-medium ${
           focused || hasValue
-            ? 'top-2 text-xs text-[#cb530a] dark:text-[#182c30] font-semibold'
-            : 'top-4 text-base text-gray-500 dark:text-gray-400'
+            ? 'top-2 text-xs text-[#cb530a] font-semibold'
+            : 'top-4 text-base text-gray-500'
         }`}
       >
         {label} {required && '*'}
@@ -69,7 +69,7 @@ export default function VanishInput({
         onBlur={handleBlur}
         placeholder={focused ? placeholder : ''}
         required={required}
-        className="w-full px-4 pt-6 pb-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] dark:bg-gray-800 dark:text-white transition-all hover:border-gray-400 dark:hover:border-gray-600"
+        className="w-full px-4 pt-6 pb-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] transition-all hover:border-gray-400"
       />
     </div>
   );

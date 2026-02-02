@@ -49,39 +49,39 @@ export default function ReferenzenPage() {
           backgroundImage="/images/herobackgeneral4.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
                 Unsere Erfolgsgeschichten
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Vertrauen Sie auf unsere Erfahrung und Expertise
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {referenzen.map((ref, index) => (
                 <AnimatedCard3D key={index}>
-                  <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 h-full">
+                  <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200 h-full">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">
                           {ref.title}
                         </h3>
-                        <span className="inline-block bg-[#fef3ed] dark:bg-gray-800 text-[#cb530a] dark:text-[#182c30] px-3 py-1 rounded text-sm font-semibold">
+                        <span className="inline-block bg-[#fef3ed] text-[#cb530a] px-3 py-1 rounded text-sm font-semibold">
                           {ref.branche}
                         </span>
                       </div>
                     </div>
                     <div className="mb-4">
-                      <p className="text-gray-600 dark:text-gray-400 font-medium mb-2">
+                      <p className="text-gray-600 font-medium mb-2">
                         Leistungen:
                       </p>
-                      <p className="text-gray-800 dark:text-white">
+                      <p className="text-gray-800">
                         {ref.leistung}
                       </p>
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <p className="text-gray-700 leading-relaxed">
                       {ref.beschreibung}
                     </p>
                   </div>

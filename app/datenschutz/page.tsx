@@ -12,16 +12,16 @@ export default function DatenschutzPage() {
           subtitle="Rechtliches"
           backgroundImage="/images/herobackgeneral3.png"
         />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">
                   Datenschutzerklärung
                 </h2>
-                <div className="space-y-6 text-gray-700 dark:text-gray-300">
+                <div className="space-y-6 text-gray-700">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">
                       1. Datenschutz auf einen Blick
                     </h3>
                     <p>
@@ -30,7 +30,7 @@ export default function DatenschutzPage() {
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">
                       2. Verantwortliche Stelle
                     </h3>
                     <p>
@@ -43,7 +43,7 @@ export default function DatenschutzPage() {
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">
                       3. Erfassung von Daten auf dieser Website
                     </h3>
                     <p>
@@ -54,7 +54,7 @@ export default function DatenschutzPage() {
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">
                       4. Ihre Rechte
                     </h3>
                     <p>

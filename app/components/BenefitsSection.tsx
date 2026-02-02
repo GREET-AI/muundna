@@ -37,13 +37,13 @@ export default function BenefitsSection() {
   ];
 
   return (
-    <section className="py-20 bg-white dark:bg-black">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">
             Davon profitierst du
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Fülle unser Anfrageformular aus und sichere dir ein kostenfreies Angebot samt Beratungstermin. 
             Entdecke professionelle Bürodienstleistungen, die flexible Optionen, hohen Komfort und eine 
             inspirierende Arbeitsumgebung bieten.
@@ -57,15 +57,15 @@ export default function BenefitsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-xl hover:border-[#cb530a] dark:hover:border-[#182c30] transition-all group"
+              className="bg-white p-8 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:border-[#cb530a] transition-all group"
             >
               <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
                 {benefit.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-[#cb530a] dark:group-hover:text-[#182c30] transition-colors">
+              <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-[#cb530a] transition-colors">
                 {benefit.title}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed">
                 {benefit.description}
               </p>
             </motion.div>

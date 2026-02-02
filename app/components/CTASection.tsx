@@ -23,18 +23,18 @@ export default function CTASection({
   variant = 'default'
 }: CTASectionProps) {
   const variants = {
-    default: 'bg-[#fef3ed] dark:bg-gray-900',
-    gradient: 'bg-gradient-to-br from-[#cb530a] to-[#a84308] dark:from-gray-900 dark:to-black',
-    dark: 'bg-gray-900 dark:bg-black'
+    default: 'bg-[#fef3ed]',
+    gradient: 'bg-gradient-to-br from-[#cb530a] to-[#a84308]',
+    dark: 'bg-gray-900'
   };
 
   const textColor = variant === 'gradient' || variant === 'dark' 
     ? 'text-white' 
-    : 'text-gray-800 dark:text-white';
+    : 'text-gray-800';
 
   const descColor = variant === 'gradient' || variant === 'dark'
     ? 'text-gray-200'
-    : 'text-gray-700 dark:text-gray-300';
+    : 'text-gray-700';
 
   return (
     <section className={`py-20 ${variants[variant]}`}>
@@ -63,7 +63,7 @@ export default function CTASection({
                 className={`inline-flex items-center justify-center px-8 py-4 font-semibold rounded-lg shadow-lg transition-colors text-lg ${
                   variant === 'gradient' || variant === 'dark'
                     ? 'bg-transparent border-2 border-white text-white hover:bg-white/10'
-                    : 'bg-white border-2 border-[#cb530a] text-[#cb530a] hover:bg-[#fef3ed] dark:hover:bg-gray-800'
+                    : 'bg-white border-2 border-[#cb530a] text-[#cb530a] hover:bg-[#fef3ed]'
                 }`}
               >
                 {secondaryButtonText}

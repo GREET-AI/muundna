@@ -25,14 +25,14 @@ export default function GoogleBewertungenPage() {
           backgroundImage="/images/herobackgeneral6.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Warum Google Bewertungen wichtig sind
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Über 80% der Kunden lesen vor der Auftragsvergabe die Google Bewertungen eines
                 Handwerkers oder Bauunternehmens. Positive Bewertungen steigern nicht nur Ihre
                 Sichtbarkeit, sondern auch das Vertrauen potenzieller Kunden. Wir helfen Ihnen,
@@ -42,57 +42,57 @@ export default function GoogleBewertungenPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Unsere Leistungen
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">⭐</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">⭐</span>
                     Bewertungsmanagement
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Professionelle Verwaltung und Überwachung aller Ihrer Google Bewertungen.
                     Regelmäßige Kontrolle und Analyse Ihrer Bewertungsentwicklung.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📧</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📧</span>
                     Kundenanfragen für Bewertungen
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Professionelle Anfragen bei zufriedenen Kunden um positive Bewertungen zu erhalten.
                     Wir kontaktieren Ihre Kunden im richtigen Moment und auf die richtige Art.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">💬</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">💬</span>
                     Reaktionsservice
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Professionelle Antworten auf alle Bewertungen - positiv wie negativ.
                     Zeigen Sie Ihren Kunden, dass Ihnen Feedback wichtig ist.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📊</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📊</span>
                     Monitoring & Analyse
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Kontinuierliche Überwachung Ihrer Bewertungen und Analyse von Trends.
                     Identifikation von Verbesserungspotenzialen.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">🎯</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">🎯</span>
                     Strategische Optimierung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Entwicklung von Strategien zur Steigerung positiver Bewertungen.
                     Langfristige Verbesserung Ihres Online-Images.
                   </p>
@@ -100,11 +100,11 @@ export default function GoogleBewertungenPage() {
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Verbessern Sie Ihr Online-Image
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns gemeinsam Ihre Google Bewertungen optimieren und mehr Vertrauen bei potenziellen Kunden schaffen.
               </p>
               <Link

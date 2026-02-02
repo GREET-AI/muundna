@@ -21,14 +21,14 @@ export default function GeschichtePage() {
           backgroundImage="/images/herobackgeneral4.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
             
             <div className="space-y-8">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Die Anfänge</h2>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Die Anfänge</h2>
+                <p className="text-gray-700 leading-relaxed">
                   Muckenfuss & Nagel wurde von einem erfahrenen Bauprofi gegründet, der über 10 Jahre
                   praktische Erfahrung im Bauwesen gesammelt hat. Während dieser Zeit wurde deutlich,
                   dass viele Handwerksbetriebe und Bauunternehmen Unterstützung bei Büroaufgaben
@@ -36,12 +36,12 @@ export default function GeschichtePage() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Unsere Erfahrung</h2>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Unsere Erfahrung</h2>
+                <p className="text-gray-700 leading-relaxed mb-4">
                   Unser Gründer hat umfassende Erfahrung in verschiedenen Bereichen des Bauwesens:
                 </p>
-                <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+                <ul className="space-y-2 text-gray-700">
                   <li>• Hoch- und Tiefbau</li>
                   <li>• Straßenbau und Brückenbau</li>
                   <li>• Sanierung von Wohnobjekten</li>
@@ -50,18 +50,18 @@ export default function GeschichtePage() {
                 </ul>
               </div>
 
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Die Idee</h2>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Die Idee</h2>
+                <p className="text-gray-700 leading-relaxed">
                   Aus der praktischen Erfahrung entstand die Idee, Bürodienstleistungen speziell
                   für Handwerksbetriebe und Bauunternehmen anzubieten. Wir verstehen die
                   Herausforderungen der Branche und wissen, welche Unterstützung wirklich hilfreich ist.
                 </p>
               </div>
 
-              <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 border border-[#fef3ed] dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Heute</h2>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div className="bg-[#fef3ed] rounded-lg p-8 border border-[#fef3ed]">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Heute</h2>
+                <p className="text-gray-700 leading-relaxed">
                   Heute betreuen wir Handwerksbetriebe und Bauunternehmen in ganz Deutschland,
                   der Schweiz und Österreich. Unser Standort in Oberderdingen ist der Ausgangspunkt
                   für unsere überregionale Betreuung. Wir sind stolz darauf, Unternehmen dabei zu

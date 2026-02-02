@@ -32,7 +32,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+      className="relative w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center transition-all duration-300 hover:scale-110 group"
       aria-label="Theme umschalten"
     >
       <div className="relative w-5 h-5">

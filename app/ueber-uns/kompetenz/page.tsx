@@ -22,90 +22,90 @@ export default function KompetenzPage() {
           backgroundImage="/images/herobackgeneral5.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
             
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
+            <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
               <div className="mb-6">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">10+ Jahre Bau-Erfahrung</h2>
-                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">10+ Jahre Bau-Erfahrung</h2>
+                <p className="text-lg text-gray-700 leading-relaxed mb-6">
                   Unser Gründer bringt über 10 Jahre praktische Erfahrung im Bauwesen mit. Diese
                   Erfahrung umfasst verschiedene Bereiche:
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Hoch- und Tiefbau</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Hoch- und Tiefbau</h3>
+                  <p className="text-gray-700 text-sm">
                     Umfassende Erfahrung in allen Bereichen des Hoch- und Tiefbaus
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Straßenbau</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Straßenbau</h3>
+                  <p className="text-gray-700 text-sm">
                     Planung und Ausführung von Straßenbauprojekten
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Brückenbau</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Brückenbau</h3>
+                  <p className="text-gray-700 text-sm">
                     Expertise im komplexen Bereich des Brückenbaus
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Sanierung</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Sanierung</h3>
+                  <p className="text-gray-700 text-sm">
                     Sanierung und Renovierung von Wohnobjekten
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Dachdecker</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Dachdecker</h3>
+                  <p className="text-gray-700 text-sm">
                     Zusammenarbeit mit Dachdeckern und Expertise in diesem Bereich
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-3">Zimmermänner</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-3">Zimmermänner</h3>
+                  <p className="text-gray-700 text-sm">
                     Koordination und Zusammenarbeit mit Zimmermännern
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Bürodienstleistungen</h2>
-              <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">Bürodienstleistungen</h2>
+              <p className="text-lg text-gray-700 leading-relaxed mb-6">
                 Zusätzlich zur Bau-Erfahrung verfügen wir über umfassende Kompetenz in:
               </p>
-              <ul className="space-y-3 text-gray-700 dark:text-gray-300">
+              <ul className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] mr-3 text-xl">✓</span>
+                  <span className="text-[#cb530a] mr-3 text-xl">✓</span>
                   <span>Professionelle Telefonkommunikation und Kundenbetreuung</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] mr-3 text-xl">✓</span>
+                  <span className="text-[#cb530a] mr-3 text-xl">✓</span>
                   <span>Effiziente Terminorganisation und Kalenderverwaltung</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] mr-3 text-xl">✓</span>
+                  <span className="text-[#cb530a] mr-3 text-xl">✓</span>
                   <span>Social Media Management und Content-Erstellung</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] mr-3 text-xl">✓</span>
+                  <span className="text-[#cb530a] mr-3 text-xl">✓</span>
                   <span>Google Bewertungsmanagement und Online-Reputation</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] mr-3 text-xl">✓</span>
+                  <span className="text-[#cb530a] mr-3 text-xl">✓</span>
                   <span>Professionelle Dokumentation und Reporting</span>
                 </li>
               </ul>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 border border-[#fef3ed] dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Die perfekte Kombination</h2>
-              <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="bg-[#fef3ed] rounded-lg p-8 border border-[#fef3ed]">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Die perfekte Kombination</h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
                 Die Kombination aus praktischer Bau-Erfahrung und Expertise in Bürodienstleistungen
                 macht uns zum idealen Partner für Handwerksbetriebe und Bauunternehmen. Wir verstehen
                 Ihr Geschäft und wissen, welche Unterstützung wirklich hilfreich ist.

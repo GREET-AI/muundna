@@ -25,14 +25,14 @@ export default function DokumentationPage() {
           backgroundImage="/images/herobackgeneral2.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Transparenz und Übersicht
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Sie behalten stets den Überblick über alle durchgeführten Leistungen und Aktivitäten.
                 Unsere monatlichen Reports geben Ihnen eine klare Übersicht über Anrufe, Termine,
                 Social Media Aktivitäten und mehr. So wissen Sie immer, was für Sie getan wurde.
@@ -40,76 +40,76 @@ export default function DokumentationPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Was enthalten unsere Reports?
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📊</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📊</span>
                     Monatliche Übersichten
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Detaillierte Aufstellung aller durchgeführten Aktivitäten im vergangenen Monat.
                     Übersichtlich aufbereitet und leicht verständlich.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📞</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📞</span>
                     Anrufstatistiken
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Anzahl der entgegengenommenen Anrufe, behandelten Anfragen und vereinbarten Termine.
                     Aufschlüsselung nach Kategorien.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📅</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📅</span>
                     Terminübersichten
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Vollständige Liste aller organisierten Termine mit Details zu Kunden und Zweck.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">📱</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">📱</span>
                     Social Media Aktivitäten
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Übersicht über veröffentlichte Posts, erreichte Reichweite und Engagement.
                     Kennzahlen und Entwicklungen.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">⭐</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">⭐</span>
                     Bewertungsentwicklung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Entwicklung Ihrer Google Bewertungen, neue Bewertungen und Reaktionen.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span className="text-[#cb530a] dark:text-[#182c30] mr-2">💰</span>
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <span className="text-[#cb530a] mr-2">💰</span>
                     Transparente Abrechnung
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700">
                     Klare Aufstellung aller Leistungen und Kosten. Keine versteckten Gebühren.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Immer im Bilde
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Mit unseren monatlichen Reports behalten Sie stets den Überblick über alle Aktivitäten.
               </p>
               <Link

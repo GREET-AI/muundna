@@ -38,13 +38,13 @@ export default function TargetGroupsSection() {
   ];
 
   return (
-    <section className="py-20 bg-white dark:bg-black">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
             Das passende Angebot für Sie
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Professionelle Bürodienstleistungen speziell für Ihre Branche – maßgeschneidert und effizient
           </p>
         </div>
@@ -59,9 +59,9 @@ export default function TargetGroupsSection() {
             >
               <AnimatedCard3D>
                 <Link href={group.href} className="block h-full">
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden h-full group hover:shadow-xl transition-all">
+                  <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden h-full group hover:shadow-xl transition-all">
                     <div className="relative h-48 overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a] to-[#a84308] dark:from-gray-800 dark:to-gray-900">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a] to-[#a84308]">
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-7xl opacity-20">{group.icon}</span>
                         </div>
@@ -70,14 +70,14 @@ export default function TargetGroupsSection() {
                     <div className="p-8">
                       <div className="flex items-center mb-4">
                         <span className="text-4xl mr-4">{group.icon}</span>
-                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-[#cb530a] dark:group-hover:text-[#182c30] transition-colors">
+                        <h3 className="text-2xl font-bold text-gray-800 group-hover:text-[#cb530a] transition-colors">
                           {group.title}
                         </h3>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                      <p className="text-gray-600 leading-relaxed mb-4">
                         {group.description}
                       </p>
-                      <span className="inline-flex items-center text-[#cb530a] dark:text-[#182c30] font-semibold group-hover:translate-x-2 transition-transform">
+                      <span className="inline-flex items-center text-[#cb530a] font-semibold group-hover:translate-x-2 transition-transform">
                         Mehr erfahren
                         <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

@@ -15,19 +15,19 @@ interface ComparisonSectionProps {
 
 export default function ComparisonSection({ items, title = 'Mit vs. Ohne Muckenfuss & Nagel' }: ComparisonSectionProps) {
   return (
-    <section className="py-20 bg-gray-50 dark:bg-black">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-8 sm:mb-12 text-center break-words px-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-8 sm:mb-12 text-center break-words px-4">
             {title}
           </h2>
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs sm:text-sm md:text-base">
-              <div className="font-bold text-gray-800 dark:text-white break-words">Feature</div>
-              <div className="font-bold text-gray-800 dark:text-white text-center break-words">Ohne</div>
-              <div className="font-bold text-[#cb530a] dark:text-[#182c30] text-center break-words">Mit uns</div>
+          <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 bg-gray-100 border-b border-gray-200 text-xs sm:text-sm md:text-base">
+              <div className="font-bold text-gray-800 break-words">Feature</div>
+              <div className="font-bold text-gray-800 text-center break-words">Ohne</div>
+              <div className="font-bold text-[#cb530a] text-center break-words">Mit uns</div>
             </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-800">
+            <div className="divide-y divide-gray-200">
               {items.map((item, index) => (
                 <motion.div
                   key={index}
@@ -35,9 +35,9 @@ export default function ComparisonSection({ items, title = 'Mit vs. Ohne Muckenf
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                  className="grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs sm:text-sm md:text-base"
+                  className="grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 hover:bg-gray-50 transition-colors text-xs sm:text-sm md:text-base"
                 >
-                  <div className="font-medium text-gray-800 dark:text-white break-words">
+                  <div className="font-medium text-gray-800 break-words">
                     {item.feature}
                   </div>
                   <div className="text-center">
@@ -48,7 +48,7 @@ export default function ComparisonSection({ items, title = 'Mit vs. Ohne Muckenf
                         <span className="text-gray-400 text-xl">—</span>
                       )
                     ) : (
-                      <span className="text-gray-600 dark:text-gray-400">{item.ohne}</span>
+                      <span className="text-gray-600">{item.ohne}</span>
                     )}
                   </div>
                   <div className="text-center">
@@ -59,7 +59,7 @@ export default function ComparisonSection({ items, title = 'Mit vs. Ohne Muckenf
                         <span className="text-gray-400 text-xl">—</span>
                       )
                     ) : (
-                      <span className="text-[#cb530a] dark:text-[#182c30] font-semibold">{item.mit}</span>
+                      <span className="text-[#cb530a] font-semibold">{item.mit}</span>
                     )}
                   </div>
                 </motion.div>

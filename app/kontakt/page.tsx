@@ -161,14 +161,14 @@ export default function KontaktPage() {
         <ExpertiseCTABanner />
 
         {/* Schnell-Kontakt Sektion */}
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
                   Schnell-Kontakt
                 </h2>
-                <p className="text-xl text-gray-600 dark:text-gray-400">
+                <p className="text-xl text-gray-600">
                   Erreichen Sie uns auf dem Weg, der für Sie am bequemsten ist
                 </p>
               </div>
@@ -184,12 +184,12 @@ export default function KontaktPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
-                      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 text-center border border-gray-200 dark:border-gray-800">
-                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#fef3ed] dark:bg-gray-800 mb-4 ${item.color}`}>
+                      <div className="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#fef3ed] mb-4 ${item.color}`}>
                           <Icon className="w-8 h-8" />
                         </div>
                         <div className="p-6 text-center">
-                          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">
                             {item.title}
                           </h3>
                           <a
@@ -198,7 +198,7 @@ export default function KontaktPage() {
                           >
                             {item.content}
                           </a>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm">
+                          <p className="text-gray-600 text-sm">
                             {item.description}
                           </p>
                         </div>
@@ -212,14 +212,14 @@ export default function KontaktPage() {
         </section>
 
         {/* Warum uns kontaktieren */}
-        <section className="py-20 bg-[#fef3ed] dark:bg-gray-900">
+        <section className="py-20 bg-[#fef3ed]">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
                   Warum uns kontaktieren?
                 </h2>
-                <p className="text-xl text-gray-600 dark:text-gray-400">
+                <p className="text-xl text-gray-600">
                   Vorteile einer Zusammenarbeit mit Muckenfuss & Nagel
                 </p>
               </div>
@@ -235,14 +235,14 @@ export default function KontaktPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
-                      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 text-center border border-gray-200 dark:border-gray-800">
+                      <div className="bg-white rounded-lg shadow-lg p-6 text-center border border-gray-200">
                         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#cb530a] text-white mb-4">
                           <Icon className="w-6 h-6" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">
                           {item.title}
                         </h3>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        <p className="text-gray-600 text-sm">
                           {item.description}
                         </p>
                       </div>
@@ -255,20 +255,20 @@ export default function KontaktPage() {
         </section>
 
         {/* Kontaktformular */}
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
                   Schreiben Sie uns
                 </h2>
-                <p className="text-xl text-gray-600 dark:text-gray-400">
+                <p className="text-xl text-gray-600">
                   Füllen Sie das Formular aus und wir melden uns schnellstmöglich bei Ihnen
                 </p>
               </div>
 
               <GlowingEffect className="mb-8">
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-8 border-2 border-gray-200 dark:border-gray-800 hover:border-[#cb530a]/50 dark:hover:border-[#182c30]/50 transition-all duration-300 hover:shadow-2xl">
+                <div className="bg-white rounded-lg shadow-xl p-8 border-2 border-gray-200 hover:border-[#cb530a]/50 transition-all duration-300 hover:shadow-2xl">
                   <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <VanishInput
@@ -311,14 +311,14 @@ export default function KontaktPage() {
                     />
                     
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         Interessierte Dienstleistung
                       </label>
                       <select
                         name="service"
                         value={formData.service}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] dark:bg-gray-800 dark:text-white transition-all hover:border-gray-400 dark:hover:border-gray-600"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] transition-all hover:border-gray-400"
                       >
                         <option value="">Bitte wählen...</option>
                         <option>Telefonservice & Kommunikation</option>
@@ -331,7 +331,7 @@ export default function KontaktPage() {
                     </div>
                     
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      <label className="block text-gray-700 font-medium mb-2">
                         Nachricht *
                       </label>
                       <textarea
@@ -341,7 +341,7 @@ export default function KontaktPage() {
                         onChange={handleInputChange}
                         placeholder="Ihre Nachricht an uns..."
                         required
-                        className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] dark:bg-gray-800 dark:text-white transition-all hover:border-gray-400 dark:hover:border-gray-600"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#cb530a] focus:border-[#cb530a] transition-all hover:border-gray-400"
                       ></textarea>
                     </div>
                     
@@ -354,9 +354,9 @@ export default function KontaktPage() {
                         className="mt-1 mr-3 w-4 h-4 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a]"
                         required
                       />
-                      <label htmlFor="privacy" className="text-sm text-gray-700 dark:text-gray-300">
+                      <label htmlFor="privacy" className="text-sm text-gray-700">
                         Ich bin mit der Speicherung meiner Daten gemäß{' '}
-                        <a href="/datenschutz" className="text-[#cb530a] dark:text-[#182c30] hover:underline">
+                        <a href="/datenschutz" className="text-[#cb530a] hover:underline">
                           Datenschutzerklärung
                         </a>{' '}
                         einverstanden. *
@@ -364,8 +364,8 @@ export default function KontaktPage() {
                     </div>
                     
                     {submitError && (
-                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                        <p className="text-red-800 dark:text-red-200 text-sm">{submitError}</p>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <p className="text-red-800 text-sm">{submitError}</p>
                       </div>
                     )}
                     <StatefulButton
@@ -384,59 +384,59 @@ export default function KontaktPage() {
         </section>
 
         {/* Öffnungszeiten & Standort */}
-        <section className="py-20 bg-gray-50 dark:bg-gray-900">
+        <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
+                <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
                   <div className="flex items-center mb-6">
                     <Clock className="w-8 h-8 text-[#cb530a] mr-3" />
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
+                    <h3 className="text-2xl font-bold text-gray-800">
                       Öffnungszeiten
                     </h3>
                   </div>
                   <div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="font-semibold text-gray-800 dark:text-white">Montag - Freitag</span>
-                      <span className="text-gray-600 dark:text-gray-400">08:00 – 18:00 Uhr</span>
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                      <span className="font-semibold text-gray-800">Montag - Freitag</span>
+                      <span className="text-gray-600">08:00 – 18:00 Uhr</span>
                     </div>
-                    <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="font-semibold text-gray-800 dark:text-white">Samstag</span>
-                      <span className="text-gray-600 dark:text-gray-400">Nach Vereinbarung</span>
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                      <span className="font-semibold text-gray-800">Samstag</span>
+                      <span className="text-gray-600">Nach Vereinbarung</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-800 dark:text-white">Sonntag</span>
-                      <span className="text-gray-600 dark:text-gray-400">Geschlossen</span>
+                      <span className="font-semibold text-gray-800">Sonntag</span>
+                      <span className="text-gray-600">Geschlossen</span>
                     </div>
                   </div>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
+                <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
                   <div className="flex items-center mb-6">
                     <MapPin className="w-8 h-8 text-[#cb530a] mr-3" />
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
+                    <h3 className="text-2xl font-bold text-gray-800">
                       Standort & Betreuung
                     </h3>
                   </div>
                   <div>
                   <div className="space-y-4">
                     <div>
-                      <p className="font-semibold text-gray-800 dark:text-white mb-2">Büro Oberderdingen</p>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="font-semibold text-gray-800 mb-2">Büro Oberderdingen</p>
+                      <p className="text-gray-600">
                         Deutschland
                       </p>
                     </div>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <p className="font-semibold text-gray-800 dark:text-white mb-2">Betreuungsgebiet</p>
-                      <p className="text-gray-600 dark:text-gray-400">
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="font-semibold text-gray-800 mb-2">Betreuungsgebiet</p>
+                      <p className="text-gray-600">
                         Deutschland, Schweiz, Österreich
                       </p>
                     </div>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <p className="font-semibold text-gray-800 dark:text-white mb-2">Zielgruppe</p>
-                      <p className="text-gray-600 dark:text-gray-400">
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="font-semibold text-gray-800 mb-2">Zielgruppe</p>
+                      <p className="text-gray-600">
                         Handwerksbetriebe & Bauunternehmen
                       </p>
                     </div>
@@ -449,14 +449,14 @@ export default function KontaktPage() {
         </section>
 
         {/* FAQ Sektion */}
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
                   Häufige Fragen zum Kontakt
                 </h2>
-                <p className="text-xl text-gray-600 dark:text-gray-400">
+                <p className="text-xl text-gray-600">
                   Antworten auf die am häufigsten gestellten Fragen
                 </p>
               </div>
@@ -470,11 +470,11 @@ export default function KontaktPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-800">
-                      <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                    <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">
                         {faq.question}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-600">
                         {faq.answer}
                       </p>
                     </div>

@@ -29,13 +29,13 @@ export default function TestimonialsSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50 dark:bg-black">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">
             Das sagen unsere Kunden
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Echte Erfahrungen von Handwerksbetrieben und Bauunternehmen, die mit uns zusammenarbeiten
           </p>
         </div>
@@ -49,25 +49,25 @@ export default function TestimonialsSection() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <AnimatedCard3D>
-                <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 h-full">
+                <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200 h-full">
                   <div className="mb-4">
                     <div className="flex text-yellow-400 mb-2">
                       {[...Array(testimonial.rating)].map((_, i) => (
                         <span key={i}>⭐</span>
                       ))}
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 italic leading-relaxed mb-4">
+                    <p className="text-gray-700 italic leading-relaxed mb-4">
                       "{testimonial.text}"
                     </p>
                   </div>
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-                    <p className="font-bold text-gray-800 dark:text-white">
+                  <div className="border-t border-gray-200 pt-4">
+                    <p className="font-bold text-gray-800">
                       {testimonial.name}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {testimonial.company}
                     </p>
-                    <p className="text-xs text-[#cb530a] dark:text-[#182c30] mt-2">
+                    <p className="text-xs text-[#cb530a] mt-2">
                       {testimonial.service}
                     </p>
                   </div>

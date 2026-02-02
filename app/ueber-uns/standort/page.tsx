@@ -21,35 +21,35 @@ export default function StandortPage() {
           backgroundImage="/images/herobackgeneral6.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
             
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Oberderdingen</h2>
-              <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+            <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">Oberderdingen</h2>
+              <p className="text-lg text-gray-700 leading-relaxed mb-6">
                 Unser Standort befindet sich in Oberderdingen, einer Gemeinde im Landkreis
                 Karlsruhe in Baden-Württemberg. Von hier aus betreuen wir Handwerksbetriebe
                 und Bauunternehmen in ganz Deutschland, der Schweiz und Österreich.
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Überregionale Betreuung</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Überregionale Betreuung</h3>
+              <p className="text-gray-700 leading-relaxed mb-4">
                 Obwohl unser Standort in Oberderdingen ist, arbeiten wir überregional und betreuen
                 Kunden in:
               </p>
-              <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+              <ul className="space-y-2 text-gray-700">
                 <li>• Deutschland (alle Bundesländer)</li>
                 <li>• Schweiz (alle Kantone)</li>
                 <li>• Österreich (alle Bundesländer)</li>
               </ul>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Digitale Zusammenarbeit</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="bg-[#fef3ed] rounded-lg p-8 border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Digitale Zusammenarbeit</h3>
+              <p className="text-gray-700 leading-relaxed">
                 Durch moderne Kommunikationstechnologien können wir Sie unabhängig von Ihrem
                 Standort professionell betreuen. Telefonservice, Terminorganisation, Social Media
                 Betreuung und alle anderen Dienstleistungen funktionieren ortsunabhängig.

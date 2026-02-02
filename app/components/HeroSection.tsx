@@ -30,7 +30,7 @@ export default function HeroSection({
           priority
           unoptimized
         />
-        <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content */}
@@ -39,7 +39,7 @@ export default function HeroSection({
           <div className="max-w-4xl">
             {subtitle && (
               <div className="mb-4">
-                <span className="inline-block bg-gray-800/90 dark:bg-gray-900/90 px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide">
+                <span className="inline-block bg-gray-800/90 px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide">
                   {subtitle}
                 </span>
               </div>
@@ -58,7 +58,7 @@ export default function HeroSection({
       </div>
 
       {/* Bottom Gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-black to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
 }

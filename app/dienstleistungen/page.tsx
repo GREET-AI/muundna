@@ -85,24 +85,24 @@ export default function DienstleistungenPage() {
           backgroundImage="/images/herobackgeneral2.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="space-y-12">
             {services.map((service, index) => (
               <AnimatedCard3D key={index}>
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow border border-gray-200 dark:border-gray-800">
+                <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow border border-gray-200">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-1">
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-4">
                       {service.title}
                     </h2>
-                    <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-6">
+                    <p className="text-gray-700 text-lg leading-relaxed mb-6">
                       {service.description}
                     </p>
                     <ul className="space-y-2 mb-6">
                       {service.features.map((feature, fIndex) => (
-                        <li key={fIndex} className="flex items-start text-gray-700 dark:text-gray-300">
-                          <span className="text-[#cb530a] dark:text-[#182c30] mr-2">✓</span>
+                        <li key={fIndex} className="flex items-start text-gray-700">
+                          <span className="text-[#cb530a] mr-2">✓</span>
                           {feature}
                         </li>
                       ))}
@@ -120,11 +120,11 @@ export default function DienstleistungenPage() {
             ))}
             </div>
 
-            <div className="mt-16 bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="mt-16 bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Individuelle Lösungen für Ihr Unternehmen
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Wir passen unsere Dienstleistungen an Ihre spezifischen Bedürfnisse an.
                 Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch.
               </p>

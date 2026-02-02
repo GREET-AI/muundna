@@ -42,14 +42,14 @@ export default function FAQSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50 dark:bg-black">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-4 break-words">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 break-words">
               Häufige Fragen
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 break-words">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 break-words">
               Sind bei Ihnen noch Fragen offen?
             </p>
           </div>
@@ -62,17 +62,17 @@ export default function FAQSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden"
+                className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden"
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
-                  <span className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white pr-4 break-words">
+                  <span className="font-semibold text-sm sm:text-base text-gray-800 pr-4 break-words">
                     {faq.question}
                   </span>
                   <svg
-                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
+                    className={`w-5 h-5 text-gray-600 flex-shrink-0 transition-transform ${
                       openIndex === index ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -96,7 +96,7 @@ export default function FAQSection() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-6 py-4 text-gray-700 dark:text-gray-300 leading-relaxed border-t border-gray-200 dark:border-gray-800">
+                      <div className="px-6 py-4 text-gray-700 leading-relaxed border-t border-gray-200">
                         {faq.answer}
                       </div>
                     </motion.div>
@@ -107,12 +107,12 @@ export default function FAQSection() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               Weitere Fragen? Wir helfen Ihnen gerne weiter.
             </p>
             <a
               href="mailto:info@muckenfussundnagel.de"
-              className="inline-flex items-center text-[#cb530a] dark:text-[#182c30] font-semibold hover:underline"
+              className="inline-flex items-center text-[#cb530a] font-semibold hover:underline"
             >
               Kontakt aufnehmen
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -53,7 +53,7 @@ export default function CardSpotlight({ children, className }: CardSpotlightProp
     <div
       ref={divRef}
       className={cn(
-        'relative rounded-lg overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300',
+        'relative rounded-lg overflow-hidden bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300',
         className
       )}
     >

@@ -12,14 +12,14 @@ export default function ImpressumPage() {
           subtitle="Rechtliches"
           backgroundImage="/images/herobackgeneral2.png"
         />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">
                   Angaben gemäß § 5 TMG
                 </h2>
-                <div className="space-y-4 text-gray-700 dark:text-gray-300">
+                <div className="space-y-4 text-gray-700">
                   <p>
                     <strong>Muckenfuss & Nagel</strong><br />
                     Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen
@@ -33,11 +33,11 @@ export default function ImpressumPage() {
                     <strong>Kontakt:</strong><br />
                     E-Mail: info@muckenfussundnagel.de
                   </p>
-                  <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">
                       Verantwortlich für den Inhalt
                     </h3>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <p className="text-gray-700">
                       Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV ist der Geschäftsführer
                       von Muckenfuss & Nagel.
                     </p>

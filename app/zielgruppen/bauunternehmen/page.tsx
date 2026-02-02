@@ -24,63 +24,63 @@ export default function BauunternehmenPage() {
           backgroundImage="/images/herobackgeneral4.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
 
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Effizienz für Bauunternehmen
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+              <p className="text-gray-700 leading-relaxed mb-6">
                 Als Bauunternehmen haben Sie viele Projekte gleichzeitig zu koordinieren. Die
                 Verwaltung von Kundenanfragen, Terminen, Angeboten und Kommunikation kann
                 zeitaufwändig sein.
               </p>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 Wir unterstützen Sie bei allen Büroaufgaben, damit Sie sich auf die Planung und
                 Ausführung Ihrer Bauprojekte konzentrieren können.
               </p>
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Unsere Leistungen für Bauunternehmen
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">Telefonservice</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-2">Telefonservice</h3>
+                  <p className="text-gray-700 text-sm">
                     Professionelle Kundenbetreuung und Anfragenbearbeitung
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">Terminorganisation</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-2">Terminorganisation</h3>
+                  <p className="text-gray-700 text-sm">
                     Koordination von Baustellenbesichtigungen und Kundenterminen
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">Social Media</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-2">Social Media</h3>
+                  <p className="text-gray-700 text-sm">
                     Präsentation Ihrer Projekte und Expertise online
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">Google Bewertungen</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-bold text-gray-800 mb-2">Google Bewertungen</h3>
+                  <p className="text-gray-700 text-sm">
                     Aufbau einer starken Online-Reputation
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Optimieren Sie Ihre Effizienz
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns gemeinsam die optimale Lösung für Ihr Bauunternehmen finden.
               </p>
               <Link

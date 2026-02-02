@@ -26,22 +26,22 @@ export default function DachdeckerZimmermännerPage() {
           backgroundImage="/images/herobackgeneral3.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">
                   Für Dachdecker & Zimmermänner
                 </h2>
-                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                <p className="text-lg text-gray-700 leading-relaxed mb-6">
                   Als Dachdecker oder Zimmermann arbeiten Sie oft in großer Höhe und benötigen
                   Unterstützung bei der Büroarbeit. Wir übernehmen die Kommunikation und
                   Terminorganisation, damit Sie sich auf Ihr Handwerk konzentrieren können.
                 </p>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">
                   Unsere Leistungen
                 </h2>
                 <AnimatedList
@@ -56,11 +56,11 @@ export default function DachdeckerZimmermännerPage() {
                 />
               </div>
 
-              <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+              <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
                   Professionelle Unterstützung
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 mb-6">
+                <p className="text-gray-700 mb-6">
                   Lassen Sie uns gemeinsam die optimale Lösung für Ihr Unternehmen finden.
                 </p>
                 <Link

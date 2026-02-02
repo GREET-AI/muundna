@@ -53,13 +53,13 @@ export default function PricingSection() {
   ];
 
   return (
-    <section className="py-20 bg-white dark:bg-black">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
             Unsere Angebote
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Flexible Pakete für jeden Bedarf – monatlich kündbar, keine langfristigen Bindungen
           </p>
         </div>
@@ -75,29 +75,29 @@ export default function PricingSection() {
               className={`relative ${pkg.popular ? 'md:-mt-4 md:mb-4' : ''}`}
             >
               {pkg.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#cb530a] dark:bg-[#182c30] text-white px-4 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#cb530a] text-white px-4 py-1 rounded-full text-sm font-semibold">
                   BELIEBTEST
                 </div>
               )}
               <AnimatedCard3D>
-                <div className={`bg-white dark:bg-gray-900 rounded-lg shadow-xl border-2 h-full flex flex-col ${
+                <div className={`bg-white rounded-lg shadow-xl border-2 h-full flex flex-col ${
                   pkg.popular 
-                    ? 'border-[#cb530a] dark:border-[#182c30]' 
-                    : 'border-gray-200 dark:border-gray-800'
+                    ? 'border-[#cb530a]'
+                    : 'border-gray-200'
                 }`}>
                   <div className="p-8 flex-grow">
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
                       {pkg.name}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    <p className="text-gray-600 mb-6">
                       {pkg.description}
                     </p>
                     <div className="mb-6">
-                      <span className="text-4xl font-bold text-gray-800 dark:text-white">
+                      <span className="text-4xl font-bold text-gray-800">
                         {pkg.price}
                       </span>
                       {pkg.period && (
-                        <span className="text-gray-600 dark:text-gray-400 ml-2">
+                        <span className="text-gray-600 ml-2">
                           {pkg.period}
                         </span>
                       )}
@@ -105,8 +105,8 @@ export default function PricingSection() {
                     <ul className="space-y-3 mb-8">
                       {pkg.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start">
-                          <span className="text-[#cb530a] dark:text-[#182c30] mr-2 mt-1">✓</span>
-                          <span className="text-gray-700 dark:text-gray-300 text-sm">
+                          <span className="text-[#cb530a] mr-2 mt-1">✓</span>
+                          <span className="text-gray-700 text-sm">
                             {feature}
                           </span>
                         </li>
@@ -128,12 +128,12 @@ export default function PricingSection() {
         </div>
 
         <div className="mt-12 text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+          <p className="text-gray-600 text-sm mb-4">
             Alle Preise netto zzgl. Umsatzsteuer
           </p>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <p className="text-gray-600 text-sm">
             Individuelle Anpassungen möglich. 
-            <Link href={getRoute('Kontakt')} className="text-[#cb530a] dark:text-[#182c30] hover:underline ml-1">
+            <Link href={getRoute('Kontakt')} className="text-[#cb530a] hover:underline ml-1">
               Kontaktieren Sie uns
             </Link>
             {' '}für ein maßgeschneidertes Angebot.

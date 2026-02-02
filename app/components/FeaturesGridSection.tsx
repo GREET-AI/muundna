@@ -29,18 +29,18 @@ export default function FeaturesGridSection({
   };
 
   return (
-    <section className="py-20 bg-white dark:bg-black">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {(title || description) && (
             <div className="text-center mb-12">
               {title && (
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                   {description}
                 </p>
               )}
@@ -56,14 +56,14 @@ export default function FeaturesGridSection({
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <AnimatedCard3D>
-                  <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 h-full hover:shadow-xl transition-all group">
+                  <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 h-full hover:shadow-xl transition-all group">
                     <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
                       {feature.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-[#cb530a] dark:group-hover:text-[#182c30] transition-colors">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-[#cb530a] transition-colors">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>

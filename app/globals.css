@@ -12,10 +12,7 @@
   --secondary-light: #e8f0f2;
 }
 
-.dark {
-  --background: #000000;
-  --foreground: #ededed;
-}
+/* Dark mode disabled - removed */
 
 body {
   background: var(--background);

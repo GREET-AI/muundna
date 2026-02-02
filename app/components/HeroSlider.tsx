@@ -104,7 +104,7 @@ export default function HeroSlider() {
               priority={currentSlide === 0}
               unoptimized
             />
-            <div className="absolute inset-0 bg-black/40 dark:bg-black/60" />
+            <div className="absolute inset-0 bg-black/40" />
             <GridBackground />
           </motion.div>
         </AnimatePresence>
@@ -113,9 +113,9 @@ export default function HeroSlider() {
       {/* Content Overlay */}
       <div className="absolute inset-0 flex items-center">
         <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full">
-          <div className="max-w-2xl w-full">
+          <div className="max-w-2xl w-full pb-24 sm:pb-8">
             {/* Title Box */}
-            <div className="mb-4">
+            <div className="mb-4 mt-8 sm:mt-0">
               <div className="inline-block bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3 mb-2 max-w-full">
                 <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-wide break-words">
                   {currentSlideData.title}
@@ -156,67 +156,69 @@ export default function HeroSlider() {
         </div>
       </div>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-3 text-white transition-all backdrop-blur-sm"
-        aria-label="Vorheriges Bild"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Navigation Arrows + Indicators - Bottom (Mobile: ganz unten, Desktop: normal) */}
+      <div className="absolute bottom-2 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 sm:gap-4">
+        <button
+          onClick={prevSlide}
+          className="bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 text-white transition-all backdrop-blur-sm"
+          aria-label="Vorheriges Bild"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-      </button>
+          <svg
+            className="w-4 h-4 sm:w-5 sm:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
 
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-3 text-white transition-all backdrop-blur-sm"
-        aria-label="Nächstes Bild"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        {/* Slide Indicators */}
+        <div className="flex space-x-2">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`h-2 transition-all ${
+                index === currentSlide
+                  ? 'w-8 bg-white'
+                  : 'w-2 bg-gray-600 hover:bg-gray-400'
+              } rounded-full`}
+              aria-label={`Zu Slide ${index + 1}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={nextSlide}
+          className="bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 text-white transition-all backdrop-blur-sm"
+          aria-label="Nächstes Bild"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </button>
-
-      {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`h-2 transition-all ${
-              index === currentSlide
-                ? 'w-8 bg-white'
-                : 'w-2 bg-gray-600 hover:bg-gray-400'
-            } rounded-full`}
-            aria-label={`Zu Slide ${index + 1}`}
-          />
-        ))}
+          <svg
+            className="w-4 h-4 sm:w-5 sm:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Pause Button */}
       <button
         onClick={() => setIsPaused(!isPaused)}
-        className="absolute bottom-8 right-4 z-20 bg-black bg-opacity-50 hover:bg-opacity-70 rounded p-2 text-white transition-all backdrop-blur-sm"
+        className="absolute bottom-2 sm:bottom-8 right-4 z-20 bg-black bg-opacity-50 hover:bg-opacity-70 rounded p-2 text-white transition-all backdrop-blur-sm"
         aria-label={isPaused ? 'Fortsetzen' : 'Pausieren'}
       >
         {isPaused ? (

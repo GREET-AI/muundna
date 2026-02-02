@@ -22,21 +22,21 @@ export default function UeberUnsPage() {
           backgroundImage="/images/herobackgeneral3.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
                     10+ Jahre Erfahrung im Bauwesen
                   </h2>
-                  <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                  <p className="text-lg text-gray-700 leading-relaxed mb-6">
                     Muckenfuss & Nagel wurde von einem erfahrenen Bauprofi gegründet, der über 10 Jahre
                     praktische Erfahrung im Bauwesen gesammelt hat. Wir verstehen die Herausforderungen
                     und Bedürfnisse von Handwerksbetrieben und Bauunternehmen aus erster Hand.
                   </p>
-                  <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-lg text-gray-700 leading-relaxed">
                     Unsere Expertise umfasst Hoch- und Tiefbau, Straßenbau, Brückenbau, Sanierung von
                     Wohnobjekten sowie die Arbeit mit Dachdeckern und Zimmermännern. Diese praktische
                     Erfahrung ermöglicht es uns, Bürodienstleistungen anzubieten, die perfekt auf die

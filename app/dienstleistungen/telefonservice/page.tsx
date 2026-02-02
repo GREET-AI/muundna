@@ -25,46 +25,46 @@ export default function TelefonservicePage() {
           backgroundImage="/images/herobackgeneral3.png"
         />
         <ExpertiseCTABanner />
-        <section className="py-20 bg-white dark:bg-black">
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Ihre Vorteile
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex items-start">
                   <span className="text-[#cb530a] text-2xl mr-3">📞</span>
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-white mb-2">Keine verpassten Anrufe</h3>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <h3 className="font-bold text-gray-800 mb-2">Keine verpassten Anrufe</h3>
+                    <p className="text-gray-700">
                       Jeder Kundenanruf wird professionell entgegengenommen, auch wenn Sie auf der Baustelle sind.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] text-2xl mr-3">💼</span>
+                  <span className="text-[#cb530a] text-2xl mr-3">💼</span>
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-white mb-2">Professionelle Ansprache</h3>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <h3 className="font-bold text-gray-800 mb-2">Professionelle Ansprache</h3>
+                    <p className="text-gray-700">
                       Ihre Kunden werden kompetent beraten und erhalten sofort Auskunft.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] text-2xl mr-3">⚡</span>
+                  <span className="text-[#cb530a] text-2xl mr-3">⚡</span>
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-white mb-2">Zeitersparnis</h3>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <h3 className="font-bold text-gray-800 mb-2">Zeitersparnis</h3>
+                    <p className="text-gray-700">
                       Konzentrieren Sie sich auf Ihr Handwerk, wir übernehmen die Kommunikation.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-[#cb530a] dark:text-[#182c30] text-2xl mr-3">📋</span>
+                  <span className="text-[#cb530a] text-2xl mr-3">📋</span>
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-white mb-2">Dokumentation</h3>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <h3 className="font-bold text-gray-800 mb-2">Dokumentation</h3>
+                    <p className="text-gray-700">
                       Alle Anrufe werden dokumentiert und Ihnen übersichtlich übermittelt.
                     </p>
                   </div>
@@ -72,8 +72,8 @@ export default function TelefonservicePage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 mb-8 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
                 Leistungsumfang
               </h2>
               <AnimatedList
@@ -88,11 +88,11 @@ export default function TelefonservicePage() {
               />
             </div>
 
-            <div className="bg-[#fef3ed] dark:bg-gray-900 rounded-lg p-8 text-center border border-[#fef3ed] dark:border-gray-800">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Bereit für professionellen Telefonservice?
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-gray-700 mb-6">
                 Lassen Sie uns gemeinsam die optimale Lösung für Ihr Unternehmen finden.
               </p>
               <Link

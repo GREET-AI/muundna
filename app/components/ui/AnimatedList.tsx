@@ -30,8 +30,8 @@ export default function AnimatedList({ items, className }: AnimatedListProps) {
           key={index}
           className="flex items-start animate-in fade-in slide-in-from-left-4 duration-500"
         >
-          <span className="text-[#cb530a] dark:text-[#182c30] mr-3 mt-1">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">{item}</span>
+          <span className="text-[#cb530a] mr-3 mt-1">✓</span>
+          <span className="text-gray-700">{item}</span>
         </li>
       ))}
     </ul>
