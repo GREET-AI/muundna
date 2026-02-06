@@ -7,9 +7,9 @@ import {
   Mail, Phone, MapPin, Calendar, FileText, CheckCircle2, Clock, XCircle, 
   Search, Filter, Building2, Wrench, Users, Home, Video, 
   MessageSquare, TrendingUp, BarChart3, User,
-  Contact, DollarSign, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
+  Contact, Euro, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
   Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History,
-  Flame, Magnet
+  Flame, Magnet, AtSign, UserCircle, LogOut
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -95,9 +95,16 @@ export default function AdminPage() {
   const [salesRep, setSalesRep] = useState<'sven' | 'pascal' | null>(null);
   const [loginPendingProfile, setLoginPendingProfile] = useState(false);
   const [contacts, setContacts] = useState<ContactSubmission[]>([]);
+  const [contactsTotal, setContactsTotal] = useState(0);
+  const [contactsPage, setContactsPage] = useState(0);
+  const CONTACTS_PAGE_SIZE = 80;
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('alle');
+  /** Info-Spalte Filter: Mehrfachauswahl – nur Kontakte mit E-Mail / Website / Profil (AND) */
+  const [infoFilter, setInfoFilter] = useState<string[]>([]);
+  const [infoFilterOpen, setInfoFilterOpen] = useState(false);
+  const infoFilterRef = useRef<HTMLDivElement>(null);
   const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null);
   const [notes, setNotes] = useState('');
   const [contactActivity, setContactActivity] = useState<ContactActivityEntry[]>([]);
@@ -133,12 +140,15 @@ export default function AdminPage() {
   /** Tools-Submenü aufgeklappt */
   const [toolsMenuOpen, setToolsMenuOpen] = useState(true);
   /** Canva-Sidebar: welcher Flyout (Unterpunkte) sichtbar ist; null = zu beim Verlassen der Bar */
-  const [sidebarFlyout, setSidebarFlyout] = useState<'quellen' | 'tools' | null>(null);
-  /** Flyout vertikal an den Menüpunkt anpassen (top in px) */
+  const [sidebarFlyout, setSidebarFlyout] = useState<'quellen' | 'tools' | 'kunden' | null>(null);
+  /** Flyout vertikal an den Menüpunkt anpassen (top in px); bei wenig Platz nach unten → nach oben öffnen */
   const [flyoutTop, setFlyoutTop] = useState(0);
+  const [flyoutOpenUp, setFlyoutOpenUp] = useState(false);
   const quellenBtnRef = useRef<HTMLButtonElement>(null);
+  const kundenBtnRef = useRef<HTMLButtonElement>(null);
   const toolsBtnRef = useRef<HTMLButtonElement>(null);
   const flyoutHoveredRef = useRef(false);
+  const FLYOUT_ESTIMATED_HEIGHT = 220;
   /** Pro Quelle: ausgewählt für Import/CSV (Duplikate standardmäßig abgewählt) */
   const [selectedScrapedLeadsGS, setSelectedScrapedLeadsGS] = useState<boolean[]>([]);
   const [selectedScrapedLeads11880, setSelectedScrapedLeads11880] = useState<boolean[]>([]);
@@ -225,11 +235,11 @@ export default function AdminPage() {
   const [upcomingTopbarEvents, setUpcomingTopbarEvents] = useState<CalendarEvent[]>([]);
   const [upcomingTopbarLoading, setUpcomingTopbarLoading] = useState(false);
   const upcomingTopbarRef = useRef<HTMLDivElement>(null);
-  /** Spaltenbreiten für Lead-Tabelle; nur Telefon, Firma/Name, E-Mail resizable – Rest fix auf Minimalbreite */
-  const TABLE_COLUMN_KEYS = ['quelle', 'vertriebler', 'firmaName', 'telefon', 'email', 'website', 'ort', 'sales', 'status'] as const;
-  const RESIZABLE_TABLE_COLUMNS: readonly string[] = ['telefon', 'firmaName', 'email'];
+  /** Spaltenbreiten für Lead-Tabelle; Quelle + E-Mail entfernt, Links → Info (Icons) */
+  const TABLE_COLUMN_KEYS = ['vertriebler', 'firmaName', 'telefon', 'info', 'ort', 'sales', 'status'] as const;
+  const RESIZABLE_TABLE_COLUMNS: readonly string[] = ['telefon', 'firmaName'];
   const FIXED_COLUMN_WIDTHS: Record<string, number> = {
-    quelle: 56, vertriebler: 72, website: 80, ort: 64, sales: 108, status: 88
+    vertriebler: 72, info: 88, ort: 64, sales: 108, status: 88
   };
 
   /** CRM-Lead-Status (Deutsch): für Pipeline, Filter und Auswahl */
@@ -258,7 +268,7 @@ export default function AdminPage() {
 
   const [tableColumnWidths, setTableColumnWidths] = useState<Record<string, number>>({
     ...FIXED_COLUMN_WIDTHS,
-    firmaName: 220, telefon: 130, email: 160
+    firmaName: 220, telefon: 130
   });
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartRef = useRef<{ x: number; w: number } | null>(null);
@@ -305,9 +315,23 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (activeNav === 'leads') loadContacts(true);
-    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung'].includes(activeNav)) loadContacts();
+    setContactsPage(0);
+    if (activeNav === 'leads') loadContacts(true, 0);
+    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung'].includes(activeNav)) loadContacts(undefined, 0);
   }, [activeNav, isAuthenticated]);
+
+  useEffect(() => {
+    setContactsPage(0);
+  }, [searchTerm, statusFilter, infoFilter]);
+
+  useEffect(() => {
+    if (!infoFilterOpen) return;
+    const close = (e: MouseEvent) => {
+      if (infoFilterRef.current && !infoFilterRef.current.contains(e.target as Node)) setInfoFilterOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [infoFilterOpen]);
 
   /** Produkte aus DB laden (für Mögliche Sales & Angebot) */
   useEffect(() => {
@@ -338,7 +362,7 @@ export default function AdminPage() {
       if (activeNav === 'kundenprojekte') return filtered.filter((c) => c.status === 'abgeschlossen' || c.status === 'kunde');
       if (activeNav === 'smart-heute-anrufen' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep && (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch'].includes(c.status));
       if (activeNav === 'smart-leads-anrufen') return filtered.filter((c) => (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
-      if (activeNav === 'smart-kein-kontakt-7') { const d = new Date(); d.setDate(d.getDate() - 7); return filtered.filter((c) => new Date(c.updated_at) < d); }
+      if (activeNav === 'smart-kein-kontakt-3') { const d = new Date(); d.setDate(d.getDate() - 3); return filtered.filter((c) => new Date(c.updated_at) < d); }
       if (activeNav === 'smart-neue-leads') return filtered.filter((c) => c.status === 'neu');
       if (activeNav === 'smart-follow-up') return filtered.filter((c) => c.status === 'wiedervorlage' || c.status === 'qualifiziert');
       return filtered;
@@ -505,14 +529,36 @@ export default function AdminPage() {
     if (stored === 'sven' || stored === 'pascal') setSalesRep(stored);
   }, []);
 
-  const loadContacts = async (leadsOnly?: boolean) => {
+  /** Views mit Server-Pagination (limit/offset), Rest lädt mit Cap und filtert clientseitig */
+  const PAGINATED_VIEWS = ['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'leads'];
+  const isPaginatedView = PAGINATED_VIEWS.includes(activeNav);
+
+  const loadContacts = async (leadsOnly?: boolean, pageOverride?: number) => {
     setLoading(true);
     setLoadError(null);
     try {
       const params = new URLSearchParams();
+      const page = pageOverride ?? contactsPage;
       if (leadsOnly) params.set('leads_only', '1');
-      const qs = params.toString();
-      const url = `/api/admin/contacts${qs ? `?${qs}` : ''}`;
+      if (isPaginatedView || leadsOnly) {
+        params.set('limit', String(CONTACTS_PAGE_SIZE));
+        params.set('offset', String((isPaginatedView ? page : 0) * CONTACTS_PAGE_SIZE));
+      }
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+      if (activeNav === 'meine-kontakte' && salesRep) params.set('assigned_to', salesRep);
+      const statusParam = activeNav === 'deals'
+        ? (statusFilter !== 'alle' ? statusFilter : 'offen,kontaktversuch,verbunden,qualifiziert,kontaktiert,in_bearbeitung')
+        : (activeNav === 'kunden' || activeNav === 'kundenprojekte')
+          ? (statusFilter !== 'alle' ? statusFilter : 'kunde,abgeschlossen')
+          : statusFilter;
+      if (statusParam && statusParam !== 'alle') params.set('status', statusParam);
+      if (infoFilter.includes('email')) params.set('has_email', '1');
+      if (infoFilter.includes('website')) params.set('has_website', '1');
+      if (infoFilter.includes('profile')) params.set('has_profile', '1');
+      if (!isPaginatedView && !leadsOnly && !['kalender', 'produkt-tool', 'bewertungs-funnel', 'angebots-erstellung', 'scraper-gelbeseiten', 'scraper-11880'].includes(activeNav)) {
+        params.set('limit', '3000');
+      }
+      const url = `/api/admin/contacts?${params.toString()}`;
       const response = await fetch(url, { credentials: 'include' });
 
       if (!response.ok) {
@@ -521,16 +567,19 @@ export default function AdminPage() {
           return;
         }
         setContacts([]);
+        setContactsTotal(0);
         setLoadError('Fehler beim Laden der Kontakte.');
         return;
       }
 
       const result = await response.json();
       setContacts(result.data || []);
+      setContactsTotal(result.total ?? result.data?.length ?? 0);
       setMigrationRequired(result.migration_required === true);
     } catch (error) {
       console.error('Fehler:', error);
       setContacts([]);
+      setContactsTotal(0);
       setLoadError('Kontakte konnten nicht geladen werden (z. B. Server nicht erreichbar).');
     } finally {
       setLoading(false);
@@ -767,6 +816,22 @@ export default function AdminPage() {
     if (!notes) return null;
     const m = notes.match(/Website:\s*(https?:\/\/[^\s\n]+)/i);
     return m ? m[1].trim() : null;
+  };
+
+  /** Automatische Potenzial-Erkennung für Vertrieb: Website, Social Media, GmbH */
+  const hasWebsite = (c: ContactSubmission) => !!getWebsiteFromNotes(c.notes);
+  const hasSocialMedia = (c: ContactSubmission) => {
+    const n = (c.notes || '').toLowerCase();
+    return /facebook|instagram|linkedin|x\.com|tiktok|social\s*media|socialmedia|twitter/.test(n);
+  };
+  const isGmbh = (c: ContactSubmission) => /gmbh/i.test(c.company || '');
+  type PotentialBadge = { key: string; label: string; title: string; className: string };
+  const getPotentialBadges = (c: ContactSubmission): PotentialBadge[] => {
+    const badges: PotentialBadge[] = [];
+    if (!hasWebsite(c)) badges.push({ key: 'website', label: 'Website-Potenzial', title: 'Keine Website erfasst – Potenzial für Website-Verkauf', className: 'bg-amber-100 text-amber-800 border border-amber-200' });
+    if (!hasSocialMedia(c)) badges.push({ key: 'social', label: 'Social-Potenzial', title: 'Kein Social Media erfasst – Potenzial für Social-Media-Ausbau', className: 'bg-sky-100 text-sky-800 border border-sky-200' });
+    if (isGmbh(c)) badges.push({ key: 'gmbh', label: 'GmbH', title: 'Firma mit GmbH im Namen – tendenziell höheres Umsatzpotenzial', className: 'bg-emerald-100 text-emerald-800 border border-emerald-200' });
+    return badges;
   };
 
   /** Anzeigename für CRM-Kunden im Bewertungs-Funnel */
@@ -1006,17 +1071,20 @@ export default function AdminPage() {
   const navItems = [
     { id: 'contacts', label: 'Alle Kontakte', icon: Contact },
     { id: 'meine-kontakte', label: 'Meine Kontakte', icon: User },
-    { id: 'deals', label: 'Abschlüsse', icon: DollarSign },
-    { id: 'kunden', label: 'Kunden', icon: Building2 },
-    { id: 'kundenprojekte', label: 'Kundenprojekte', icon: FolderKanban },
+    { id: 'deals', label: 'Abschlüsse', icon: Euro },
   ];
+  const kundenSubItems: { id: string; label: string }[] = [
+    { id: 'kunden', label: 'Kunden' },
+    { id: 'kundenprojekte', label: 'Kundenprojekte' },
+  ];
+  const isKundenActive = activeNav === 'kunden' || activeNav === 'kundenprojekte';
 
   /** Akquise: vordefinierte Listen inkl. Leads-Übersicht */
   const smartViewItems: { id: string; label: string; icon: typeof Phone }[] = [
     { id: 'leads', label: 'Leads', icon: Target },
     { id: 'smart-heute-anrufen', label: 'Heute anrufen', icon: Phone },
     { id: 'smart-leads-anrufen', label: 'Hot Leads', icon: Flame },
-    { id: 'smart-kein-kontakt-7', label: '7 Tage+', icon: Clock },
+    { id: 'smart-kein-kontakt-3', label: '3 Tage+', icon: Clock },
     { id: 'smart-neue-leads', label: 'Neue Leads', icon: Target },
     { id: 'smart-follow-up', label: 'Follow-up nötig', icon: Clock },
   ];
@@ -1029,16 +1097,27 @@ export default function AdminPage() {
   const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
 
   const toolsSubItems: { id: string; label: string }[] = [
-    { id: 'kalender', label: 'Kalender' },
     { id: 'produkt-tool', label: 'Produkt-Tool' },
     { id: 'bewertungs-funnel', label: 'Bewertungs-Funnel' },
     { id: 'angebots-erstellung', label: 'Angebotserstellung' },
   ];
-  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool' || activeNav === 'kalender';
+  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool';
 
-  // Logik für verschiedene Views basierend auf Status (und Vertriebler bei "Meine Kontakte")
+  // Logik für verschiedene Views; bei Pagination liefert die API bereits die gefilterte Seite → contacts direkt nutzen
   const getViewData = () => {
     const myContacts = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : [];
+    if (isPaginatedView) {
+      const titles: Record<string, { title: string; description: string; showStats: boolean }> = {
+        'contacts': { title: 'Alle Kontakte', description: 'Alle Kontakte und Ansprechpartner', showStats: true },
+        'meine-kontakte': { title: 'Meine Kontakte', description: salesRep ? `Nur Ihnen zugewiesene Leads (${salesRep === 'sven' ? 'Sven' : 'Pascal'})` : 'Zugewiesene Kontakte', showStats: true },
+        'deals': { title: 'Abschlüsse', description: 'Aktive Verhandlungen und Angebote', showStats: true },
+        'kunden': { title: 'Kunden', description: 'Bestehende Kunden und Partner', showStats: true },
+        'kundenprojekte': { title: 'Kundenprojekte', description: 'Projekte für bestehende Kunden', showStats: false },
+        'leads': { title: 'Alle Leads', description: '', showStats: false },
+      };
+      const config = titles[activeNav] ?? { title: 'Kontakte', description: 'Alle Kontakte', showStats: true };
+      return { ...config, contacts };
+    }
     switch (activeNav) {
       case 'contacts':
         return {
@@ -1055,7 +1134,6 @@ export default function AdminPage() {
           showStats: true
         };
       case 'deals':
-        // Abschlüsse: Aktive Phasen (Offen, Kontaktversuch, Verbunden, Qualifiziert + Legacy)
         return {
           title: 'Abschlüsse',
           description: 'Aktive Verhandlungen und Angebote',
@@ -1066,7 +1144,6 @@ export default function AdminPage() {
           showStats: true
         };
       case 'kunden':
-        // Kunden: Kunde / Abgeschlossen
         return {
           title: 'Kunden',
           description: 'Bestehende Kunden und Partner',
@@ -1077,7 +1154,6 @@ export default function AdminPage() {
           showStats: true
         };
       case 'kundenprojekte':
-        // Kundenprojekte: Projekte für Kunden
         return {
           title: 'Kundenprojekte',
           description: 'Projekte für bestehende Kunden',
@@ -1097,7 +1173,7 @@ export default function AdminPage() {
         const mine = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : filteredContacts;
         return {
           title: 'Heute anrufen',
-          description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch)',
+          description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch). Die Zuordnung erfolgt automatisch durch das System.',
           contacts: mine.filter(c => withPhone(c) && early(c)),
           showStats: true
         };
@@ -1107,18 +1183,18 @@ export default function AdminPage() {
         const active = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status);
         return {
           title: 'Hot Leads',
-          description: 'Alle mit Telefonnummer in aktiven Phasen',
+          description: 'Alle mit Telefonnummer in aktiven Phasen. Die Zuordnung erfolgt automatisch durch das System.',
           contacts: filteredContacts.filter(c => withPhone(c) && active(c)),
           showStats: true
         };
       }
-      case 'smart-kein-kontakt-7': {
+      case 'smart-kein-kontakt-3': {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const noContact = (c: ContactSubmission) => new Date(c.updated_at) < sevenDaysAgo;
         return {
-          title: '7 Tage+',
-          description: 'Keine Aktivität seit mehr als 7 Tagen',
+          title: '3 Tage+',
+          description: 'Keine Aktivität seit mehr als 3 Tagen – Vertrieb sollte zeitnah nachfassen. Die Zuordnung erfolgt automatisch durch das System.',
           contacts: filteredContacts.filter(noContact),
           showStats: true
         };
@@ -1161,15 +1237,20 @@ export default function AdminPage() {
 
   const viewData = getViewData();
 
+  const APP_PADDING = 8;
+  const SIDEBAR_WIDTH = 97;
+  const HEADER_HEIGHT = 40;
+  const GAP = 12;
+  const contentLeft = APP_PADDING + SIDEBAR_WIDTH + GAP;
+  const headerTop = APP_PADDING + HEADER_HEIGHT + GAP;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top-Bar: fix oben, weiß; links Haus-Icon → Website, rechts Anstehende Termine + History (kein Logout) */}
-      <header className="fixed top-0 left-0 right-0 h-10 z-50 flex items-center justify-between px-3 bg-white border-b border-neutral-300 text-neutral-800">
-        <div className="w-[97px] flex items-center justify-start pl-[24px] shrink-0">
-          <Link href="/" className="flex items-center justify-center rounded p-1.5 hover:bg-neutral-300/80 transition-colors" title="Zur Website">
-            <Home className="w-5 h-5" />
-          </Link>
-        </div>
+    <div className="min-h-screen admin-crm-bg p-2">
+      {/* Top-Bar: nur so breit wie Content, abgerundet, mit Abstand – Haus-Icon ist in der Sidebar */}
+      <header
+        className="fixed z-50 flex items-center justify-between px-4 h-10 bg-white border border-neutral-300 rounded-xl shadow-sm text-neutral-800"
+        style={{ left: contentLeft, right: APP_PADDING, top: APP_PADDING }}
+      >
         <span className="text-xs text-neutral-600">Eingeloggt als <strong className="text-neutral-800">{salesRep === 'sven' ? 'Sven' : salesRep === 'pascal' ? 'Pascal' : '—'}</strong></span>
         <div className="flex items-center gap-1">
           <div className="relative" ref={upcomingTopbarRef}>
@@ -1232,14 +1313,24 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Sidebar – unter der Top-Bar; Canva-Stil; Flyout nur neben dem Menüpunkt, abgerundet */}
+      {/* Sidebar – mit Abstand zu Rändern, abgerundet; Haus-Icon oben */}
       <div
-        className="admin-sidebar-wrap fixed left-0 top-10 bottom-0 z-40 flex"
+        className="admin-sidebar-wrap fixed z-40 flex rounded-2xl overflow-hidden shadow-lg"
+        style={{ left: APP_PADDING, top: APP_PADDING, bottom: APP_PADDING, width: SIDEBAR_WIDTH }}
         onMouseLeave={() => { if (!flyoutHoveredRef.current) setSidebarFlyout(null); }}
       >
-        <aside className="w-[97px] bg-white border-r border-neutral-300 flex flex-col shrink-0 shadow-sm">
-          <nav className="admin-sidebar-nav flex-1 py-2 min-h-0">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">CRM</p>
+        <aside className="w-full h-full bg-white border border-neutral-300 flex flex-col shrink-0 rounded-2xl">
+          <nav className="admin-sidebar-nav flex-1 py-2 min-h-0 overflow-y-auto">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 text-neutral-700 hover:scale-105"
+              title="Abmelden"
+            >
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] leading-tight text-center font-medium">Logout</span>
+            </button>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-1">CRM</p>
             <div className="space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -1249,8 +1340,8 @@ export default function AdminPage() {
                     key={item.id}
                     type="button"
                     onClick={() => setActiveNav(item.id)}
-                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
-                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
                     }`}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
@@ -1259,6 +1350,30 @@ export default function AdminPage() {
                 );
               })}
             </div>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Kunden</p>
+            <button
+              ref={kundenBtnRef}
+              type="button"
+              onClick={() => setActiveNav('kunden')}
+              onMouseEnter={() => {
+                const el = kundenBtnRef.current;
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  setFlyoutTop(rect.top);
+                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
+                }
+                setSidebarFlyout('kunden');
+              }}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                isKundenActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+              }`}
+            >
+              <Building2 className="w-5 h-5 shrink-0" />
+              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
+                Kunden
+                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
+              </span>
+            </button>
             <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Akquise</p>
             <div className="space-y-0.5">
               {smartViewItems.map((item) => {
@@ -1269,8 +1384,8 @@ export default function AdminPage() {
                     key={item.id}
                     type="button"
                     onClick={() => setActiveNav(item.id)}
-                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
-                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
                     }`}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
@@ -1284,26 +1399,59 @@ export default function AdminPage() {
               ref={quellenBtnRef}
               type="button"
               onClick={() => setActiveNav(scraperSubItems[0]?.id ?? 'scraper-gelbeseiten')}
-              onMouseEnter={() => { setSidebarFlyout('quellen'); setFlyoutTop(quellenBtnRef.current ? quellenBtnRef.current.getBoundingClientRect().top : 0); }}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
-                isScraperActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+              onMouseEnter={() => {
+                const el = quellenBtnRef.current;
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  setFlyoutTop(rect.top);
+                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
+                }
+                setSidebarFlyout('quellen');
+              }}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                isScraperActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
               }`}
             >
               <Magnet className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] leading-tight text-center font-medium">Leadmagnet</span>
+              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
+                Leadmagnet
+                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
+              </span>
+            </button>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Termine</p>
+            <button
+              type="button"
+              onClick={() => setActiveNav('kalender')}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                activeNav === 'kalender' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+              }`}
+            >
+              <Calendar className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] leading-tight text-center font-medium">Kalender</span>
             </button>
             <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Tools</p>
             <button
               ref={toolsBtnRef}
               type="button"
-              onClick={() => setActiveNav(toolsSubItems[0]?.id ?? 'kalender')}
-              onMouseEnter={() => { setSidebarFlyout('tools'); setFlyoutTop(toolsBtnRef.current ? toolsBtnRef.current.getBoundingClientRect().top : 0); }}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
-                isToolsActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+              onClick={() => setActiveNav(toolsSubItems[0]?.id ?? 'produkt-tool')}
+              onMouseEnter={() => {
+                const el = toolsBtnRef.current;
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  setFlyoutTop(rect.top);
+                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
+                }
+                setSidebarFlyout('tools');
+              }}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                isToolsActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
               }`}
             >
               <Wrench className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] leading-tight text-center font-medium">Tools</span>
+              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
+                Tools
+                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
+              </span>
             </button>
           </nav>
         </aside>
@@ -1311,13 +1459,13 @@ export default function AdminPage() {
         {/* Flyout nur neben dem Menüpunkt, abgerundet, nicht über volle Höhe */}
         {sidebarFlyout && (
           <div
-            className="fixed w-52 bg-[#f0f0f0] border border-neutral-200 rounded-lg shadow-xl flex flex-col py-2.5 z-50"
-            style={{ left: 97, top: flyoutTop }}
+            className="fixed w-52 bg-white border border-neutral-300 rounded-lg shadow-xl flex flex-col py-2.5 z-50"
+            style={flyoutOpenUp ? { left: APP_PADDING + SIDEBAR_WIDTH + 4, bottom: window.innerHeight - flyoutTop } : { left: APP_PADDING + SIDEBAR_WIDTH + 4, top: flyoutTop }}
             onMouseEnter={() => { flyoutHoveredRef.current = true; }}
             onMouseLeave={() => { flyoutHoveredRef.current = false; setSidebarFlyout(null); }}
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 px-3 pb-1.5">
-              {sidebarFlyout === 'quellen' ? 'Leadmagnet' : 'Tools'}
+              {sidebarFlyout === 'quellen' ? 'Leadmagnet' : sidebarFlyout === 'kunden' ? 'Kunden' : 'Tools'}
             </p>
             <div className="space-y-0.5">
               {sidebarFlyout === 'quellen'
@@ -1340,28 +1488,47 @@ export default function AdminPage() {
                       </button>
                     );
                   })
-                : toolsSubItems.map((sub) => {
-                    const isSubActive = activeNav === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        type="button"
-                        onClick={() => setActiveNav(sub.id)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
-                          isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
-                        }`}
-                      >
-                        {sub.label}
-                      </button>
-                    );
-                  })}
+                : sidebarFlyout === 'kunden'
+                  ? kundenSubItems.map((sub) => {
+                      const isSubActive = activeNav === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setActiveNav(sub.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
+                            isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      );
+                    })
+                  : toolsSubItems.map((sub) => {
+                      const isSubActive = activeNav === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setActiveNav(sub.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
+                            isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      );
+                    })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Main Content – unter der fixen Top-Bar */}
-      <div className="flex-1 ml-[97px] pt-10 min-w-0 overflow-x-hidden flex flex-col">
+      {/* Main Content – gleiche Breite wie Top-Bar, unter der Top-Bar */}
+      <div
+        className="flex-1 min-w-0 overflow-x-hidden flex flex-col pr-2"
+        style={{ marginLeft: contentLeft, paddingTop: headerTop }}
+      >
         {migrationRequired && (
           <div className="bg-[#cb530a] text-white px-6 py-3 flex items-center justify-between gap-4">
             <span className="font-medium">
@@ -2618,17 +2785,62 @@ export default function AdminPage() {
                   ))}
                 </select>
               </div>
+              <div className="relative" ref={infoFilterRef}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-xs justify-start gap-1.5 min-w-[7rem] border border-input bg-background"
+                  onClick={() => setInfoFilterOpen((o) => !o)}
+                >
+                  <span className="truncate">
+                    Info: {infoFilter.length === 0 ? 'alle' : infoFilter.map((k) => k === 'email' ? 'E-Mail' : k === 'website' ? 'Website' : 'Profil').join(', ')}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-60" />
+                </Button>
+                {infoFilterOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-1 w-52 rounded-md border border-border bg-white py-1 shadow-lg">
+                    {[
+                      { key: 'email', label: 'Hat E-Mail' },
+                      { key: 'website', label: 'Hat Website' },
+                      { key: 'profile', label: 'Hat Profil' },
+                    ].map(({ key, label }) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-muted/60"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={infoFilter.includes(key)}
+                          onChange={(e) => {
+                            if (e.target.checked) setInfoFilter((prev) => [...prev, key].sort());
+                            else setInfoFilter((prev) => prev.filter((k) => k !== key));
+                          }}
+                          className="rounded border-input"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                    <p className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border/60 mt-1 pt-1.5">
+                      Mehrfachauswahl = alle gewählten Bedingungen (UND)
+                    </p>
+                  </div>
+                )}
+              </div>
               <div className="flex gap-0 rounded-md border border-input overflow-hidden">
                 <Button variant={viewMode === 'pipeline' ? 'default' : 'ghost'} size="sm" className="rounded-none h-8 px-2.5 text-xs bg-[#cb530a] hover:bg-[#a84308] data-[variant=ghost]:bg-transparent" onClick={() => setViewMode('pipeline')}>Pipeline</Button>
                 <Button variant={viewMode === 'table' ? 'default' : 'ghost'} size="sm" className="rounded-none h-8 px-2.5 text-xs bg-[#cb530a] hover:bg-[#a84308] data-[variant=ghost]:bg-transparent" onClick={() => setViewMode('table')}>Tabelle</Button>
               </div>
-              <Button onClick={() => loadContacts()} disabled={loading} size="sm" className="h-8 px-3 text-xs bg-[#cb530a] hover:bg-[#a84308]">
+              <Button onClick={() => { setContactsPage(0); loadContacts(activeNav === 'leads', 0); }} disabled={loading} size="sm" className="h-8 px-3 text-xs bg-[#cb530a] hover:bg-[#a84308]">
                 {loading ? 'Lädt...' : 'Aktualisieren'}
               </Button>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            {viewData.contacts.length} {viewData.title === 'Kundenprojekte' ? 'Projekt' : 'Kontakt'}{viewData.contacts.length !== 1 ? (viewData.title === 'Kundenprojekte' ? 'e' : 'e') : ''} gefunden
+            {isPaginatedView ? contactsTotal : viewData.contacts.length} {viewData.title === 'Kundenprojekte' ? 'Projekt' : 'Kontakt'}{(isPaginatedView ? contactsTotal : viewData.contacts.length) !== 1 ? (viewData.title === 'Kundenprojekte' ? 'e' : 'e') : ''} gefunden
+            {isPaginatedView && contactsTotal > CONTACTS_PAGE_SIZE && (
+              <span className="ml-2 text-muted-foreground">(Seite {contactsPage + 1} von {Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE)})</span>
+            )}
           </p>
         </Card>
 
@@ -2766,6 +2978,7 @@ export default function AdminPage() {
                           <ContactCard
                             key={contact.id}
                             contact={contact}
+                            potentialBadges={getPotentialBadges(contact)}
                             leadStatuses={LEAD_STATUSES}
                             onStatusChange={(newStatus) => updateStatus(contact.id, newStatus)}
                             onStatusClick={() => setStatusDialogContact(contact)}
@@ -2789,6 +3002,18 @@ export default function AdminPage() {
                 })}
               </div>
             </div>
+            {isPaginatedView && contactsTotal > CONTACTS_PAGE_SIZE && (
+              <div className="flex items-center justify-between gap-4 py-3 px-4 border-t border-border/80 bg-white rounded-b-xl mt-2">
+                <span className="text-sm text-muted-foreground">
+                  Einträge {(contactsPage * CONTACTS_PAGE_SIZE) + 1}–{Math.min((contactsPage + 1) * CONTACTS_PAGE_SIZE, contactsTotal)} von {contactsTotal}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage === 0 || loading} onClick={() => { const prev = contactsPage - 1; setContactsPage(prev); loadContacts(activeNav === 'leads', prev); }}>Zurück</Button>
+                  <span className="text-sm tabular-nums">Seite {contactsPage + 1} von {Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE)}</span>
+                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage >= Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE) - 1 || loading} onClick={() => { const next = contactsPage + 1; setContactsPage(next); loadContacts(activeNav === 'leads', next); }}>Weiter</Button>
+                </div>
+              </div>
+            )}
             </>
           ) : (
             /* Table View */
@@ -2798,8 +3023,8 @@ export default function AdminPage() {
                   <p className="text-muted-foreground">Keine {viewData.title === 'Kundenprojekte' ? 'Projekte' : 'Kontakte'} gefunden.</p>
                 </Card>
               ) : (activeNav === 'leads' || activeNav === 'contacts' || activeNav === 'meine-kontakte' || activeNav === 'kunden' || isSmartView) && viewMode === 'table' ? (
-                /* Tabelle – Zeilen als kleine breite Cards, seitlich geschlossen wie Suchen-Card, weiß */
-                <div className="min-w-0 overflow-x-auto px-4">
+                /* Tabelle – gleiche Breite wie KPI-Cards darüber, keine seitliche Einrückung */
+                <div className="min-w-0 overflow-x-auto">
                   <Card className="overflow-visible border-0 shadow-none rounded-none bg-transparent p-0">
                     <Table className="table-fixed w-max min-w-full border-separate border-spacing-x-0 border-spacing-y-2">
                       <colgroup>
@@ -2816,7 +3041,7 @@ export default function AdminPage() {
                               className={`relative select-none pr-0 overflow-visible ${idx === 0 ? 'rounded-tl-lg' : ''} ${idx === TABLE_COLUMN_KEYS.length - 1 ? 'rounded-tr-lg' : ''}`}
                             >
                               <span className="block truncate pr-2">
-                                {key === 'quelle' ? 'Quelle' : key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'telefon' ? 'Telefon' : key === 'email' ? 'E-Mail' : key === 'website' ? 'Links' : key === 'ort' ? 'Ort' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
+                                {key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'telefon' ? 'Telefon' : key === 'info' ? 'Info' : key === 'ort' ? 'Ort' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
                               </span>
                               {RESIZABLE_TABLE_COLUMNS.includes(key) && (
                                 <div
@@ -2851,8 +3076,7 @@ export default function AdminPage() {
                                 setContextMenu({ x: e.clientX, y: e.clientY, contact });
                               }}
                             >
-                              <TableCell style={{ width: getTableColWidth('quelle'), maxWidth: getTableColWidth('quelle'), minWidth: 0 }} className="overflow-hidden rounded-l-lg"><span className="block truncate text-xs font-medium text-muted-foreground min-w-0">{getSourceLabel(contact.source)}</span></TableCell>
-                              <TableCell style={{ width: getTableColWidth('vertriebler'), maxWidth: getTableColWidth('vertriebler'), minWidth: 0 }} className="overflow-hidden min-w-0">
+                              <TableCell style={{ width: getTableColWidth('vertriebler'), maxWidth: getTableColWidth('vertriebler'), minWidth: 0 }} className="overflow-hidden rounded-l-lg min-w-0">
                                 <Button
                                   type="button"
                                   variant="outline"
@@ -2863,7 +3087,16 @@ export default function AdminPage() {
                                   {contact.assigned_to === 'sven' ? 'Sven' : contact.assigned_to === 'pascal' ? 'Pascal' : '—'}
                                 </Button>
                               </TableCell>
-                              <TableCell style={{ width: getTableColWidth('firmaName'), maxWidth: getTableColWidth('firmaName'), minWidth: 0 }} className="font-medium overflow-hidden min-w-0" title={firmaName}><span className="block truncate min-w-0">{firmaName}</span></TableCell>
+                              <TableCell style={{ width: getTableColWidth('firmaName'), maxWidth: getTableColWidth('firmaName'), minWidth: 0 }} className="font-medium overflow-hidden min-w-0">
+                                <span className="block truncate min-w-0" title={firmaName}>{firmaName}</span>
+                                {getPotentialBadges(contact).length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {getPotentialBadges(contact).map((b) => (
+                                      <span key={b.key} className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${b.className}`} title={b.title}>{b.label}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </TableCell>
                               <TableCell style={{ width: getTableColWidth('telefon'), maxWidth: getTableColWidth('telefon'), minWidth: 0 }} className="overflow-hidden min-w-0">
                                 {contact.phone ? (
                                   <div className="flex items-center gap-1.5">
@@ -2879,14 +3112,33 @@ export default function AdminPage() {
                                   </div>
                                 ) : '—'}
                               </TableCell>
-                              <TableCell style={{ width: getTableColWidth('email'), maxWidth: getTableColWidth('email'), minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.email || '—'}</TableCell>
-                              <TableCell style={{ width: getTableColWidth('website'), maxWidth: getTableColWidth('website'), minWidth: 0 }} className="overflow-hidden min-w-0">
-                                <div className="flex flex-col gap-0.5 text-xs">
-                                  {getWebsiteFromNotes(contact.notes) ? (
-                                    <a href={getWebsiteFromNotes(contact.notes)!} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block truncate min-w-0" title={getWebsiteFromNotes(contact.notes)!}>Website</a>
-                                  ) : <span className="text-muted-foreground">—</span>}
+                              <TableCell style={{ width: getTableColWidth('info'), maxWidth: getTableColWidth('info'), minWidth: 0 }} className="overflow-hidden min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {/* Quelle: Farbpunkt (Gelb = Gelbe Seiten, Grün = 11880) */}
+                                  <span
+                                    className="shrink-0 w-3 h-3 rounded-full border border-neutral-300"
+                                    style={{ backgroundColor: contact.source === 'gelbe_seiten' ? '#F5C400' : contact.source === '11880' ? 'rgb(34 197 94)' : 'var(--muted)' }}
+                                    title={getSourceLabel(contact.source)}
+                                  />
+                                  {contact.email?.trim() ? (
+                                    <button
+                                      type="button"
+                                      className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                                      title={`E-Mail kopieren: ${contact.email}`}
+                                      onClick={() => { navigator.clipboard.writeText(contact.email!); }}
+                                    >
+                                      <AtSign className="w-4 h-4" />
+                                    </button>
+                                  ) : null}
                                   {profileUrl ? (
-                                    <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block truncate min-w-0" title={profileLabel || undefined}>Profil</a>
+                                    <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title={profileLabel || 'Profil'}>
+                                      <UserCircle className="w-4 h-4" />
+                                    </a>
+                                  ) : null}
+                                  {getWebsiteFromNotes(contact.notes) ? (
+                                    <a href={getWebsiteFromNotes(contact.notes)!} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Website">
+                                      <Globe className="w-4 h-4" />
+                                    </a>
                                   ) : null}
                                 </div>
                               </TableCell>
@@ -2922,6 +3174,7 @@ export default function AdminPage() {
                   <ContactCard
                     key={contact.id}
                     contact={contact}
+                    potentialBadges={getPotentialBadges(contact)}
                     leadStatuses={LEAD_STATUSES}
                     onStatusChange={(newStatus) => updateStatus(contact.id, newStatus)}
                     onStatusClick={() => setStatusDialogContact(contact)}
@@ -2942,6 +3195,42 @@ export default function AdminPage() {
                     fullWidth
                   />
                 ))
+              )}
+              {isPaginatedView && contactsTotal > CONTACTS_PAGE_SIZE && (
+                <div className="flex items-center justify-between gap-4 py-3 px-4 border-t border-border/80 bg-white rounded-b-xl">
+                  <span className="text-sm text-muted-foreground">
+                    Einträge {(contactsPage * CONTACTS_PAGE_SIZE) + 1}–{Math.min((contactsPage + 1) * CONTACTS_PAGE_SIZE, contactsTotal)} von {contactsTotal}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={contactsPage === 0 || loading}
+                      onClick={() => {
+                        const prev = contactsPage - 1;
+                        setContactsPage(prev);
+                        loadContacts(activeNav === 'leads', prev);
+                      }}
+                    >
+                      Zurück
+                    </Button>
+                    <span className="text-sm tabular-nums">Seite {contactsPage + 1} von {Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE)}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={contactsPage >= Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE) - 1 || loading}
+                      onClick={() => {
+                        const next = contactsPage + 1;
+                        setContactsPage(next);
+                        loadContacts(activeNav === 'leads', next);
+                      }}
+                    >
+                      Weiter
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           )
@@ -3471,6 +3760,7 @@ function ContactCard({
   onAssignedChange,
   onStatusClick,
   onCalendarClick,
+  potentialBadges = [],
 }: {
   contact: ContactSubmission;
   leadStatuses: readonly { value: string; label: string }[];
@@ -3491,6 +3781,7 @@ function ContactCard({
   onAssignedChange?: (assignedTo: string | null) => void;
   onStatusClick?: () => void;
   onCalendarClick?: () => void;
+  potentialBadges?: { key: string; label: string; title: string; className: string }[];
 }) {
   const profileUrl = getProfileUrl(contact);
   const profileLabel = getProfileLabel(contact);
@@ -3537,6 +3828,13 @@ function ContactCard({
             >
               {getStatusLabel(contact.status)}
             </button>
+            {potentialBadges.length > 0 && (
+              <span className="flex flex-wrap gap-1">
+                {potentialBadges.map((b) => (
+                  <span key={b.key} className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${b.className}`} title={b.title}>{b.label}</span>
+                ))}
+              </span>
+            )}
             {onAssignedChange && (
               <>
                 <Button

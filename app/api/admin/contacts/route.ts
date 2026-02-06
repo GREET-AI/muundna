@@ -23,10 +23,22 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const leadsOnly = url.searchParams.get('leads_only') === '1';
     const scrapeBatchId = url.searchParams.get('scrape_batch_id') || null;
+    const limitParam = url.searchParams.get('limit');
+    const offsetParam = url.searchParams.get('offset');
+    const search = (url.searchParams.get('search') ?? '').trim().slice(0, 200);
+    const statusFilter = url.searchParams.get('status') || null;
+    const assignedTo = url.searchParams.get('assigned_to') || null;
+    const hasEmail = url.searchParams.get('has_email') === '1';
+    const hasWebsite = url.searchParams.get('has_website') === '1';
+    const hasProfile = url.searchParams.get('has_profile') === '1';
+
+    const usePagination = limitParam != null && limitParam !== '';
+    const limit = usePagination ? Math.min(Math.max(1, parseInt(limitParam, 10) || 50), 500) : undefined;
+    const offset = usePagination ? Math.max(0, parseInt(offsetParam ?? '0', 10)) : 0;
 
     let query = supabaseAdmin
       .from('contact_submissions')
-      .select('*')
+      .select('*', usePagination ? { count: 'exact' } : undefined)
       .order('created_at', { ascending: false });
 
     if (leadsOnly) {
@@ -35,15 +47,41 @@ export async function GET(request: NextRequest) {
     if (scrapeBatchId) {
       query = query.eq('scrape_batch_id', scrapeBatchId);
     }
+    if (statusFilter && statusFilter !== 'alle') {
+      const statuses = statusFilter.split(',').map((s) => s.trim()).filter(Boolean);
+      if (statuses.length === 1) query = query.eq('status', statuses[0]);
+      else if (statuses.length > 1) query = query.in('status', statuses);
+    }
+    if (assignedTo) {
+      query = query.eq('assigned_to', assignedTo);
+    }
+    if (search.length >= 2) {
+      const safe = search.replace(/'/g, "''").replace(/\\/g, '\\\\');
+      const term = `%${safe}%`;
+      query = query.or(
+        `first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term},phone.ilike.${term},company.ilike.${term}`
+      );
+    }
+    if (hasEmail) {
+      query = query.not('email', 'is', null).not('email', 'eq', '');
+    }
+    if (hasWebsite) {
+      query = query.ilike('notes', '%Website:%');
+    }
+    if (hasProfile) {
+      query = query.or('notes.ilike.%Profil%,notes.ilike.%profile_url%');
+    }
+    if (limit != null) {
+      query = query.range(offset, offset + limit - 1);
+    }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
-      // Spalte "source" oder "scrape_batch_id" fehlt → Migration nicht ausgeführt
       if (error.code === '42703') {
         console.warn('contact_submissions: Spalte source/scrape_batch_id fehlt. Bitte SUPABASE_SCRAPER_MIGRATION.md ausführen.');
         return NextResponse.json(
-          { data: [], migration_required: true },
+          { data: [], total: 0, migration_required: true },
           { status: 200 }
         );
       }
@@ -54,7 +92,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data: data ?? [], migration_required: false }, { status: 200 });
+    const total = usePagination && typeof count === 'number' ? count : (data ?? []).length;
+    return NextResponse.json({
+      data: data ?? [],
+      total,
+      migration_required: false
+    }, { status: 200 });
   } catch (error) {
     console.error('Fehler:', error);
     return NextResponse.json(
