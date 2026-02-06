@@ -29,6 +29,7 @@ import { scrape11880 } from '@/app/actions/scrape-11880';
 import { buildGelbeSeitenSearchUrl, build11880SearchUrl } from '@/lib/scraper-sources';
 import { normalizeGermanPhone } from '@/lib/normalize-phone';
 import type { ScrapedLeadInsert } from '@/types/scraper-lead';
+import type { Product, ContactProduct } from '@/types/product';
 
 interface ContactSubmission {
   id: number;
@@ -171,8 +172,31 @@ export default function AdminPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   /** API meldet: DB-Migration für Leads/Scraping fehlt */
   const [migrationRequired, setMigrationRequired] = useState(false);
+  /** Produkte (Pakete/Add-ons) aus DB – für Mögliche Sales & Angebot */
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsMigrationRequired, setProductsMigrationRequired] = useState(false);
+  /** Mögliche Sales pro contact_id (Summe zugeordneter Produkte) */
+  const [opportunitySums, setOpportunitySums] = useState<Record<string, number>>({});
+  /** Produkt-Picker geöffnet für diesen Kontakt (Mögliche Sales) */
+  const [productPickerContact, setProductPickerContact] = useState<ContactSubmission | null>(null);
+  const [contactProductsForPicker, setContactProductsForPicker] = useState<ContactProduct[]>([]);
+  const [productPickerLoading, setProductPickerLoading] = useState(false);
+  /** Angebot: Produkt-Auswahl per Popup statt Dropdown */
+  const [angebotProductPickerOpen, setAngebotProductPickerOpen] = useState(false);
+  /** Status-Popup aus Tabelle (einheitlich: Klick → Popup, wie in Cards) */
+  const [statusDialogContact, setStatusDialogContact] = useState<ContactSubmission | null>(null);
+  /** Produkt-Tool: Dialog offen (Add/Edit) */
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  /** Produkt-Tool: Bearbeiten (null = Neu anlegen) */
+  const [productEditProduct, setProductEditProduct] = useState<Product | null>(null);
+  /** Produkt-Tool: Löschen bestätigen (id) */
+  const [productDeleteId, setProductDeleteId] = useState<number | null>(null);
+  /** Produkt-Tool: Formular-Daten (für Add/Edit Dialog) */
+  const [productForm, setProductForm] = useState<{ name: string; description: string; price_display: string; price_period: string; price_min: string; price_once: string; product_type: Product['product_type']; subline: string; features: string[]; sort_order: number; for_package: string }>({
+    name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: 0, for_package: '',
+  });
   /** Spaltenbreiten für Lead-Tabelle (Excel-artig resizable) */
-  const TABLE_COLUMN_KEYS = ['quelle', 'vertriebler', 'firmaName', 'profil', 'telefon', 'email', 'website', 'ort', 'strasse', 'status'] as const;
+  const TABLE_COLUMN_KEYS = ['quelle', 'vertriebler', 'firmaName', 'profil', 'telefon', 'email', 'website', 'ort', 'strasse', 'sales', 'status'] as const;
 
   /** CRM-Lead-Status (Deutsch): für Pipeline, Filter und Auswahl */
   const LEAD_STATUSES = [
@@ -199,7 +223,7 @@ export default function AdminPage() {
   const PIPELINE_COLUMNS = ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'nicht_qualifiziert', 'wiedervorlage', 'kunde'] as const;
 
   const [tableColumnWidths, setTableColumnWidths] = useState<Record<string, number>>({
-    quelle: 100, vertriebler: 90, firmaName: 220, profil: 90, telefon: 130, email: 160, website: 90, ort: 90, strasse: 140, status: 90
+    quelle: 100, vertriebler: 90, firmaName: 220, profil: 90, telefon: 130, email: 160, website: 90, ort: 90, strasse: 140, sales: 110, status: 90
   });
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartRef = useRef<{ x: number; w: number } | null>(null);
@@ -247,6 +271,64 @@ export default function AdminPage() {
     if (activeNav === 'leads') loadContacts(true);
     else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung'].includes(activeNav)) loadContacts();
   }, [activeNav, isAuthenticated]);
+
+  /** Produkte aus DB laden (für Mögliche Sales & Angebot) */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch('/api/admin/products', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.migration_required) setProductsMigrationRequired(true);
+        else setProducts(res.data ?? []);
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
+
+
+  /** Opportunity-Summen für sichtbare Kontakte (muss vor jedem early return stehen, gleiche Hook-Reihenfolge) */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const search = (searchTerm ?? '').toLowerCase().trim();
+    const filtered = contacts.filter((c) => {
+      const matchSearch = !search || [c.first_name, c.last_name, c.email, c.phone, c.company].some((v) => String(v ?? '').toLowerCase().includes(search));
+      const matchStatus = statusFilter === 'alle' || c.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+    const viewContacts = (() => {
+      if (activeNav === 'meine-kontakte' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep);
+      if (activeNav === 'deals') return filtered.filter((c) => ['offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
+      if (activeNav === 'kunden') return filtered.filter((c) => c.status === 'kunde' || c.status === 'abgeschlossen');
+      if (activeNav === 'kundenprojekte') return filtered.filter((c) => c.status === 'abgeschlossen' || c.status === 'kunde');
+      if (activeNav === 'smart-heute-anrufen' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep && (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch'].includes(c.status));
+      if (activeNav === 'smart-leads-anrufen') return filtered.filter((c) => (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
+      if (activeNav === 'smart-kein-kontakt-7') { const d = new Date(); d.setDate(d.getDate() - 7); return filtered.filter((c) => new Date(c.updated_at) < d); }
+      if (activeNav === 'smart-neue-leads') return filtered.filter((c) => c.status === 'neu');
+      if (activeNav === 'smart-follow-up') return filtered.filter((c) => c.status === 'wiedervorlage' || c.status === 'qualifiziert');
+      return filtered;
+    })();
+    if (!viewContacts.length) { setOpportunitySums({}); return; }
+    const ids = viewContacts.map((c) => c.id).join(',');
+    fetch(`/api/admin/contact-products/sums?contact_ids=${ids}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => setOpportunitySums(res.sums ?? {}))
+      .catch(() => setOpportunitySums({}));
+  }, [isAuthenticated, activeNav, statusFilter, searchTerm, contacts.length, salesRep, contacts]);
+
+  /** Bei geöffnetem Produkt-Picker: Zuordnung für Kontakt laden */
+  useEffect(() => {
+    if (!productPickerContact?.id) {
+      setContactProductsForPicker([]);
+      return;
+    }
+    setProductPickerLoading(true);
+    fetch(`/api/admin/contacts/${productPickerContact.id}/products`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => {
+        setContactProductsForPicker(res.data ?? []);
+        if (res.migration_required) setProductsMigrationRequired(true);
+      })
+      .finally(() => setProductPickerLoading(false));
+  }, [productPickerContact?.id]);
 
   /** Popup „Scraper fertig“ nach 6 Sekunden ausblenden */
   useEffect(() => {
@@ -848,6 +930,16 @@ export default function AdminPage() {
     { id: 'kundenprojekte', label: 'Kundenprojekte', icon: FolderKanban },
   ];
 
+  /** Smart Views (Close-Style): vordefinierte Listen für Vertrieb */
+  const smartViewItems: { id: string; label: string; icon: typeof Phone }[] = [
+    { id: 'smart-heute-anrufen', label: 'Heute anrufen', icon: Phone },
+    { id: 'smart-leads-anrufen', label: 'Leads zum Anrufen', icon: Phone },
+    { id: 'smart-kein-kontakt-7', label: 'Kein Kontakt > 7 Tage', icon: Clock },
+    { id: 'smart-neue-leads', label: 'Neue Leads', icon: Target },
+    { id: 'smart-follow-up', label: 'Follow-up nötig', icon: Clock },
+  ];
+  const isSmartView = smartViewItems.some((s) => s.id === activeNav);
+
   const scraperSubItems: { id: string; label: string }[] = [
     { id: 'scraper-gelbeseiten', label: 'Gelbe Seiten' },
     { id: 'scraper-11880', label: '11880.com' },
@@ -855,10 +947,11 @@ export default function AdminPage() {
   const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
 
   const toolsSubItems: { id: string; label: string }[] = [
+    { id: 'produkt-tool', label: 'Produkt-Tool' },
     { id: 'bewertungs-funnel', label: 'Bewertungs-Funnel' },
     { id: 'angebots-erstellung', label: 'Angebotserstellung' },
   ];
-  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung';
+  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool';
 
   // Logik für verschiedene Views basierend auf Status (und Vertriebler bei "Meine Kontakte")
   const getViewData = () => {
@@ -915,6 +1008,54 @@ export default function AdminPage() {
           contacts: filteredContacts,
           showStats: false
         };
+      case 'smart-heute-anrufen': {
+        const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
+        const early = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch'].includes(c.status);
+        const mine = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : filteredContacts;
+        return {
+          title: 'Heute anrufen',
+          description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch)',
+          contacts: mine.filter(c => withPhone(c) && early(c)),
+          showStats: true
+        };
+      }
+      case 'smart-leads-anrufen': {
+        const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
+        const active = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status);
+        return {
+          title: 'Leads zum Anrufen',
+          description: 'Alle mit Telefonnummer in aktiven Phasen',
+          contacts: filteredContacts.filter(c => withPhone(c) && active(c)),
+          showStats: true
+        };
+      }
+      case 'smart-kein-kontakt-7': {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const noContact = (c: ContactSubmission) => new Date(c.updated_at) < sevenDaysAgo;
+        return {
+          title: 'Kein Kontakt > 7 Tage',
+          description: 'Keine Aktivität seit mehr als 7 Tagen',
+          contacts: filteredContacts.filter(noContact),
+          showStats: true
+        };
+      }
+      case 'smart-neue-leads':
+        return {
+          title: 'Neue Leads',
+          description: 'Status „Neu“ – noch nicht bearbeitet',
+          contacts: filteredContacts.filter(c => c.status === 'neu'),
+          showStats: true
+        };
+      case 'smart-follow-up':
+        return {
+          title: 'Follow-up nötig',
+          description: 'Wiedervorlage oder Qualifiziert – nächster Schritt',
+          contacts: filteredContacts.filter(c => c.status === 'wiedervorlage' || c.status === 'qualifiziert'),
+          showStats: true
+        };
+      case 'produkt-tool':
+        return { title: 'Produkt-Tool', description: 'Produkte definieren und kombinierbar machen (Pakete, Add-ons, Module – wie auf der Website)', contacts: [], showStats: false };
       case 'bewertungs-funnel':
         return { title: 'Bewertungs-Funnel', description: 'Google-Bewertungs-Einladungen im Namen von Kunden versenden', contacts: [], showStats: false };
       case 'angebots-erstellung':
@@ -958,6 +1099,30 @@ export default function AdminPage() {
           </p>
           <div className="space-y-0.5">
             {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+                    isActive
+                      ? 'bg-[#cb530a] text-white font-medium shadow-md'
+                      : 'text-neutral-300 hover:bg-neutral-800/70 hover:text-white'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-neutral-400'}`} />
+                  <span className="flex-1 text-left truncate">{item.label}</span>
+                  {isActive && <ChevronRight className="w-4 h-4 shrink-0 opacity-90" />}
+                </button>
+              );
+            })}
+          </div>
+          <p className="px-3 py-2 mt-6 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+            Smart Views
+          </p>
+          <div className="space-y-0.5">
+            {smartViewItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.id;
               return (
@@ -1305,6 +1470,177 @@ export default function AdminPage() {
               </>
             )}
           </div>
+        ) : activeNav === 'produkt-tool' ? (
+          <div className="p-6 min-h-[calc(100vh-4rem)]">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Produkt-Tool</h2>
+            <p className="text-sm text-muted-foreground mb-6">Produkte definieren und kombinierbar machen – abgestimmt mit Main-Page (Pakete, Add-ons, Module wie im Quiz &amp; Konfigurator).</p>
+            {productsMigrationRequired && (
+              <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                <CardContent className="p-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">Produkte-Tabelle fehlt. Bitte <code className="text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">SUPABASE_PRODUCTS_MIGRATION.md</code> in Supabase ausführen.</p>
+                </CardContent>
+              </Card>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <p className="text-sm text-muted-foreground">Pakete (z. B. Basis, Professional, Enterprise), Add-ons (z. B. Google Bewertungen, Social Basic/Growth/Pro), Module (Enterprise-Konfigurator), Einzelprodukte.</p>
+              <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={() => { setProductEditProduct(null); setProductForm({ name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: products.length * 10, for_package: '' }); setProductDialogOpen(true); }}>
+                <Briefcase className="w-4 h-4 mr-2" />
+                Produkt hinzufügen
+              </Button>
+            </div>
+            <Card className="rounded-xl border border-border/80 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[280px]">Name</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead>Preis (Anzeige)</TableHead>
+                    <TableHead>Preis min. (€)</TableHead>
+                    <TableHead>Komb. Paket</TableHead>
+                    <TableHead className="text-right w-[140px]">Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell>
+                        <span className="text-xs px-2 py-0.5 rounded bg-muted">{p.product_type === 'package' ? 'Paket' : p.product_type === 'addon' ? 'Add-on' : p.product_type === 'module' ? 'Modul' : 'Einzel'}</span>
+                      </TableCell>
+                      <TableCell>{p.price_display} {p.price_period || ''}{(p as Product & { price_once?: number })?.price_once != null ? ` · einmalig ${(p as Product & { price_once?: number }).price_once} €` : ''}</TableCell>
+                      <TableCell>{p.price_min != null ? p.price_min : '—'}</TableCell>
+                      <TableCell>{(p as Product & { for_package?: string })?.for_package || '—'}</TableCell>
+                      <TableCell className="text-right">
+                        <Button type="button" variant="outline" size="sm" className="mr-1" onClick={() => { setProductEditProduct(p); setProductForm({ name: p.name, description: p.description || '', price_display: p.price_display, price_period: p.price_period || '€/Monat', price_min: p.price_min != null ? String(p.price_min) : '', price_once: (p as Product & { price_once?: number })?.price_once != null ? String((p as Product & { price_once?: number }).price_once) : '', product_type: p.product_type, subline: p.subline || '', features: Array.isArray(p.features) ? [...p.features] : [], sort_order: p.sort_order, for_package: (p as Product & { for_package?: string })?.for_package || '' }); setProductDialogOpen(true); }}>Bearbeiten</Button>
+                        <Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setProductDeleteId(p.id)}>Löschen</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {products.length === 0 && !productsMigrationRequired && (
+                <div className="p-8 text-center text-muted-foreground text-sm">Noch keine Produkte. Klicken Sie auf &quot;Produkt hinzufügen&quot; oder führen Sie die Migration aus.</div>
+              )}
+            </Card>
+
+            {/* Dialog: Produkt anlegen / bearbeiten */}
+            <Dialog open={productDialogOpen} onOpenChange={(open) => { if (!open) { setProductDialogOpen(false); setProductEditProduct(null); } }}>
+              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{productEditProduct ? 'Produkt bearbeiten' : 'Produkt anlegen'}</DialogTitle>
+                  <DialogDescription>Abgestimmt mit Website: Pakete (Basis/Professional/Enterprise), Add-ons (z. B. Google +99 €, Social Basic/Growth/Pro), Module für den Enterprise-Konfigurator.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3 py-2">
+                  <div>
+                    <Label className="text-xs">Name *</Label>
+                    <Input value={productForm.name} onChange={(e) => setProductForm(f => ({ ...f, name: e.target.value }))} placeholder="z. B. Paket 1: Basis" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Typ</Label>
+                    <select value={productForm.product_type} onChange={(e) => setProductForm(f => ({ ...f, product_type: e.target.value as Product['product_type'] }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="package">Paket</option>
+                      <option value="addon">Add-on</option>
+                      <option value="module">Modul (Enterprise)</option>
+                      <option value="single">Einzelprodukt</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Beschreibung</Label>
+                    <Textarea value={productForm.description} onChange={(e) => setProductForm(f => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 text-sm" placeholder="Kurzbeschreibung" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Preis-Anzeige * (z. B. ab 299, +99, Auf Anfrage)</Label>
+                      <Input value={productForm.price_display} onChange={(e) => setProductForm(f => ({ ...f, price_display: e.target.value }))} placeholder="ab 299" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Preis-Zeitraum</Label>
+                      <Input value={productForm.price_period} onChange={(e) => setProductForm(f => ({ ...f, price_period: e.target.value }))} placeholder="€/Monat" className="mt-1 h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Preis min. (€, für Berechnung)</Label>
+                      <Input type="number" value={productForm.price_min} onChange={(e) => setProductForm(f => ({ ...f, price_min: e.target.value }))} placeholder="299" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Einmalpreis (€, z. B. Website)</Label>
+                      <Input type="number" value={productForm.price_once} onChange={(e) => setProductForm(f => ({ ...f, price_once: e.target.value }))} placeholder="2000" className="mt-1 h-9" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Subline (optional)</Label>
+                    <Input value={productForm.subline} onChange={(e) => setProductForm(f => ({ ...f, subline: e.target.value }))} placeholder="z. B. Optional: Google Bewertungen +99 €/Monat" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Kombinierbar mit Paket (Add-ons: 1, 2 oder 1,2)</Label>
+                    <Input value={productForm.for_package} onChange={(e) => setProductForm(f => ({ ...f, for_package: e.target.value }))} placeholder="1 oder 2 oder 1,2" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Features (eine pro Zeile, optional)</Label>
+                    <Textarea value={productForm.features.join('\n')} onChange={(e) => setProductForm(f => ({ ...f, features: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) }))} rows={3} className="mt-1 text-sm" placeholder="Feature 1&#10;Feature 2" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Sortierung (Zahl)</Label>
+                    <Input type="number" value={productForm.sort_order} onChange={(e) => setProductForm(f => ({ ...f, sort_order: Number(e.target.value) || 0 }))} className="mt-1 h-9" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setProductDialogOpen(false); setProductEditProduct(null); }}>Abbrechen</Button>
+                  <Button
+                    className="bg-[#cb530a] hover:bg-[#a84308]"
+                    onClick={async () => {
+                      if (!productForm.name.trim() || !productForm.price_display.trim()) return;
+                      try {
+                        if (productEditProduct) {
+                          const res = await fetch('/api/admin/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ id: productEditProduct.id, ...productForm, price_min: productForm.price_min === '' ? null : Number(productForm.price_min), price_once: productForm.price_once === '' ? null : Number(productForm.price_once), for_package: productForm.for_package || null }) });
+                          if (!res.ok) { const d = await res.json(); alert(d.error || 'Fehler'); return; }
+                          const { data } = await res.json();
+                          setProducts(prev => prev.map(p => p.id === data.id ? { ...p, ...data, features: data.features ?? p.features } : p));
+                        } else {
+                          const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ ...productForm, price_min: productForm.price_min === '' ? null : Number(productForm.price_min), price_once: productForm.price_once === '' ? null : Number(productForm.price_once), for_package: productForm.for_package || null }) });
+                          if (!res.ok) { const d = await res.json(); alert(d.error || 'Fehler'); return; }
+                          const { data } = await res.json();
+                          setProducts(prev => [...prev, data].sort((a, b) => a.sort_order - b.sort_order));
+                        }
+                        setProductDialogOpen(false);
+                        setProductEditProduct(null);
+                      } catch (e) { console.error(e); alert('Fehler beim Speichern'); }
+                    }}
+                  >
+                    {productEditProduct ? 'Speichern' : 'Anlegen'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Dialog: Produkt löschen bestätigen */}
+            <Dialog open={productDeleteId != null} onOpenChange={(open) => { if (!open) setProductDeleteId(null); }}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Produkt löschen?</DialogTitle>
+                  <DialogDescription>Diese Aktion entfernt das Produkt. Zugeordnungen zu Kontakten (Mögliche Sales) werden ebenfalls gelöscht.</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setProductDeleteId(null)}>Abbrechen</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (productDeleteId == null) return;
+                      try {
+                        const res = await fetch(`/api/admin/products?id=${productDeleteId}`, { method: 'DELETE', credentials: 'include' });
+                        if (!res.ok) { const d = await res.json(); alert(d.error || 'Fehler'); return; }
+                        setProducts(prev => prev.filter(p => p.id !== productDeleteId));
+                        setProductDeleteId(null);
+                      } catch (e) { console.error(e); alert('Fehler'); }
+                    }}
+                  >
+                    Löschen
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         ) : activeNav === 'angebots-erstellung' ? (
           <div className="p-6 min-h-[calc(100vh-4rem)]">
             <h2 className="text-xl font-semibold text-foreground mb-1">Angebotserstellung</h2>
@@ -1347,13 +1683,12 @@ export default function AdminPage() {
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs">Produkt / Leistung</Label>
-                    <select
-                      value={angebot.produkt} onChange={(e) => setAngebot(a => ({ ...a, produkt: e.target.value }))}
-                      className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                    >
-                      <option value="">— Bitte wählen —</option>
-                      {ANGEBOT_PRODUKTE.map(p => (<option key={p} value={p}>{p}</option>))}
-                    </select>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setAngebotProductPickerOpen(true)}>
+                        Produkt wählen
+                      </Button>
+                      {angebot.produkt && <span className="text-sm text-muted-foreground">{angebot.produkt} {angebot.preis ? `(${angebot.preis} €)` : ''}</span>}
+                    </div>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div>
@@ -1376,6 +1711,37 @@ export default function AdminPage() {
                 </div>
               </Card>
             </div>
+
+            {/* Popup: Produkt für Angebot wählen (klickbasiert statt Dropdown) */}
+            <Dialog open={angebotProductPickerOpen} onOpenChange={setAngebotProductPickerOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Produkt für Angebot wählen</DialogTitle>
+                  <DialogDescription>Ein Klick übernimmt Name und Preis in das Angebot.</DialogDescription>
+                </DialogHeader>
+                {productsMigrationRequired && (
+                  <p className="text-sm text-amber-600">Produkte-Tabelle fehlt. Bitte SUPABASE_PRODUCTS_MIGRATION.md ausführen.</p>
+                )}
+                <div className="grid gap-1.5 max-h-64 overflow-y-auto">
+                  {products.map((p) => (
+                    <Button
+                      key={p.id}
+                      type="button"
+                      variant="outline"
+                      className="justify-start h-auto py-2 text-left"
+                      onClick={() => {
+                        const priceStr = p.price_display?.replace(/\D/g, '') || (p.price_min != null ? String(p.price_min) : '');
+                        setAngebot((a) => ({ ...a, produkt: p.name, preis: priceStr || a.preis }));
+                        setAngebotProductPickerOpen(false);
+                      }}
+                    >
+                      <span className="font-medium">{p.name}</span>
+                      <span className="ml-2 text-muted-foreground">({p.price_display} {p.price_period || ''})</span>
+                    </Button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
@@ -2148,18 +2514,19 @@ export default function AdminPage() {
                             key={contact.id}
                             contact={contact}
                             leadStatuses={LEAD_STATUSES}
-                    onStatusChange={(newStatus) => updateStatus(contact.id, newStatus)}
-                    onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, contact })}
-                    onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
-                    onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
-                    getProfileUrl={getProfileUrl}
-                    getProfileLabel={getProfileLabel}
-                    getWebsiteFromNotes={getWebsiteFromNotes}
-                    renderQuizData={renderQuizData}
-                    getStatusColor={getStatusColor}
-                    getStatusLabel={getStatusLabel}
-                    getSourceLabel={getSourceLabel}
-                    getSourceBorderClass={getSourceBorderClass}
+                            onStatusChange={(newStatus) => updateStatus(contact.id, newStatus)}
+                            onStatusClick={() => setStatusDialogContact(contact)}
+                            onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, contact })}
+                            onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
+                            onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
+                            getProfileUrl={getProfileUrl}
+                            getProfileLabel={getProfileLabel}
+                            getWebsiteFromNotes={getWebsiteFromNotes}
+                            renderQuizData={renderQuizData}
+                            getStatusColor={getStatusColor}
+                            getStatusLabel={getStatusLabel}
+                            getSourceLabel={getSourceLabel}
+                            getSourceBorderClass={getSourceBorderClass}
                         />
                         ))}
                       </div>
@@ -2176,7 +2543,7 @@ export default function AdminPage() {
                 <Card className="rounded-2xl border border-border/80 bg-card shadow-sm p-12 text-center">
                   <p className="text-muted-foreground">Keine {viewData.title === 'Kundenprojekte' ? 'Projekte' : 'Kontakte'} gefunden.</p>
                 </Card>
-              ) : (activeNav === 'leads' || activeNav === 'contacts' || activeNav === 'meine-kontakte' || activeNav === 'kunden') && viewMode === 'table' ? (
+              ) : (activeNav === 'leads' || activeNav === 'contacts' || activeNav === 'meine-kontakte' || activeNav === 'kunden' || isSmartView) && viewMode === 'table' ? (
                 /* Tabelle – neues Design: abgerundet, Schatten, klare Zeilen */
                 <div className="min-w-0 overflow-x-auto rounded-2xl border border-border/80 bg-card shadow-sm overflow-hidden">
                   <Card className="overflow-visible border-0 shadow-none rounded-none bg-transparent">
@@ -2195,7 +2562,7 @@ export default function AdminPage() {
                               className="relative select-none pr-0 overflow-visible"
                             >
                               <span className="block truncate pr-2">
-                                {key === 'quelle' ? 'Quelle' : key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'profil' ? '11880 Profil' : key === 'telefon' ? 'Telefon' : key === 'email' ? 'E-Mail' : key === 'website' ? 'Website' : key === 'ort' ? 'Ort' : key === 'strasse' ? 'Straße' : 'Status'}
+                                {key === 'quelle' ? 'Quelle' : key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'profil' ? '11880 Profil' : key === 'telefon' ? 'Telefon' : key === 'email' ? 'E-Mail' : key === 'website' ? 'Website' : key === 'ort' ? 'Ort' : key === 'strasse' ? 'Straße' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
                               </span>
                               {/* Sichtbarer Spaltentrenner – immer sichtbar, zum Ziehen */}
                               <div
@@ -2270,8 +2637,20 @@ export default function AdminPage() {
                               </TableCell>
                               <TableCell style={{ width: tableColumnWidths.ort, maxWidth: tableColumnWidths.ort, minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.city || '—'}</TableCell>
                               <TableCell style={{ width: tableColumnWidths.strasse, maxWidth: tableColumnWidths.strasse, minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate" title={contact.street || ''}>{contact.street || '—'}</TableCell>
+                              <TableCell style={{ width: tableColumnWidths.sales, maxWidth: tableColumnWidths.sales, minWidth: 0 }} className="overflow-hidden min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {opportunitySums[contact.id] != null && opportunitySums[contact.id] > 0 && (
+                                    <span className="text-xs font-medium text-emerald-700 tabular-nums">{opportunitySums[contact.id].toLocaleString('de-DE')} €</span>
+                                  )}
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => setProductPickerContact(contact)} title="Produkte / Mögliche Sales">
+                                    Produkte
+                                  </Button>
+                                </div>
+                              </TableCell>
                               <TableCell style={{ width: tableColumnWidths.status, maxWidth: tableColumnWidths.status, minWidth: 0 }} className="overflow-hidden min-w-0">
-                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold truncate max-w-full min-w-0 align-middle ${getStatusColor(contact.status)}`} title={getStatusLabel(contact.status)}>{getStatusLabel(contact.status)}</span>
+                                <Button type="button" variant="outline" size="sm" className={`h-7 w-full min-w-0 text-xs justify-start font-semibold ${getStatusColor(contact.status)} border-current/30`} title="Klicken zum Ändern" onClick={() => setStatusDialogContact(contact)}>
+                                  <span className="truncate block">{getStatusLabel(contact.status)}</span>
+                                </Button>
                               </TableCell>
                             </TableRow>
                           );
@@ -2287,9 +2666,12 @@ export default function AdminPage() {
                     contact={contact}
                     leadStatuses={LEAD_STATUSES}
                     onStatusChange={(newStatus) => updateStatus(contact.id, newStatus)}
+                    onStatusClick={() => setStatusDialogContact(contact)}
                     onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, contact })}
                     onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
                     onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
+                    onProductsClick={() => setProductPickerContact(contact)}
+                    opportunitySum={opportunitySums[contact.id]}
                     getProfileUrl={getProfileUrl}
                     getProfileLabel={getProfileLabel}
                     getWebsiteFromNotes={getWebsiteFromNotes}
@@ -2308,6 +2690,99 @@ export default function AdminPage() {
         </div>
         )}
       </div>
+
+      {/* Produkt-Picker: Mögliche Sales – Produkte einem Kontakt zuordnen */}
+      <Dialog open={!!productPickerContact} onOpenChange={(open) => { if (!open) { setProductPickerContact(null); if (viewData.contacts?.length) { const ids = viewData.contacts.map((c) => c.id).join(','); fetch(`/api/admin/contact-products/sums?contact_ids=${ids}`, { credentials: 'include' }).then((r) => r.json()).then((res) => setOpportunitySums(res.sums ?? {})).catch(() => {}); } } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Produkte / Mögliche Sales</DialogTitle>
+            <DialogDescription>
+              {productPickerContact ? (productPickerContact.company || `${productPickerContact.first_name || ''} ${productPickerContact.last_name || ''}`.trim() || 'Kontakt') : ''} – zugeordnete Produkte bestimmen den möglichen Umsatz.
+            </DialogDescription>
+          </DialogHeader>
+          {productsMigrationRequired && (
+            <p className="text-sm text-amber-600">Produkte-Tabelle fehlt. Bitte SUPABASE_PRODUCTS_MIGRATION.md ausführen.</p>
+          )}
+          {productPickerLoading ? (
+            <p className="text-sm text-muted-foreground">Lade…</p>
+          ) : (
+            <div className="space-y-3">
+              <ul className="space-y-2 max-h-48 overflow-y-auto">
+                {contactProductsForPicker.map((cp) => {
+                  const p = cp.products ?? (typeof cp.product_id === 'object' ? cp.product_id : null);
+                  const name = p && typeof p === 'object' && 'name' in p ? String(p.name) : `Produkt #${cp.product_id}`;
+                  const price = p && typeof p === 'object' && 'price_display' in p ? String(p.price_display) : '';
+                  return (
+                    <li key={cp.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 p-2 text-sm">
+                      <span className="font-medium truncate">{name}</span>
+                      <span className="text-muted-foreground shrink-0">{price}</span>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-destructive hover:text-destructive" onClick={async () => {
+                        if (!productPickerContact) return;
+                        await fetch(`/api/admin/contacts/${productPickerContact.id}/products?product_id=${cp.product_id}`, { method: 'DELETE', credentials: 'include' });
+                        setContactProductsForPicker((prev) => prev.filter((x) => x.id !== cp.id));
+                      }}>×</Button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {contactProductsForPicker.length === 0 && !productPickerLoading && (
+                <p className="text-sm text-muted-foreground">Noch keine Produkte zugeordnet.</p>
+              )}
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Produkt hinzufügen</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {products.filter((p) => !contactProductsForPicker.some((cp) => cp.product_id === p.id)).map((p) => (
+                    <Button key={p.id} type="button" variant="outline" size="sm" className="text-xs h-8" onClick={async () => {
+                      if (!productPickerContact) return;
+                      const res = await fetch(`/api/admin/contacts/${productPickerContact.id}/products`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ product_id: p.id, quantity: 1 }),
+                      });
+                      const data = await res.json();
+                      if (data.data) setContactProductsForPicker((prev) => [...prev, data.data]);
+                    }}>
+                      {p.name} ({p.price_display})
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Status-Popup (aus Tabelle geöffnet – einheitlich wie in Cards: Klick → Popup) */}
+      <Dialog open={!!statusDialogContact} onOpenChange={(open) => { if (!open) setStatusDialogContact(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Lead-Status ändern</DialogTitle>
+            <DialogDescription>
+              {statusDialogContact ? (statusDialogContact.company || `${statusDialogContact.first_name || ''} ${statusDialogContact.last_name || ''}`.trim() || 'Kontakt') : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1.5 py-2">
+            {LEAD_STATUSES.map((s) => (
+              <Button
+                key={s.value}
+                variant={statusDialogContact?.status === s.value ? 'default' : 'ghost'}
+                size="sm"
+                className={`justify-start ${statusDialogContact?.status === s.value ? getStatusColor(s.value) : ''}`}
+                onClick={() => {
+                  if (statusDialogContact) {
+                    updateStatus(statusDialogContact.id, s.value);
+                    setContacts((prev) => prev.map((c) => c.id === statusDialogContact.id ? { ...c, status: s.value } : c));
+                    setStatusDialogContact(null);
+                  }
+                }}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Popup: Scraper fertig (Hintergrund-Lauf) – shadcn Dialog */}
       <Dialog open={!!scraperDoneNotification} onOpenChange={(open) => { if (!open) setScraperDoneNotification(null); }}>
@@ -2565,6 +3040,8 @@ function ContactCard({
   onStatusChange,
   onContextMenu,
   onNotesClick,
+  onProductsClick,
+  opportunitySum,
   getProfileUrl,
   getProfileLabel,
   getWebsiteFromNotes,
@@ -2574,13 +3051,16 @@ function ContactCard({
   getSourceLabel,
   getSourceBorderClass,
   fullWidth = false,
-  onAssignedChange
+  onAssignedChange,
+  onStatusClick,
 }: {
   contact: ContactSubmission;
   leadStatuses: readonly { value: string; label: string }[];
   onStatusChange: (status: string) => void;
   onContextMenu: (e: React.MouseEvent) => void;
   onNotesClick: () => void;
+  onProductsClick?: () => void;
+  opportunitySum?: number;
   getProfileUrl: (c: ContactSubmission) => string | null;
   getProfileLabel: (c: ContactSubmission) => string | null;
   getWebsiteFromNotes: (notes: string | null | undefined) => string | null;
@@ -2591,6 +3071,8 @@ function ContactCard({
   getSourceBorderClass: (source: string | null | undefined) => string;
   fullWidth?: boolean;
   onAssignedChange?: (assignedTo: string | null) => void;
+  /** Wenn gesetzt: Klick auf Status-Badge/Button öffnet diesen Callback (z. B. zentrales Status-Popup) statt eigenem Dialog */
+  onStatusClick?: () => void;
 }) {
   const profileUrl = getProfileUrl(contact);
   const profileLabel = getProfileLabel(contact);
@@ -2629,9 +3111,14 @@ function ContactCard({
             <span className="shrink-0 px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground">
               {getSourceLabel(contact.source)}
             </span>
-            <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(contact.status)}`}>
+            <button
+              type="button"
+              title="Klicken zum Ändern"
+              className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(contact.status)} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/50`}
+              onClick={() => (onStatusClick ? onStatusClick() : setStatusDialogOpen(true))}
+            >
               {getStatusLabel(contact.status)}
-            </span>
+            </button>
             {onAssignedChange && (
               <>
                 <Button
@@ -2696,6 +3183,16 @@ function ContactCard({
                 </a>
               </div>
             )}
+            {onProductsClick && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {opportunitySum != null && opportunitySum > 0 && (
+                  <span className="text-xs font-semibold text-emerald-700 tabular-nums">{opportunitySum.toLocaleString('de-DE')} € mögliche Sales</span>
+                )}
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={onProductsClick}>
+                  Produkte / Mögliche Sales
+                </Button>
+              </div>
+            )}
             {getWebsiteFromNotes(contact.notes) && (
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-[#cb530a] shrink-0" />
@@ -2755,7 +3252,8 @@ function ContactCard({
           variant="outline"
           size="sm"
           className="h-9 rounded-md border-input"
-          onClick={() => setStatusDialogOpen(true)}
+          onClick={() => (onStatusClick ? onStatusClick() : setStatusDialogOpen(true))}
+          title="Klicken zum Ändern"
         >
           Lead-Status: {getStatusLabel(contact.status)}
         </Button>
@@ -2768,30 +3266,32 @@ function ContactCard({
         >
           Notizen {contact.notes ? 'bearbeiten' : 'hinzufügen'}
         </Button>
-        <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Lead-Status wählen</DialogTitle>
-              <DialogDescription>Status für diesen Kontakt setzen.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-1.5 py-2">
-              {leadStatuses.map((s) => (
-                <Button
-                  key={s.value}
-                  variant={contact.status === s.value ? 'default' : 'ghost'}
-                  size="sm"
-                  className={`justify-start ${contact.status === s.value ? getStatusColor(s.value) : ''}`}
-                  onClick={() => {
-                    onStatusChange(s.value);
-                    setStatusDialogOpen(false);
-                  }}
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {!onStatusClick && (
+          <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Lead-Status wählen</DialogTitle>
+                <DialogDescription>Status für diesen Kontakt setzen.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-1.5 py-2">
+                {leadStatuses.map((s) => (
+                  <Button
+                    key={s.value}
+                    variant={contact.status === s.value ? 'default' : 'ghost'}
+                    size="sm"
+                    className={`justify-start ${contact.status === s.value ? getStatusColor(s.value) : ''}`}
+                    onClick={() => {
+                      onStatusChange(s.value);
+                      setStatusDialogOpen(false);
+                    }}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </Card>
   );
