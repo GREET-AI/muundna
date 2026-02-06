@@ -773,8 +773,8 @@ export default function AdminPage() {
   const getSourceLabel = (source: string | null | undefined) => {
     if (!source) return 'Eigene';
     switch (source) {
-      case 'gelbe_seiten': return 'Gelbe Seiten';
-      case '11880': return '11880';
+      case 'gelbe_seiten': return 'Gelbe Zauberer';
+      case '11880': return '11880 Zauberer';
       case 'google_places': return 'Google';
       case 'website_form': case 'quiz': return 'Website';
       default: return source;
@@ -802,13 +802,13 @@ export default function AdminPage() {
   };
 
   const getProfileLabel = (contact: ContactSubmission): string | null => {
-    if (contact.source === 'gelbe_seiten') return 'Gelbe-Seiten Profil';
-    if (contact.source === '11880') return '11880 Profil';
+    if (contact.source === 'gelbe_seiten') return 'Gelbe Zauberer Profil';
+    if (contact.source === '11880') return '11880 Zauberer Profil';
     if (!getProfileUrl(contact)) return null;
     const meta = contact.source_meta as { profile_url?: string } | undefined;
-    if (meta?.profile_url) return '11880 Profil';
-    if ((contact.notes || '').includes('11880-Profil')) return '11880 Profil';
-    return 'Gelbe-Seiten Profil';
+    if (meta?.profile_url) return '11880 Zauberer Profil';
+    if ((contact.notes || '').includes('11880-Profil')) return '11880 Zauberer Profil';
+    return 'Gelbe Zauberer Profil';
   };
 
   /** Website aus Notizen parsen (beim Import: "Website: https://...") */
@@ -1091,8 +1091,8 @@ export default function AdminPage() {
   const isSmartView = smartViewItems.some((s) => s.id === activeNav);
 
   const scraperSubItems: { id: string; label: string }[] = [
-    { id: 'scraper-gelbeseiten', label: 'Gelbe Seiten' },
-    { id: 'scraper-11880', label: '11880.com' },
+    { id: 'scraper-gelbeseiten', label: 'Gelbe Zauberer' },
+    { id: 'scraper-11880', label: '11880 Zauberer' },
   ];
   const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
 
@@ -1222,9 +1222,9 @@ export default function AdminPage() {
       case 'angebots-erstellung':
         return { title: 'Angebotserstellung', description: 'Angebote gestalten, Vorschau anzeigen und als PDF speichern', contacts: [], showStats: false };
       case 'scraper-gelbeseiten':
-        return { title: 'Gelbe Seiten', description: 'Leads aus gelbeseiten.de scrapen', contacts: [], showStats: false };
+        return { title: 'Gelbe Zauberer', description: 'Wo die goldenen Kontakte aus dem Märchenbuch herfliegen', contacts: [], showStats: false };
       case 'scraper-11880':
-        return { title: '11880.com', description: 'Leads aus 11880.com scrapen (inkl. E-Mail/Website von Detailseiten)', contacts: [], showStats: false };
+        return { title: '11880 Zauberer', description: 'Wo die Zauberer ihre Kontakte für euch herbeizaubern', contacts: [], showStats: false };
       default:
         return {
           title: 'Kontakte',
@@ -1479,8 +1479,8 @@ export default function AdminPage() {
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
                           isSubActive
                             ? sub.id === 'scraper-gelbeseiten'
-                              ? 'bg-[#F5C400]/25 text-[#b88600] font-medium'
-                              : 'bg-[#00a651]/20 text-emerald-700 font-medium'
+                              ? 'bg-amber-100 text-amber-800 font-medium'
+                              : 'bg-emerald-100 text-emerald-800 font-medium'
                             : 'text-neutral-700 hover:bg-neutral-200'
                         }`}
                       >
@@ -2180,14 +2180,11 @@ export default function AdminPage() {
             </div>
           </div>
         ) : activeNav === 'scraper-gelbeseiten' ? (
-          /* ——— Gelbe Seiten: gesamter Content-Bereich gelb, kein weißes Karten-Element ——— */
-          <div
-            className="min-h-[calc(100vh-4rem)] p-6 md:p-8"
-            style={{ backgroundColor: GELBE_SEITEN_YELLOW }}
-          >
-            <h2 className="text-2xl font-bold mb-2" style={{ color: GELBE_SEITEN_BLACK }}>Gelbe Seiten</h2>
-            <p className="text-sm mb-6 max-w-2xl" style={{ color: GELBE_SEITEN_BLACK }}>
-                  Keyword und Ort eingeben → &quot;Jetzt scrapen&quot;. Zuerst erscheint &quot;Anzeigen sammeln…&quot;, dann die Anzahl gefundener Anzeigen; die Leads füllen sich live in die Tabelle. Sie können zu 11880 wechseln und dort ebenfalls scrapen. Bei Abschluss erscheint eine Meldung.
+          /* ——— Gelbe Zauberer: märchenhaft & humorvoll ——— */
+          <div className="min-h-[calc(100vh-4rem)] p-6 md:p-8 bg-white rounded-xl border border-neutral-200">
+            <h2 className="text-2xl font-bold mb-2 text-foreground">Gelbe Zauberer</h2>
+            <p className="text-sm mb-6 max-w-2xl text-muted-foreground">
+                  Im goldenen Buch der Handwerker stehen die schönsten Kontakte. Verratet uns Zauberwort und Ort – dann sagen wir dem Buch Bescheid. Es blättert sich von selbst, sammelt Einträge und füllt eure Liste wie von Geisterhand. Ihr könnt zwischendurch auch die 11880 Zauberer besuchen; wenn hier alles fertig ist, erscheint eine Botschaft.
             </p>
 
             <div className="mb-6">
@@ -2231,13 +2228,13 @@ export default function AdminPage() {
                     </select>
                   </div>
                   {scrapingGS && (
-                    <div className="mb-3 p-3 bg-white/80 rounded-lg border border-[#1a1a1a]/20">
+                    <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                       <p className="text-sm font-medium text-gray-800 flex items-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                        {scrapePhaseGS === 'anzeigen_sammeln' ? 'Anzeigen sammeln…' : `${foundCountGS} Anzeigen gefunden`}
+                        {scrapePhaseGS === 'anzeigen_sammeln' ? 'Das goldene Buch blättert…' : `${foundCountGS} Einträge gefunden`}
                       </p>
                       {scrapePhaseGS !== 'anzeigen_sammeln' && (
-                        <p className="text-xs text-gray-600 mt-1">Leads füllen sich live in die Tabelle. Sie können zu 11880 wechseln und dort ebenfalls scrapen.</p>
+                        <p className="text-xs text-gray-600 mt-1">Die Kontakte erscheinen wie von Zauberhand. Ihr könnt zwischendurch auch die 11880 Zauberer besuchen.</p>
                       )}
                     </div>
                   )}
@@ -2295,12 +2292,12 @@ export default function AdminPage() {
                                   setScrapingGS(false);
                                   const current = streamingLeadsRef.current;
                                   if (current.length > 0) await fetchExistingAndSetSelection(current, 'gelbeseiten');
-                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Seiten', count: ev.count ?? current.length });
-                                  if ((ev.count ?? 0) === 0) setScrapeErrorGS('Keine Treffer.');
+                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: ev.count ?? current.length });
+                                  if ((ev.count ?? 0) === 0) setScrapeErrorGS('Das goldene Buch hatte leider nichts Passendes.');
                                 } else if (ev.phase === 'error') {
                                   setScrapingGS(false);
-                                  setScrapeErrorGS(ev.error ?? 'Scraping fehlgeschlagen.');
-                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Seiten', count: 0, error: ev.error });
+                                  setScrapeErrorGS(ev.error ?? 'Der Zauber ist leider fehlgeschlagen.');
+                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: 0, error: ev.error });
                                 }
                               } catch (_) {}
                             }
@@ -2320,8 +2317,8 @@ export default function AdminPage() {
                           }
                         } catch (e) {
                           setScrapingGS(false);
-                          setScrapeErrorGS(e instanceof Error ? e.message : 'Scraping fehlgeschlagen.');
-                          setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Seiten', count: 0, error: e instanceof Error ? e.message : undefined });
+                          setScrapeErrorGS(e instanceof Error ? e.message : 'Der Zauber ist leider fehlgeschlagen.');
+                          setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: 0, error: e instanceof Error ? e.message : undefined });
                         }
                       }}
                       disabled={!scrapeKeyword.trim() || !scrapeLocation.trim() || scrapingGS}
@@ -2330,10 +2327,10 @@ export default function AdminPage() {
                       {scrapingGS ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Scrapen läuft…
+                          Zaubern läuft…
                         </>
                       ) : (
-                        'Jetzt scrapen'
+                        'Kontakte herbeizaubern'
                       )}
                     </button>
                     {scrapeKeyword.trim() && scrapeLocation.trim() && (
@@ -2344,7 +2341,7 @@ export default function AdminPage() {
                         className="px-4 py-2 bg-white border-2 border-[#1a1a1a] rounded-lg font-medium text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors inline-flex items-center gap-2"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        Suche in neuem Tab öffnen
+                        Goldenes Buch in neuem Tab öffnen
                       </a>
                     )}
                   </div>
@@ -2357,10 +2354,10 @@ export default function AdminPage() {
                   <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-2 border-[#1a1a1a]/20">
                     {selectedScrapedLeads.filter((s) => !s).length > 0 && (
                       <p className="text-[#cb530a] bg-[#cb530a]/10 border border-[#cb530a]/30 rounded-lg px-3 py-2 mb-3 text-sm font-medium">
-                        {selectedScrapedLeads.filter((s) => !s).length} Duplikat(e) erkannt (bereits in Leads) – abgewählt. Sie können einzelne Zeilen per Klick an- oder abwählen.
+                        {selectedScrapedLeads.filter((s) => !s).length} Duplikat(e) erkannt (bereits in Leads) – abgewählt. Einzelne Zeilen könnt ihr per Klick an- oder abwählen.
                       </p>
                     )}
-                    <p className="font-semibold text-gray-800 mb-3">{scrapedLeads.length} Treffer – Auswählen, dann importieren oder CSV</p>
+                    <p className="font-semibold text-gray-800 mb-3">{scrapedLeads.length} herbeigezauberte Kontakte – Auswählen, dann importieren oder CSV</p>
                     <div className="rounded-lg border overflow-auto max-h-80 mb-4">
                       <table className="w-full text-sm">
                         <thead>
@@ -2453,7 +2450,7 @@ export default function AdminPage() {
                             alert('Bitte mindestens einen Lead auswählen.');
                             return;
                           }
-                          downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', 'Gelbe Seiten');
+                          downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', 'Gelbe Zauberer');
                         }}
                         disabled={scrapedLeads.filter((_, i) => selectedScrapedLeads[i] !== false).length === 0}
                         className="px-4 py-2 bg-white border-2 border-[#1a1a1a] text-[#1a1a1a] font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -2469,14 +2466,11 @@ export default function AdminPage() {
                 )}
           </div>
         ) : activeNav === 'scraper-11880' ? (
-          /* ——— 11880.com: gesamter Content-Bereich grün, kein weißes Karten-Element ——— */
-          <div
-            className="min-h-[calc(100vh-4rem)] p-6 md:p-8"
-            style={{ backgroundColor: '#00a651' }}
-          >
-            <h2 className="text-2xl font-bold text-white mb-2">11880.com</h2>
-            <p className="text-white/95 text-sm mb-6 max-w-2xl">
-              Branche und Ort eingeben → &quot;Jetzt scrapen&quot;. Der Scraper läuft im Hintergrund – Sie können zu Gelbe Seiten wechseln und dort ebenfalls scrapen. Bei Abschluss erscheint eine Meldung. Bei vielen Treffern (z. B. 170+) dauert das Auslesen aller Detailseiten mehrere Minuten – das ist normal.
+          /* ——— 11880 Zauberer: märchenhaft & humorvoll ——— */
+          <div className="min-h-[calc(100vh-4rem)] p-6 md:p-8 bg-white rounded-xl border border-neutral-200">
+            <h2 className="text-2xl font-bold mb-2 text-foreground">11880 Zauberer</h2>
+            <p className="text-sm mb-6 max-w-2xl text-muted-foreground">
+              Die Zauberer von 11880 flüstern Branche und Ort – und schon suchen sie in ihrem Reich nach den passenden Kontakten. Das passiert im Hintergrund; ihr könnt inzwischen bei den Gelben Zauberern vorbeischauen. Wenn alle Kontakte herbeigezaubert sind, erscheint eine Botschaft. Bei vielen Treffern (z. B. 170+) brauchen die Zauberer ein paar Minuten – das ist ganz normal.
             </p>
 
             <div className="mb-6">
@@ -2505,12 +2499,12 @@ export default function AdminPage() {
                     </div>
                   </div>
                   {scraping11880 && (
-                    <div className="mb-3 p-3 bg-white/15 rounded-lg border border-white/30">
-                      <p className="text-sm font-medium text-white flex items-center gap-2">
+                    <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                      <p className="text-sm font-medium text-gray-800 flex items-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                        Anzeigen sammeln…
+                        Die Zauberer sind am Werk…
                       </p>
-                      <p className="text-xs text-white/90 mt-1">Suchseite → Anzeigen sammeln → Detailseiten nacheinander. Sie können zu Gelbe Seiten wechseln und dort ebenfalls scrapen. Bei Abschluss erscheint eine Meldung.</p>
+                      <p className="text-xs text-gray-600 mt-1">Die Kontakte erscheinen nach und nach. Ihr könnt zwischendurch auch die Gelben Zauberer besuchen – bei Abschluss erscheint eine Botschaft.</p>
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3">
@@ -2528,21 +2522,21 @@ export default function AdminPage() {
                               if (result.leads.length > 0) {
                                 await fetchExistingAndSetSelection(result.leads, '11880');
                               }
-                              setScraperDoneNotification({ source: '11880', label: '11880.com', count: result.leads.length });
+                              setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: result.leads.length });
                               if (result.leads.length === 0 && result.error) {
                                 setScrapeError11880(result.error);
                               }
                             } else {
-                              setScrapeError11880(result.error ?? 'Unbekannter Fehler beim Scrapen.');
-                              setScraperDoneNotification({ source: '11880', label: '11880.com', count: 0, error: result.error });
+                              setScrapeError11880(result.error ?? 'Die Zauberer melden: etwas ist schiefgelaufen.');
+                              setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: 0, error: result.error });
                             }
                           } finally {
                             setScraping11880(false);
                           }
                         }).catch((e) => {
                           setScraping11880(false);
-                          setScrapeError11880(e?.message ?? 'Scraping fehlgeschlagen.');
-                          setScraperDoneNotification({ source: '11880', label: '11880.com', count: 0, error: e?.message });
+                          setScrapeError11880(e?.message ?? 'Der Zauber ist leider fehlgeschlagen.');
+                          setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: 0, error: e?.message });
                         });
                       }}
                       disabled={!scrapeKeyword.trim() || !scrapeLocation.trim() || scraping11880}
@@ -2551,10 +2545,10 @@ export default function AdminPage() {
                       {scraping11880 ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Scrapen läuft…
+                          Zaubern läuft…
                         </>
                       ) : (
-                        'Jetzt scrapen'
+                        'Kontakte herbeizaubern'
                       )}
                     </button>
                     {scrapeKeyword.trim() && scrapeLocation.trim() && (
@@ -2562,10 +2556,10 @@ export default function AdminPage() {
                         href={build11880SearchUrl(scrapeKeyword, scrapeLocation)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 bg-white border-2 border-[#004d28] rounded-lg font-medium text-[#004d28] hover:bg-[#004d28] hover:text-white transition-colors inline-flex items-center gap-2"
+                        className="px-4 py-2 bg-white border-2 border-emerald-700 rounded-lg font-medium text-emerald-800 hover:bg-emerald-700 hover:text-white transition-colors inline-flex items-center gap-2"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        Suche in neuem Tab öffnen
+                        Zauberer-Reich in neuem Tab öffnen
                       </a>
                     )}
                   </div>
@@ -2575,13 +2569,13 @@ export default function AdminPage() {
             </div>
 
             {scrapedLeads.length > 0 && (
-              <div className="mb-6 bg-white/10 rounded-lg p-6 border border-white/20">
+              <div className="mb-6 bg-emerald-50 rounded-lg p-6 border border-emerald-200">
                 {selectedScrapedLeads.filter((s) => !s).length > 0 && (
-                  <p className="text-white/95 bg-[#cb530a]/30 border border-[#cb530a]/50 rounded-lg px-3 py-2 mb-3 text-sm font-medium">
-                    {selectedScrapedLeads.filter((s) => !s).length} Duplikat(e) erkannt (bereits in Leads) – abgewählt. Sie können einzelne Zeilen per Klick an- oder abwählen.
+                  <p className="text-amber-900 bg-amber-100 border border-amber-300 rounded-lg px-3 py-2 mb-3 text-sm font-medium">
+                    {selectedScrapedLeads.filter((s) => !s).length} Duplikat(e) erkannt (bereits in Leads) – abgewählt. Einzelne Zeilen könnt ihr per Klick an- oder abwählen.
                   </p>
                 )}
-                <p className="font-semibold text-white mb-3">{scrapedLeads.length} Treffer – Auswählen, dann importieren oder CSV</p>
+                <p className="font-semibold text-gray-800 mb-3">{scrapedLeads.length} herbeigezauberte Kontakte – Auswählen, dann importieren oder CSV</p>
                 <div className="rounded-lg border border-white/30 overflow-auto max-h-80 mb-4 bg-white">
                   <table className="w-full text-sm">
                     <thead>
@@ -2682,7 +2676,7 @@ export default function AdminPage() {
                         alert('Bitte mindestens einen Lead auswählen.');
                         return;
                       }
-                      downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', '11880');
+                      downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', '11880 Zauberer');
                     }}
                     disabled={scrapedLeads.filter((_, i) => selectedScrapedLeads[i] !== false).length === 0}
                     className="px-4 py-2 bg-white text-[#004d28] font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -3336,9 +3330,9 @@ export default function AdminPage() {
       <Dialog open={!!scraperDoneNotification} onOpenChange={(open) => { if (!open) setScraperDoneNotification(null); }}>
         <DialogContent className="sm:max-w-sm border-2 border-[#cb530a]">
           <DialogHeader>
-            <DialogTitle>{scraperDoneNotification?.label}: Scraping abgeschlossen</DialogTitle>
+            <DialogTitle>{scraperDoneNotification?.label}: Zauber erledigt</DialogTitle>
             <DialogDescription>
-              {scraperDoneNotification?.error ?? `${scraperDoneNotification?.count ?? 0} Treffer gefunden. Die Liste wurde aktualisiert.`}
+              {scraperDoneNotification?.error ?? `${scraperDoneNotification?.count ?? 0} Kontakte herbeigezaubert. Die Liste wurde aktualisiert.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
