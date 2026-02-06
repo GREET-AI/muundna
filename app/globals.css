@@ -74,6 +74,29 @@ html {
   background: #555;
 }
 
+/* Admin-Sidebar: Scrollbar nur sichtbar bei Hover (Canva-Stil) */
+.admin-sidebar-nav {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.admin-sidebar-wrap:hover .admin-sidebar-nav {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.admin-sidebar-wrap:hover .admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+}
+
 /* Scrollbar ausblenden, Scrollen bleibt möglich (z. B. Pipeline-Spalten) */
 .scrollbar-hide {
   -ms-overflow-style: none;

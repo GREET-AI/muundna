@@ -8,13 +8,18 @@ import IconInput from '../../components/ui/IconInput';
 import Toast from '../../components/ui/Toast';
 import Link from 'next/link';
 
+const SOCIAL_IDS = ['social-basic', 'social-growth', 'social-pro'] as const;
+
 const ENTERPRISE_MODULES = [
-  { id: 'telefonie', label: 'Telefonie (erweitert)', price: 599, details: 'Max. 500 Anrufe/1200 Min., Branding, bis 10 Mitarbeiter, 24/7-Option +200 €' },
-  { id: 'email-kalender', label: 'E-Mail, Kalender & Terminlegung', price: 299, details: 'Max. 300 E-Mails, 200 Termine, CRM-Sync' },
-  { id: 'google', label: 'Google Bewertungen (erweitert)', price: 199, details: 'Unbegrenzt Anfragen, Automatisierung, Reporting' },
-  { id: 'social', label: 'Social Media (custom)', price: 249, details: 'Bis 4 Plattformen, bis 5 Posts/Woche, Community' },
-  { id: 'reporting', label: 'Reporting & Dokumentation', price: 99, details: 'Wöchentliche/Monatliche KPIs, Custom-Dashboards' },
-  { id: 'website', label: 'Website-Entwicklung & Betreuung', priceOnce: 2000, priceMonthly: 99, details: 'Einmalig ab 2.000 € + 99 €/Monat (Updates, Hosting)' },
+  { id: 'telefonie', label: 'Telefonie (erweitert)', price: 599, details: 'Max. 500 Anrufe/1.200 Min., Branding bis 10 Mitarbeiter. Extra: 1,80 €/Anruf.' },
+  { id: 'telefonie-24h', label: '24/7-Option (nur mit Telefonie)', price: 200, details: 'Telefonie rund um die Uhr', requires: 'telefonie' as const },
+  { id: 'email-kalender', label: 'E-Mail, Kalender & Terminlegung', price: 299, details: 'Max. 300 E-Mails, 200 Termine, CRM-Sync. Extra: 0,50 €/E-Mail, 3 €/Termin.' },
+  { id: 'google', label: 'Google Bewertungen (erweitert)', price: 199, details: 'Unbegrenzt Anfragen, Automatisierung, Reporting. Basis max. 100; Extra: 3 €/Anfrage.' },
+  { id: 'social-basic', label: 'Social Media Basic', price: 249, details: '1–2 Plattformen, 1–2 Posts/Woche (Mix Bild/Video), max. 8 Posts/Monat. Extra: 30 €/Post.' },
+  { id: 'social-growth', label: 'Social Media Growth', price: 449, details: '2–3 Plattformen, 2–3 Posts/Woche, Community max. 50 Interaktionen, max. 12 Posts/Monat. Extra: 25 €/Post.' },
+  { id: 'social-pro', label: 'Social Media Pro', price: 749, details: '3–4 Plattformen, 3+ Posts/Woche, Voll-Mix + Community bis 8 Std., max. 20 Posts/Monat. Extra: 20 €/Post.' },
+  { id: 'reporting', label: 'Reporting & Dokumentation', price: 99, details: 'Wöchentliche/monatliche KPIs, Custom-Dashboards.' },
+  { id: 'website', label: 'Website-Entwicklung & Betreuung', priceOnce: 2000, priceMonthly: 99, details: 'Einmalig ab 2.000 € (Basis-Site: responsiv, SEO) + 99 €/Monat (Updates, Hosting, max. 4 Std. Änderungen; Extra: 50 €/Stunde). E-Commerce +500 € einmalig.' },
 ] as const;
 
 function getDiscount(monthlySum: number): { percent: number; label: string } {
@@ -45,22 +50,36 @@ export default function EnterpriseKonfiguratorPage() {
   const toggleModule = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        if (id === 'telefonie') next.delete('telefonie-24h');
+      } else {
+        if (SOCIAL_IDS.includes(id as typeof SOCIAL_IDS[number])) {
+          SOCIAL_IDS.forEach((s) => next.delete(s));
+          next.add(id);
+        } else if (id === 'telefonie-24h') {
+          if (next.has('telefonie')) next.add(id);
+        } else if (id === 'telefonie') {
+          next.add(id);
+        } else {
+          next.add(id);
+        }
+      }
       return next;
     });
   };
 
   const monthlySum = ENTERPRISE_MODULES.reduce((sum, m) => {
     if (!selected.has(m.id)) return sum;
+    if ('requires' in m && m.requires && !selected.has(m.requires)) return sum;
     if ('priceMonthly' in m && m.priceMonthly) return sum + m.priceMonthly;
-    if ('price' in m) return sum + m.price;
+    if ('price' in m) return sum + (m as { price: number }).price;
     return sum;
   }, 0);
 
   const onceSum = ENTERPRISE_MODULES.reduce((sum, m) => {
     if (!selected.has(m.id) || !('priceOnce' in m) || !m.priceOnce) return sum;
-    return sum + m.priceOnce;
+    return sum + (m as { priceOnce: number }).priceOnce;
   }, 0);
 
   const discount = getDiscount(monthlySum);
@@ -75,9 +94,11 @@ export default function EnterpriseKonfiguratorPage() {
     }
     setIsSubmitting(true);
     try {
-      const selectedModules = ENTERPRISE_MODULES.filter((m) => selected.has(m.id)).map((m) =>
-        'priceOnce' in m ? `${m.label} (einmalig ${m.priceOnce} € + ${m.priceMonthly} €/Monat)` : `${m.label} (${m.price} €/Monat)`
-      );
+      const selectedModules = ENTERPRISE_MODULES.filter((m) => selected.has(m.id)).map((m) => {
+        const mo = m as { priceOnce?: number; priceMonthly?: number; price?: number };
+        if (mo.priceOnce != null && mo.priceMonthly != null) return `${m.label} (einmalig ${mo.priceOnce} € + ${mo.priceMonthly} €/Monat)`;
+        return `${m.label} (${mo.price ?? 0} €/Monat)`;
+      });
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,15 +222,25 @@ export default function EnterpriseKonfiguratorPage() {
                   <div className="space-y-4 mb-8">
                     {ENTERPRISE_MODULES.map((m) => {
                       const isSelected = selected.has(m.id);
+                      const requires = 'requires' in m ? (m as { requires?: string }).requires : undefined;
+                      const isDisabled = requires && !selected.has(requires);
                       const priceLabel = 'priceOnce' in m
-                        ? `Einmalig ${m.priceOnce?.toLocaleString('de-DE')} € + ${m.priceMonthly} €/Monat`
-                        : `${m.price.toLocaleString('de-DE')} €/Monat`;
+                        ? `Einmalig ${(m as { priceOnce?: number }).priceOnce?.toLocaleString('de-DE')} € + ${(m as { priceMonthly?: number }).priceMonthly} €/Monat`
+                        : `${(m as { price: number }).price.toLocaleString('de-DE')} €/Monat`;
                       return (
                         <label
                           key={m.id}
-                          className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${isSelected ? 'border-[#cb530a] bg-[#fef3ed]' : 'border-gray-200 hover:border-gray-300'}`}
+                          className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-colors ${
+                            isDisabled ? 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-75' : 'cursor-pointer'
+                          } ${isSelected ? 'border-[#cb530a] bg-[#fef3ed]' : !isDisabled ? 'border-gray-200 hover:border-gray-300' : ''}`}
                         >
-                          <input type="checkbox" checked={isSelected} onChange={() => toggleModule(m.id)} className="mt-1 w-5 h-5 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a]" />
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={!!isDisabled}
+                            onChange={() => !isDisabled && toggleModule(m.id)}
+                            className="mt-1 w-5 h-5 text-[#cb530a] border-gray-300 rounded focus:ring-[#cb530a] disabled:opacity-50"
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <span className="font-semibold text-gray-800">{m.label}</span>

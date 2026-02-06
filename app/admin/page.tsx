@@ -5,10 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Mail, Phone, MapPin, Calendar, FileText, CheckCircle2, Clock, XCircle, 
-  Search, Filter, LogOut, Building2, Wrench, Users, Home, Video, 
+  Search, Filter, Building2, Wrench, Users, Home, Video, 
   MessageSquare, TrendingUp, BarChart3, User,
-  Contact, DollarSign, Target, Briefcase, FolderKanban, ChevronRight,
-  Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History
+  Contact, DollarSign, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
+  Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History,
+  Flame, Magnet
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -30,6 +31,7 @@ import { buildGelbeSeitenSearchUrl, build11880SearchUrl } from '@/lib/scraper-so
 import { normalizeGermanPhone } from '@/lib/normalize-phone';
 import type { ScrapedLeadInsert } from '@/types/scraper-lead';
 import type { Product, ContactProduct } from '@/types/product';
+import type { CalendarEvent } from '@/types/calendar';
 
 interface ContactSubmission {
   id: number;
@@ -112,7 +114,7 @@ export default function AdminPage() {
   const [editingContact, setEditingContact] = useState<ContactSubmission | null>(null);
   const [editForm, setEditForm] = useState<{ first_name: string; last_name: string; email: string; phone: string; street: string; city: string; company: string; notes: string }>({ first_name: '', last_name: '', email: '', phone: '', street: '', city: '', company: '', notes: '' });
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; contact: ContactSubmission } | null>(null);
-  const [viewMode, setViewMode] = useState<'pipeline' | 'table'>('pipeline');
+  const [viewMode, setViewMode] = useState<'pipeline' | 'table'>('table');
   const [activeNav, setActiveNav] = useState('contacts');
   // Lead-Scraping (Gelbe Seiten + 11880 – unabhängig, laufen im Hintergrund)
   const [scrapeKeyword, setScrapeKeyword] = useState('');
@@ -130,6 +132,13 @@ export default function AdminPage() {
   const [scraperMenuOpen, setScraperMenuOpen] = useState(true);
   /** Tools-Submenü aufgeklappt */
   const [toolsMenuOpen, setToolsMenuOpen] = useState(true);
+  /** Canva-Sidebar: welcher Flyout (Unterpunkte) sichtbar ist; null = zu beim Verlassen der Bar */
+  const [sidebarFlyout, setSidebarFlyout] = useState<'quellen' | 'tools' | null>(null);
+  /** Flyout vertikal an den Menüpunkt anpassen (top in px) */
+  const [flyoutTop, setFlyoutTop] = useState(0);
+  const quellenBtnRef = useRef<HTMLButtonElement>(null);
+  const toolsBtnRef = useRef<HTMLButtonElement>(null);
+  const flyoutHoveredRef = useRef(false);
   /** Pro Quelle: ausgewählt für Import/CSV (Duplikate standardmäßig abgewählt) */
   const [selectedScrapedLeadsGS, setSelectedScrapedLeadsGS] = useState<boolean[]>([]);
   const [selectedScrapedLeads11880, setSelectedScrapedLeads11880] = useState<boolean[]>([]);
@@ -195,8 +204,33 @@ export default function AdminPage() {
   const [productForm, setProductForm] = useState<{ name: string; description: string; price_display: string; price_period: string; price_min: string; price_once: string; product_type: Product['product_type']; subline: string; features: string[]; sort_order: number; for_package: string }>({
     name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: 0, for_package: '',
   });
-  /** Spaltenbreiten für Lead-Tabelle (Excel-artig resizable) */
-  const TABLE_COLUMN_KEYS = ['quelle', 'vertriebler', 'firmaName', 'profil', 'telefon', 'email', 'website', 'ort', 'strasse', 'sales', 'status'] as const;
+  /** Kalender: Termine, angezeigter Monat, Filter Vertriebler */
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [calendarFilterSalesRep, setCalendarFilterSalesRep] = useState<'alle' | 'sven' | 'pascal'>('alle');
+  const [calendarMigrationRequired, setCalendarMigrationRequired] = useState(false);
+  const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
+  const [calendarEditEvent, setCalendarEditEvent] = useState<CalendarEvent | null>(null);
+  const [calendarFromContact, setCalendarFromContact] = useState<ContactSubmission | null>(null);
+  const [calendarUpcomingEvents, setCalendarUpcomingEvents] = useState<CalendarEvent[]>([]);
+  const [calendarForm, setCalendarForm] = useState<{
+    title: string; startDate: string; startTime: string; endDate: string; endTime: string; sales_rep: 'sven' | 'pascal'; notes: string;
+    contact_id: number | null; recommendedProductIds: number[]; website_state: string; google_state: string; social_media_state: string;
+  }>({
+    title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: 'sven', notes: '',
+    contact_id: null, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '',
+  });
+  /** Top-Bar: Anstehende Termine (Dropdown für eingeloggten User) */
+  const [upcomingTopbarOpen, setUpcomingTopbarOpen] = useState(false);
+  const [upcomingTopbarEvents, setUpcomingTopbarEvents] = useState<CalendarEvent[]>([]);
+  const [upcomingTopbarLoading, setUpcomingTopbarLoading] = useState(false);
+  const upcomingTopbarRef = useRef<HTMLDivElement>(null);
+  /** Spaltenbreiten für Lead-Tabelle; nur Telefon, Firma/Name, E-Mail resizable – Rest fix auf Minimalbreite */
+  const TABLE_COLUMN_KEYS = ['quelle', 'vertriebler', 'firmaName', 'telefon', 'email', 'website', 'ort', 'sales', 'status'] as const;
+  const RESIZABLE_TABLE_COLUMNS: readonly string[] = ['telefon', 'firmaName', 'email'];
+  const FIXED_COLUMN_WIDTHS: Record<string, number> = {
+    quelle: 56, vertriebler: 72, website: 80, ort: 64, sales: 108, status: 88
+  };
 
   /** CRM-Lead-Status (Deutsch): für Pipeline, Filter und Auswahl */
   const LEAD_STATUSES = [
@@ -223,10 +257,13 @@ export default function AdminPage() {
   const PIPELINE_COLUMNS = ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'nicht_qualifiziert', 'wiedervorlage', 'kunde'] as const;
 
   const [tableColumnWidths, setTableColumnWidths] = useState<Record<string, number>>({
-    quelle: 100, vertriebler: 90, firmaName: 220, profil: 90, telefon: 130, email: 160, website: 90, ort: 90, strasse: 140, sales: 110, status: 90
+    ...FIXED_COLUMN_WIDTHS,
+    firmaName: 220, telefon: 130, email: 160
   });
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const resizeStartRef = useRef<{ x: number; w: number } | null>(null);
+  /** Spaltenbreite (fix oder aus State für resizable) */
+  const getTableColWidth = (key: string) => RESIZABLE_TABLE_COLUMNS.includes(key) ? (tableColumnWidths[key] ?? 120) : (FIXED_COLUMN_WIDTHS[key] ?? 80);
 
   /** Gelbe-Seiten-Branding (Hintergrund wie gelbeseiten.de) */
   const GELBE_SEITEN_YELLOW = '#F5C400';
@@ -330,6 +367,50 @@ export default function AdminPage() {
       .finally(() => setProductPickerLoading(false));
   }, [productPickerContact?.id]);
 
+  /** Kalender: Termine für angezeigten Monat laden */
+  useEffect(() => {
+    if (!isAuthenticated || activeNav !== 'kalender') return;
+    const y = calendarMonth.getFullYear();
+    const m = calendarMonth.getMonth();
+    const from = new Date(y, m, 1).toISOString();
+    const to = new Date(y, m + 1, 0, 23, 59, 59).toISOString();
+    const params = new URLSearchParams({ from, to });
+    if (calendarFilterSalesRep !== 'alle') params.set('sales_rep', calendarFilterSalesRep);
+    fetch(`/api/admin/calendar/events?${params}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.migration_required) setCalendarMigrationRequired(true);
+        else setCalendarEvents(res.data ?? []);
+      })
+      .catch(() => setCalendarEvents([]));
+  }, [isAuthenticated, activeNav, calendarMonth.getTime(), calendarFilterSalesRep]);
+
+  /** Kalender: Kommende Termine (für Sidebar-Liste, unabhängig vom Monat) */
+  useEffect(() => {
+    if (!isAuthenticated || activeNav !== 'kalender') return;
+    const now = new Date();
+    const to = new Date(now);
+    to.setDate(to.getDate() + 90);
+    const params = new URLSearchParams({ from: now.toISOString(), to: to.toISOString() });
+    if (calendarFilterSalesRep !== 'alle') params.set('sales_rep', calendarFilterSalesRep);
+    fetch(`/api/admin/calendar/events?${params}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => {
+        if (!res.migration_required) setCalendarUpcomingEvents((res.data ?? []).sort((a: CalendarEvent, b: CalendarEvent) => a.start_at.localeCompare(b.start_at)));
+      })
+      .catch(() => setCalendarUpcomingEvents([]));
+  }, [isAuthenticated, activeNav, calendarFilterSalesRep, calendarDialogOpen]);
+
+  /** Klick außerhalb: Anstehende-Termine-Dropdown schließen */
+  useEffect(() => {
+    if (!upcomingTopbarOpen) return;
+    const handle = (e: MouseEvent) => {
+      if (upcomingTopbarRef.current && !upcomingTopbarRef.current.contains(e.target as Node)) setUpcomingTopbarOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [upcomingTopbarOpen]);
+
   /** Popup „Scraper fertig“ nach 6 Sekunden ausblenden */
   useEffect(() => {
     if (!scraperDoneNotification) return;
@@ -352,6 +433,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!resizingColumn || !resizeStartRef.current) return;
     const handleMove = (e: MouseEvent) => {
+      if (!RESIZABLE_TABLE_COLUMNS.includes(resizingColumn)) return;
       const start = resizeStartRef.current;
       if (!start) return;
       const delta = e.clientX - start.x;
@@ -651,9 +733,9 @@ export default function AdminPage() {
   };
 
   const getSourceBorderClass = (source: string | null | undefined) => {
-    if (!source) return 'border-l-4 border-l-neutral-300'; // Eigene: schwarz/neutral
-    if (source === 'gelbe_seiten') return 'border-l-4 border-l-amber-400 bg-amber-50/50'; // Quelle: behalten
-    if (source === '11880') return 'border-l-4 border-l-green-500 bg-green-50/50'; // Quelle: behalten
+    if (!source) return 'border-l-4 border-l-neutral-300';
+    if (source === 'gelbe_seiten') return 'border-l-4 border-l-amber-400'; // Quelle: nur linker Rand, Hintergrund weiß
+    if (source === '11880') return 'border-l-4 border-l-green-500';
     return 'border-l-4 border-l-neutral-300';
   };
 
@@ -925,16 +1007,16 @@ export default function AdminPage() {
     { id: 'contacts', label: 'Alle Kontakte', icon: Contact },
     { id: 'meine-kontakte', label: 'Meine Kontakte', icon: User },
     { id: 'deals', label: 'Abschlüsse', icon: DollarSign },
-    { id: 'leads', label: 'Leads', icon: Target },
     { id: 'kunden', label: 'Kunden', icon: Building2 },
     { id: 'kundenprojekte', label: 'Kundenprojekte', icon: FolderKanban },
   ];
 
-  /** Smart Views (Close-Style): vordefinierte Listen für Vertrieb */
+  /** Akquise: vordefinierte Listen inkl. Leads-Übersicht */
   const smartViewItems: { id: string; label: string; icon: typeof Phone }[] = [
+    { id: 'leads', label: 'Leads', icon: Target },
     { id: 'smart-heute-anrufen', label: 'Heute anrufen', icon: Phone },
-    { id: 'smart-leads-anrufen', label: 'Leads zum Anrufen', icon: Phone },
-    { id: 'smart-kein-kontakt-7', label: 'Kein Kontakt > 7 Tage', icon: Clock },
+    { id: 'smart-leads-anrufen', label: 'Hot Leads', icon: Flame },
+    { id: 'smart-kein-kontakt-7', label: '7 Tage+', icon: Clock },
     { id: 'smart-neue-leads', label: 'Neue Leads', icon: Target },
     { id: 'smart-follow-up', label: 'Follow-up nötig', icon: Clock },
   ];
@@ -947,11 +1029,12 @@ export default function AdminPage() {
   const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
 
   const toolsSubItems: { id: string; label: string }[] = [
+    { id: 'kalender', label: 'Kalender' },
     { id: 'produkt-tool', label: 'Produkt-Tool' },
     { id: 'bewertungs-funnel', label: 'Bewertungs-Funnel' },
     { id: 'angebots-erstellung', label: 'Angebotserstellung' },
   ];
-  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool';
+  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool' || activeNav === 'kalender';
 
   // Logik für verschiedene Views basierend auf Status (und Vertriebler bei "Meine Kontakte")
   const getViewData = () => {
@@ -1003,8 +1086,8 @@ export default function AdminPage() {
         };
       case 'leads':
         return {
-          title: 'Leads',
-          description: 'Alle gescrapten Leads (Gelbe Seiten, 11880)',
+          title: 'Alle Leads',
+          description: '',
           contacts: filteredContacts,
           showStats: false
         };
@@ -1023,7 +1106,7 @@ export default function AdminPage() {
         const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
         const active = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status);
         return {
-          title: 'Leads zum Anrufen',
+          title: 'Hot Leads',
           description: 'Alle mit Telefonnummer in aktiven Phasen',
           contacts: filteredContacts.filter(c => withPhone(c) && active(c)),
           showStats: true
@@ -1034,7 +1117,7 @@ export default function AdminPage() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const noContact = (c: ContactSubmission) => new Date(c.updated_at) < sevenDaysAgo;
         return {
-          title: 'Kein Kontakt > 7 Tage',
+          title: '7 Tage+',
           description: 'Keine Aktivität seit mehr als 7 Tagen',
           contacts: filteredContacts.filter(noContact),
           showStats: true
@@ -1054,6 +1137,8 @@ export default function AdminPage() {
           contacts: filteredContacts.filter(c => c.status === 'wiedervorlage' || c.status === 'qualifiziert'),
           showStats: true
         };
+      case 'kalender':
+        return { title: 'Kalender', description: 'Termine anlegen, Kalender einsehen, kommende Termine', contacts: [], showStats: false };
       case 'produkt-tool':
         return { title: 'Produkt-Tool', description: 'Produkte definieren und kombinierbar machen (Pakete, Add-ons, Module – wie auf der Website)', contacts: [], showStats: false };
       case 'bewertungs-funnel':
@@ -1077,179 +1162,206 @@ export default function AdminPage() {
   const viewData = getViewData();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar – Upgrade: klare Hierarchie, weiche Hover/Active, Orange-Akzent */}
-      <aside className="w-64 bg-neutral-950 border-r border-neutral-800 fixed left-0 top-0 bottom-0 overflow-y-auto flex flex-col shadow-xl">
-        <div className="p-5 border-b border-neutral-800/80 shrink-0">
-          <Link href="/" className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-neutral-800/50 transition-colors">
-            <Image
-              src="/logoneu.png"
-              alt="Muckenfuss & Nagel Logo"
-              width={180}
-              height={90}
-              className="h-10 w-auto"
-              priority
-              loading="eager"
-            />
+    <div className="min-h-screen bg-gray-50">
+      {/* Top-Bar: fix oben, weiß; links Haus-Icon → Website, rechts Anstehende Termine + History (kein Logout) */}
+      <header className="fixed top-0 left-0 right-0 h-10 z-50 flex items-center justify-between px-3 bg-white border-b border-neutral-300 text-neutral-800">
+        <div className="w-[97px] flex items-center justify-start pl-[24px] shrink-0">
+          <Link href="/" className="flex items-center justify-center rounded p-1.5 hover:bg-neutral-300/80 transition-colors" title="Zur Website">
+            <Home className="w-5 h-5" />
           </Link>
         </div>
-        <nav className="p-3 flex-1">
-          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-            CRM
-          </p>
-          <div className="space-y-0.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeNav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveNav(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                    isActive
-                      ? 'bg-[#cb530a] text-white font-medium shadow-md'
-                      : 'text-neutral-300 hover:bg-neutral-800/70 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-neutral-400'}`} />
-                  <span className="flex-1 text-left truncate">{item.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 shrink-0 opacity-90" />}
-                </button>
-              );
-            })}
-          </div>
-          <p className="px-3 py-2 mt-6 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-            Smart Views
-          </p>
-          <div className="space-y-0.5">
-            {smartViewItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeNav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveNav(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                    isActive
-                      ? 'bg-[#cb530a] text-white font-medium shadow-md'
-                      : 'text-neutral-300 hover:bg-neutral-800/70 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-neutral-400'}`} />
-                  <span className="flex-1 text-left truncate">{item.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 shrink-0 opacity-90" />}
-                </button>
-              );
-            })}
-          </div>
-          <p className="px-3 py-2 mt-6 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-            Lead-Scraping
-          </p>
-          <div className="mt-0.5">
+        <span className="text-xs text-neutral-600">Eingeloggt als <strong className="text-neutral-800">{salesRep === 'sven' ? 'Sven' : salesRep === 'pascal' ? 'Pascal' : '—'}</strong></span>
+        <div className="flex items-center gap-1">
+          <div className="relative" ref={upcomingTopbarRef}>
             <button
               type="button"
-              onClick={() => setScraperMenuOpen(!scraperMenuOpen)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                isScraperActive ? 'bg-neutral-800 text-white' : 'text-neutral-300 hover:bg-neutral-800/70 hover:text-white'
-              }`}
+              onClick={() => {
+                if (upcomingTopbarOpen) { setUpcomingTopbarOpen(false); return; }
+                if (upcomingTopbarLoading) return;
+                setUpcomingTopbarLoading(true);
+                const from = new Date().toISOString();
+                const to = new Date(); to.setDate(to.getDate() + 14);
+                const params = new URLSearchParams({ from, to: to.toISOString() });
+                if (salesRep) params.set('sales_rep', salesRep);
+                fetch(`/api/admin/calendar/events?${params}`, { credentials: 'include' })
+                  .then((r) => r.json())
+                  .then((res) => { setUpcomingTopbarEvents(res.data ?? []); setUpcomingTopbarLoading(false); setUpcomingTopbarOpen(true); })
+                  .catch(() => { setUpcomingTopbarLoading(false); });
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded hover:bg-neutral-300/80 transition-colors"
+              title="Anstehende Termine"
             >
-              <Globe className="w-5 h-5 shrink-0 text-neutral-400" />
-              <span className="flex-1 text-left">Quellen</span>
-              {scraperMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">{upcomingTopbarLoading ? 'Lade…' : 'Anstehende Termine'}</span>
+              {upcomingTopbarOpen && !upcomingTopbarLoading && <span className="text-xs text-neutral-500">({upcomingTopbarEvents.length})</span>}
             </button>
-            {scraperMenuOpen && (
-              <div className="ml-2 mt-1 pl-4 border-l border-neutral-800 space-y-0.5">
-                {scraperSubItems.map((sub) => {
-                  const isSubActive = activeNav === sub.id;
-                  return (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => setActiveNav(sub.id)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                        isSubActive
-                          ? sub.id === 'scraper-gelbeseiten'
-                            ? 'bg-[#F5C400]/20 text-[#F5C400] font-medium border-l-2 border-[#F5C400] -ml-px pl-3'
-                            : 'bg-[#00a651]/20 text-emerald-300 font-medium border-l-2 border-[#00a651] -ml-px pl-3'
-                          : 'text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-200'
-                      }`}
-                    >
-                      <span className="flex-1 text-left truncate">{sub.label}</span>
-                      {isSubActive && <ChevronRight className="w-3.5 h-3.5 shrink-0" />}
-                    </button>
-                  );
-                })}
+            {upcomingTopbarOpen && (
+              <div className="absolute right-0 top-full mt-1 w-80 max-h-72 overflow-y-auto rounded-lg border border-neutral-300 bg-white shadow-xl z-[100] py-2">
+                {upcomingTopbarEvents.length === 0 ? (
+                  <p className="px-3 py-4 text-sm text-neutral-500">Keine anstehenden Termine.</p>
+                ) : (
+                  <ul className="space-y-0">
+                    {upcomingTopbarEvents.slice(0, 20).map((ev) => (
+                      <li key={ev.id}>
+                        <button
+                          type="button"
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 text-neutral-800"
+                          onClick={() => { setUpcomingTopbarOpen(false); setCalendarFromContact(null); setCalendarEditEvent(ev); setCalendarForm({ title: ev.title, startDate: ev.start_at.slice(0, 10), startTime: ev.start_at.slice(11, 16), endDate: ev.end_at.slice(0, 10), endTime: ev.end_at.slice(11, 16), sales_rep: ev.sales_rep, notes: ev.notes || '', contact_id: ev.contact_id ?? null, recommendedProductIds: ev.recommended_product_ids ?? [], website_state: ev.website_state || '', google_state: ev.google_state || '', social_media_state: ev.social_media_state || '' }); setCalendarDialogOpen(true); }}
+                        >
+                          <span className="font-medium block">{ev.title}</span>
+                          <span className="text-xs text-neutral-500">
+                            {new Date(ev.start_at).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </div>
-          <p className="px-3 py-2 mt-6 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-            Tools
-          </p>
-          <div className="mt-0.5">
-            <button
-              type="button"
-              onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                isToolsActive ? 'bg-neutral-800 text-white' : 'text-neutral-300 hover:bg-neutral-800/70 hover:text-white'
-              }`}
-            >
-              <Wrench className="w-5 h-5 shrink-0 text-neutral-400" />
-              <span className="flex-1 text-left">Tools</span>
-              {toolsMenuOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
-            </button>
-            {toolsMenuOpen && (
-              <div className="ml-2 mt-1 pl-4 border-l border-neutral-800 space-y-0.5">
-                {toolsSubItems.map((sub) => {
-                  const isSubActive = activeNav === sub.id;
-                  return (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => setActiveNav(sub.id)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                        isSubActive
-                          ? 'bg-[#cb530a]/20 text-[#cb530a] font-medium border-l-2 border-[#cb530a] -ml-px pl-3'
-                          : 'text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-200'
-                      }`}
-                    >
-                      <span className="flex-1 text-left truncate">{sub.label}</span>
-                      {isSubActive && <ChevronRight className="w-3.5 h-3.5 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </nav>
-      </aside>
+          <button
+            type="button"
+            onClick={() => setHistoryDialogOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded hover:bg-neutral-300/80 transition-colors"
+            title="Aktivitätsverlauf"
+          >
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">History</span>
+          </button>
+        </div>
+      </header>
 
-      {/* Main Content – min-w-0 verhindert Überlauf; nur Tabellen-Container scrollt horizontal */}
-      <div className="flex-1 ml-64 min-w-0 overflow-x-hidden flex flex-col">
-        {/* Minimale Top-Bar: Profil + Abmelden */}
-        <header className="bg-black text-white border-b border-gray-800 sticky top-0 z-50">
-          <div className="px-4 flex items-center justify-between h-10">
-            <span className="text-xs text-gray-400">Eingeloggt als <strong className="text-white">{salesRep === 'sven' ? 'Sven' : salesRep === 'pascal' ? 'Pascal' : '—'}</strong></span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setHistoryDialogOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm hover:bg-gray-800 rounded transition-colors"
-                title="Aktivitätsverlauf"
-              >
-                <History className="w-4 h-4" />
-                <span>History</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm hover:bg-gray-800 rounded transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Abmelden</span>
-              </button>
+      {/* Sidebar – unter der Top-Bar; Canva-Stil; Flyout nur neben dem Menüpunkt, abgerundet */}
+      <div
+        className="admin-sidebar-wrap fixed left-0 top-10 bottom-0 z-40 flex"
+        onMouseLeave={() => { if (!flyoutHoveredRef.current) setSidebarFlyout(null); }}
+      >
+        <aside className="w-[97px] bg-white border-r border-neutral-300 flex flex-col shrink-0 shadow-sm">
+          <nav className="admin-sidebar-nav flex-1 py-2 min-h-0">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">CRM</p>
+            <div className="space-y-0.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveNav(item.id)}
+                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
+                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Akquise</p>
+            <div className="space-y-0.5">
+              {smartViewItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveNav(item.id)}
+                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
+                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Leadmagnet</p>
+            <button
+              ref={quellenBtnRef}
+              type="button"
+              onClick={() => setActiveNav(scraperSubItems[0]?.id ?? 'scraper-gelbeseiten')}
+              onMouseEnter={() => { setSidebarFlyout('quellen'); setFlyoutTop(quellenBtnRef.current ? quellenBtnRef.current.getBoundingClientRect().top : 0); }}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
+                isScraperActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+              }`}
+            >
+              <Magnet className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] leading-tight text-center font-medium">Leadmagnet</span>
+            </button>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Tools</p>
+            <button
+              ref={toolsBtnRef}
+              type="button"
+              onClick={() => setActiveNav(toolsSubItems[0]?.id ?? 'kalender')}
+              onMouseEnter={() => { setSidebarFlyout('tools'); setFlyoutTop(toolsBtnRef.current ? toolsBtnRef.current.getBoundingClientRect().top : 0); }}
+              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-colors ${
+                isToolsActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:bg-neutral-300/80'
+              }`}
+            >
+              <Wrench className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] leading-tight text-center font-medium">Tools</span>
+            </button>
+          </nav>
+        </aside>
+
+        {/* Flyout nur neben dem Menüpunkt, abgerundet, nicht über volle Höhe */}
+        {sidebarFlyout && (
+          <div
+            className="fixed w-52 bg-[#f0f0f0] border border-neutral-200 rounded-lg shadow-xl flex flex-col py-2.5 z-50"
+            style={{ left: 97, top: flyoutTop }}
+            onMouseEnter={() => { flyoutHoveredRef.current = true; }}
+            onMouseLeave={() => { flyoutHoveredRef.current = false; setSidebarFlyout(null); }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 px-3 pb-1.5">
+              {sidebarFlyout === 'quellen' ? 'Leadmagnet' : 'Tools'}
+            </p>
+            <div className="space-y-0.5">
+              {sidebarFlyout === 'quellen'
+                ? scraperSubItems.map((sub) => {
+                    const isSubActive = activeNav === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => setActiveNav(sub.id)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
+                          isSubActive
+                            ? sub.id === 'scraper-gelbeseiten'
+                              ? 'bg-[#F5C400]/25 text-[#b88600] font-medium'
+                              : 'bg-[#00a651]/20 text-emerald-700 font-medium'
+                            : 'text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    );
+                  })
+                : toolsSubItems.map((sub) => {
+                    const isSubActive = activeNav === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => setActiveNav(sub.id)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
+                          isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    );
+                  })}
             </div>
           </div>
-        </header>
+        )}
+      </div>
 
+      {/* Main Content – unter der fixen Top-Bar */}
+      <div className="flex-1 ml-[97px] pt-10 min-w-0 overflow-x-hidden flex flex-col">
         {migrationRequired && (
           <div className="bg-[#cb530a] text-white px-6 py-3 flex items-center justify-between gap-4">
             <span className="font-medium">
@@ -1265,8 +1377,149 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Content: Bewertungs-Funnel, Scraper-Seiten oder CRM-Views */}
-        {activeNav === 'bewertungs-funnel' ? (
+        {/* Content: Kalender, Bewertungs-Funnel, Scraper-Seiten oder CRM-Views */}
+        {activeNav === 'kalender' ? (
+          <div className="p-6 min-h-[calc(100vh-4rem)]">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Kalender</h2>
+            <p className="text-sm text-muted-foreground mb-6">Termine anlegen, Kalender einsehen, kommende Termine – für Sven und Pascal.</p>
+            {calendarMigrationRequired && (
+              <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                <CardContent className="p-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">Kalender-Tabelle fehlt. Bitte <code className="text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">CALENDAR_MIGRATION.md</code> in Supabase ausführen.</p>
+                </CardContent>
+              </Card>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <select
+                  value={calendarFilterSalesRep}
+                  onChange={(e) => setCalendarFilterSalesRep(e.target.value as 'alle' | 'sven' | 'pascal')}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="alle">Alle Vertriebler</option>
+                  <option value="sven">Sven</option>
+                  <option value="pascal">Pascal</option>
+                </select>
+                <span className="text-sm text-muted-foreground">
+                  {calendarMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+                </span>
+                <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { const d = new Date(calendarMonth); d.setMonth(d.getMonth() - 1); setCalendarMonth(d); }}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { const d = new Date(calendarMonth); d.setMonth(d.getMonth() + 1); setCalendarMonth(d); }}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setCalendarMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}>Heute</Button>
+              </div>
+              <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={() => { setCalendarFromContact(null); setCalendarEditEvent(null); setCalendarForm({ title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: 'sven', notes: '', contact_id: null, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarDialogOpen(true); }}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Termin hinzufügen
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Monatsansicht */}
+              <div className="lg:col-span-2">
+                <Card className="rounded-xl border border-border/80 overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="grid grid-cols-7 text-center text-xs font-medium border-b border-border bg-muted/50">
+                      {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d) => (
+                        <div key={d} className="py-2">{d}</div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 auto-rows-fr min-h-[320px]">
+                      {(() => {
+                        const y = calendarMonth.getFullYear();
+                        const m = calendarMonth.getMonth();
+                        const first = new Date(y, m, 1);
+                        const startOffset = (first.getDay() + 6) % 7;
+                        const daysInMonth = new Date(y, m + 1, 0).getDate();
+                        const cells = startOffset + daysInMonth;
+                        const rows = Math.ceil(cells / 7);
+                        const items: { date: Date | null; dayNum: number }[] = [];
+                        for (let i = 0; i < rows * 7; i++) {
+                          if (i < startOffset) items.push({ date: null, dayNum: 0 });
+                          else if (i < startOffset + daysInMonth) items.push({ date: new Date(y, m, i - startOffset + 1), dayNum: i - startOffset + 1 });
+                          else items.push({ date: null, dayNum: 0 });
+                        }
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return items.map((cell, idx) => {
+                          if (!cell.date) return <div key={idx} className="border-b border-r border-border/50 bg-muted/20 min-h-[60px]" />;
+                          const d = cell.date;
+                          const dayStart = new Date(d);
+                          dayStart.setHours(0, 0, 0, 0);
+                          const dayEnd = new Date(d);
+                          dayEnd.setHours(23, 59, 59, 999);
+                          const dayEvents = calendarEvents.filter((e) => {
+                            const start = new Date(e.start_at);
+                            return start >= dayStart && start <= dayEnd;
+                          });
+                          const isToday = d.getTime() === today.getTime();
+                          return (
+                            <div
+                              key={idx}
+                              className={`border-b border-r border-border/50 min-h-[60px] p-1 overflow-auto ${isToday ? 'bg-[#cb530a]/10' : ''}`}
+                            >
+                              <span className={`text-xs font-medium ${isToday ? 'text-[#cb530a]' : 'text-muted-foreground'}`}>{d.getDate()}</span>
+                              <div className="space-y-0.5 mt-0.5">
+                                {dayEvents.map((ev) => (
+                                  <button
+                                    key={ev.id}
+                                    type="button"
+                                    className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded bg-[#cb530a]/20 text-foreground truncate hover:bg-[#cb530a]/30"
+                                    title={`${ev.title} · ${new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`}
+                                    onClick={() => { setCalendarFromContact(null); setCalendarEditEvent(ev); setCalendarForm({ title: ev.title, startDate: ev.start_at.slice(0, 10), startTime: ev.start_at.slice(11, 16), endDate: ev.end_at.slice(0, 10), endTime: ev.end_at.slice(11, 16), sales_rep: ev.sales_rep, notes: ev.notes || '', contact_id: ev.contact_id ?? null, recommendedProductIds: ev.recommended_product_ids ?? [], website_state: ev.website_state || '', google_state: ev.google_state || '', social_media_state: ev.social_media_state || '' }); setCalendarDialogOpen(true); }}
+                                  >
+                                    {new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} {ev.title}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Kommende Termine */}
+              <div>
+                <Card className="rounded-xl border border-border/80">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Kommende Termine</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {(() => {
+                      const upcoming = calendarUpcomingEvents.slice(0, 15);
+                      if (upcoming.length === 0) return <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>;
+                      return (
+                        <ul className="space-y-2">
+                          {upcoming.map((ev) => (
+                            <li key={ev.id}>
+                              <button
+                                type="button"
+                                className="w-full text-left text-sm p-2 rounded-lg border border-border/80 hover:bg-muted/50"
+                                onClick={() => { setCalendarFromContact(null); setCalendarEditEvent(ev); setCalendarForm({ title: ev.title, startDate: ev.start_at.slice(0, 10), startTime: ev.start_at.slice(11, 16), endDate: ev.end_at.slice(0, 10), endTime: ev.end_at.slice(11, 16), sales_rep: ev.sales_rep, notes: ev.notes || '', contact_id: ev.contact_id ?? null, recommendedProductIds: ev.recommended_product_ids ?? [], website_state: ev.website_state || '', google_state: ev.google_state || '', social_media_state: ev.social_media_state || '' }); setCalendarDialogOpen(true); }}
+                              >
+                                <span className="font-medium block">{ev.title}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(ev.start_at).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · {ev.sales_rep === 'sven' ? 'Sven' : 'Pascal'}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+          </div>
+        ) : activeNav === 'bewertungs-funnel' ? (
           <div className="p-6 min-h-[calc(100vh-4rem)]">
             <h2 className="text-xl font-semibold text-foreground mb-1">Google-Bewertungs-Funnel</h2>
             <p className="text-sm text-muted-foreground mb-6">Wählen Sie einen Kunden aus dem CRM – dann bauen Sie für diesen Kunden einen eigenen Funnel (Empfänger, Vorlage, Versand).</p>
@@ -2294,50 +2547,50 @@ export default function AdminPage() {
           </Card>
         )}
 
-        {/* KPI-Cards – kompakt */}
+        {/* KPI-Cards – flach, wenig Platz */}
         {viewData.showStats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-            <Card className="rounded-lg border border-border/80 bg-card overflow-hidden border-l-4 border-l-neutral-800">
-              <CardContent className="flex items-center justify-between p-3">
+            <Card className="rounded-lg border border-border/80 bg-white overflow-hidden border-l-4 border-l-neutral-800">
+              <CardContent className="flex items-center justify-between py-1.5 px-2.5">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Neu</p>
-                  <p className="text-lg font-bold tabular-nums text-foreground">{kpiNeu}</p>
+                  <p className="text-base font-bold tabular-nums text-foreground leading-tight">{kpiNeu}</p>
                 </div>
-                <div className="rounded-lg bg-neutral-200 p-2"><Clock className="w-4 h-4 text-neutral-700" /></div>
+                <div className="rounded-md bg-neutral-200 p-1.5"><Clock className="w-3.5 h-3.5 text-neutral-700" /></div>
               </CardContent>
             </Card>
-            <Card className="rounded-lg border border-border/80 bg-card overflow-hidden border-l-4 border-l-[#cb530a]">
-              <CardContent className="flex items-center justify-between p-3">
+            <Card className="rounded-lg border border-border/80 bg-white overflow-hidden border-l-4 border-l-[#cb530a]">
+              <CardContent className="flex items-center justify-between py-1.5 px-2.5">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Aktiv</p>
-                  <p className="text-lg font-bold tabular-nums text-foreground">{kpiAktiv}</p>
+                  <p className="text-base font-bold tabular-nums text-foreground leading-tight">{kpiAktiv}</p>
                 </div>
-                <div className="rounded-lg bg-[#cb530a]/10 p-2"><MessageSquare className="w-4 h-4 text-[#cb530a]" /></div>
+                <div className="rounded-md bg-[#cb530a]/10 p-1.5"><MessageSquare className="w-3.5 h-3.5 text-[#cb530a]" /></div>
               </CardContent>
             </Card>
-            <Card className="rounded-lg border border-border/80 bg-card overflow-hidden border-l-4 border-l-neutral-500">
-              <CardContent className="flex items-center justify-between p-3">
+            <Card className="rounded-lg border border-border/80 bg-white overflow-hidden border-l-4 border-l-neutral-500">
+              <CardContent className="flex items-center justify-between py-1.5 px-2.5">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nicht qual. / Wiedervorlage</p>
-                  <p className="text-lg font-bold tabular-nums text-foreground">{kpiNichtQual}</p>
+                  <p className="text-base font-bold tabular-nums text-foreground leading-tight">{kpiNichtQual}</p>
                 </div>
-                <div className="rounded-lg bg-neutral-200 p-2"><XCircle className="w-4 h-4 text-neutral-600" /></div>
+                <div className="rounded-md bg-neutral-200 p-1.5"><XCircle className="w-3.5 h-3.5 text-neutral-600" /></div>
               </CardContent>
             </Card>
-            <Card className="rounded-lg border border-border/80 bg-card overflow-hidden border-l-4 border-l-black">
-              <CardContent className="flex items-center justify-between p-3">
+            <Card className="rounded-lg border border-border/80 bg-white overflow-hidden border-l-4 border-l-black">
+              <CardContent className="flex items-center justify-between py-1.5 px-2.5">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Kunde</p>
-                  <p className="text-lg font-bold tabular-nums text-foreground">{kpiKunde}</p>
+                  <p className="text-base font-bold tabular-nums text-foreground leading-tight">{kpiKunde}</p>
                 </div>
-                <div className="rounded-lg bg-neutral-200 p-2"><CheckCircle2 className="w-4 h-4 text-neutral-800" /></div>
+                <div className="rounded-md bg-neutral-200 p-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-neutral-800" /></div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Filter und Suche – kompakt */}
-        <Card className="rounded-lg border border-border/80 bg-card p-3 mb-3">
+        {/* Filter und Suche – kompakt, weiß wie Suchen-Card */}
+        <Card className="rounded-lg border border-border/80 bg-white p-3 mb-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <div className="flex-1 min-w-0">
               <div className="relative">
@@ -2519,6 +2772,7 @@ export default function AdminPage() {
                             onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, contact })}
                             onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
                             onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
+                            onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
                             getProfileUrl={getProfileUrl}
                             getProfileLabel={getProfileLabel}
                             getWebsiteFromNotes={getWebsiteFromNotes}
@@ -2540,44 +2794,45 @@ export default function AdminPage() {
             /* Table View */
             <div className="space-y-4">
               {viewData.contacts.length === 0 ? (
-                <Card className="rounded-2xl border border-border/80 bg-card shadow-sm p-12 text-center">
+                <Card className="rounded-2xl border border-border/80 bg-white shadow-sm p-12 text-center">
                   <p className="text-muted-foreground">Keine {viewData.title === 'Kundenprojekte' ? 'Projekte' : 'Kontakte'} gefunden.</p>
                 </Card>
               ) : (activeNav === 'leads' || activeNav === 'contacts' || activeNav === 'meine-kontakte' || activeNav === 'kunden' || isSmartView) && viewMode === 'table' ? (
-                /* Tabelle – neues Design: abgerundet, Schatten, klare Zeilen */
-                <div className="min-w-0 overflow-x-auto rounded-2xl border border-border/80 bg-card shadow-sm overflow-hidden">
-                  <Card className="overflow-visible border-0 shadow-none rounded-none bg-transparent">
-                    <Table className="table-fixed w-max min-w-full [&_tr]:border-b [&_tr]:border-border/60">
+                /* Tabelle – Zeilen als kleine breite Cards, seitlich geschlossen wie Suchen-Card, weiß */
+                <div className="min-w-0 overflow-x-auto px-4">
+                  <Card className="overflow-visible border-0 shadow-none rounded-none bg-transparent p-0">
+                    <Table className="table-fixed w-max min-w-full border-separate border-spacing-x-0 border-spacing-y-2">
                       <colgroup>
                         {TABLE_COLUMN_KEYS.map((key) => (
-                          <col key={key} style={{ width: tableColumnWidths[key] ?? 100, minWidth: 40 }} />
+                          <col key={key} style={{ width: getTableColWidth(key), minWidth: RESIZABLE_TABLE_COLUMNS.includes(key) ? 40 : getTableColWidth(key) }} />
                         ))}
                       </colgroup>
                       <TableHeader>
-                        <TableRow className="bg-muted/40 hover:bg-muted/40 border-0">
+                        <TableRow className="bg-white border-2 border-neutral-200 border-0 rounded-t-lg hover:bg-white">
                           {TABLE_COLUMN_KEYS.map((key, idx) => (
                             <TableHead
                               key={key}
-                              style={{ width: tableColumnWidths[key], maxWidth: tableColumnWidths[key], minWidth: 40 }}
-                              className="relative select-none pr-0 overflow-visible"
+                              style={{ width: getTableColWidth(key), maxWidth: getTableColWidth(key), minWidth: RESIZABLE_TABLE_COLUMNS.includes(key) ? 40 : getTableColWidth(key) }}
+                              className={`relative select-none pr-0 overflow-visible ${idx === 0 ? 'rounded-tl-lg' : ''} ${idx === TABLE_COLUMN_KEYS.length - 1 ? 'rounded-tr-lg' : ''}`}
                             >
                               <span className="block truncate pr-2">
-                                {key === 'quelle' ? 'Quelle' : key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'profil' ? '11880 Profil' : key === 'telefon' ? 'Telefon' : key === 'email' ? 'E-Mail' : key === 'website' ? 'Website' : key === 'ort' ? 'Ort' : key === 'strasse' ? 'Straße' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
+                                {key === 'quelle' ? 'Quelle' : key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'telefon' ? 'Telefon' : key === 'email' ? 'E-Mail' : key === 'website' ? 'Links' : key === 'ort' ? 'Ort' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
                               </span>
-                              {/* Sichtbarer Spaltentrenner – immer sichtbar, zum Ziehen */}
-                              <div
-                                role="separator"
-                                aria-orientation="vertical"
-                                className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 shrink-0 border-l-2 border-gray-400 hover:border-[#cb530a] hover:bg-primary/20 active:border-[#cb530a] active:bg-primary/30"
-                                style={{ minWidth: 10 }}
-                                title="Spaltenbreite ziehen"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setResizingColumn(key);
-                                  resizeStartRef.current = { x: e.clientX, w: tableColumnWidths[key] ?? 100 };
-                                }}
-                              />
+                              {RESIZABLE_TABLE_COLUMNS.includes(key) && (
+                                <div
+                                  role="separator"
+                                  aria-orientation="vertical"
+                                  className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 shrink-0 border-l-2 border-gray-400 hover:border-[#cb530a] hover:bg-primary/20 active:border-[#cb530a] active:bg-primary/30"
+                                  style={{ minWidth: 10 }}
+                                  title="Spaltenbreite ziehen"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setResizingColumn(key);
+                                    resizeStartRef.current = { x: e.clientX, w: tableColumnWidths[key] ?? 100 };
+                                  }}
+                                />
+                              )}
                             </TableHead>
                           ))}
                         </TableRow>
@@ -2590,14 +2845,14 @@ export default function AdminPage() {
                           return (
                             <TableRow
                               key={contact.id}
-                              className={`hover:bg-muted/30 transition-colors ${getSourceBorderClass(contact.source)}`}
+                              className={`border-b-0 bg-white border-2 border-neutral-200 hover:border-neutral-300 transition-colors ${getSourceBorderClass(contact.source)}`}
                               onContextMenu={(e) => {
                                 e.preventDefault();
                                 setContextMenu({ x: e.clientX, y: e.clientY, contact });
                               }}
                             >
-                              <TableCell style={{ width: tableColumnWidths.quelle, maxWidth: tableColumnWidths.quelle, minWidth: 0 }} className="overflow-hidden"><span className="block truncate text-xs font-medium text-muted-foreground min-w-0">{getSourceLabel(contact.source)}</span></TableCell>
-                              <TableCell style={{ width: tableColumnWidths.vertriebler, maxWidth: tableColumnWidths.vertriebler, minWidth: 0 }} className="overflow-hidden min-w-0">
+                              <TableCell style={{ width: getTableColWidth('quelle'), maxWidth: getTableColWidth('quelle'), minWidth: 0 }} className="overflow-hidden rounded-l-lg"><span className="block truncate text-xs font-medium text-muted-foreground min-w-0">{getSourceLabel(contact.source)}</span></TableCell>
+                              <TableCell style={{ width: getTableColWidth('vertriebler'), maxWidth: getTableColWidth('vertriebler'), minWidth: 0 }} className="overflow-hidden min-w-0">
                                 <Button
                                   type="button"
                                   variant="outline"
@@ -2608,13 +2863,8 @@ export default function AdminPage() {
                                   {contact.assigned_to === 'sven' ? 'Sven' : contact.assigned_to === 'pascal' ? 'Pascal' : '—'}
                                 </Button>
                               </TableCell>
-                              <TableCell style={{ width: tableColumnWidths.firmaName, maxWidth: tableColumnWidths.firmaName, minWidth: 0 }} className="font-medium overflow-hidden min-w-0" title={firmaName}><span className="block truncate min-w-0">{firmaName}</span></TableCell>
-                              <TableCell style={{ width: tableColumnWidths.profil, maxWidth: tableColumnWidths.profil, minWidth: 0 }} className="overflow-hidden min-w-0">
-                                {profileUrl ? (
-                                  <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium text-xs block truncate min-w-0" title={profileLabel || undefined}>Link →</a>
-                                ) : '—'}
-                              </TableCell>
-                              <TableCell style={{ width: tableColumnWidths.telefon, maxWidth: tableColumnWidths.telefon, minWidth: 0 }} className="overflow-hidden min-w-0">
+                              <TableCell style={{ width: getTableColWidth('firmaName'), maxWidth: getTableColWidth('firmaName'), minWidth: 0 }} className="font-medium overflow-hidden min-w-0" title={firmaName}><span className="block truncate min-w-0">{firmaName}</span></TableCell>
+                              <TableCell style={{ width: getTableColWidth('telefon'), maxWidth: getTableColWidth('telefon'), minWidth: 0 }} className="overflow-hidden min-w-0">
                                 {contact.phone ? (
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-muted-foreground truncate">{contact.phone}</span>
@@ -2629,15 +2879,19 @@ export default function AdminPage() {
                                   </div>
                                 ) : '—'}
                               </TableCell>
-                              <TableCell style={{ width: tableColumnWidths.email, maxWidth: tableColumnWidths.email, minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.email || '—'}</TableCell>
-                              <TableCell style={{ width: tableColumnWidths.website, maxWidth: tableColumnWidths.website, minWidth: 0 }} className="overflow-hidden min-w-0">
-                                {getWebsiteFromNotes(contact.notes) ? (
-                                  <a href={getWebsiteFromNotes(contact.notes)!} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs block truncate min-w-0" title={getWebsiteFromNotes(contact.notes)!}>Website</a>
-                                ) : '—'}
+                              <TableCell style={{ width: getTableColWidth('email'), maxWidth: getTableColWidth('email'), minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.email || '—'}</TableCell>
+                              <TableCell style={{ width: getTableColWidth('website'), maxWidth: getTableColWidth('website'), minWidth: 0 }} className="overflow-hidden min-w-0">
+                                <div className="flex flex-col gap-0.5 text-xs">
+                                  {getWebsiteFromNotes(contact.notes) ? (
+                                    <a href={getWebsiteFromNotes(contact.notes)!} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block truncate min-w-0" title={getWebsiteFromNotes(contact.notes)!}>Website</a>
+                                  ) : <span className="text-muted-foreground">—</span>}
+                                  {profileUrl ? (
+                                    <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block truncate min-w-0" title={profileLabel || undefined}>Profil</a>
+                                  ) : null}
+                                </div>
                               </TableCell>
-                              <TableCell style={{ width: tableColumnWidths.ort, maxWidth: tableColumnWidths.ort, minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.city || '—'}</TableCell>
-                              <TableCell style={{ width: tableColumnWidths.strasse, maxWidth: tableColumnWidths.strasse, minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate" title={contact.street || ''}>{contact.street || '—'}</TableCell>
-                              <TableCell style={{ width: tableColumnWidths.sales, maxWidth: tableColumnWidths.sales, minWidth: 0 }} className="overflow-hidden min-w-0">
+                              <TableCell style={{ width: getTableColWidth('ort'), maxWidth: getTableColWidth('ort'), minWidth: 0 }} className="text-muted-foreground overflow-hidden min-w-0 truncate">{contact.city || '—'}</TableCell>
+                              <TableCell style={{ width: getTableColWidth('sales'), maxWidth: getTableColWidth('sales'), minWidth: 0 }} className="overflow-hidden min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   {opportunitySums[contact.id] != null && opportunitySums[contact.id] > 0 && (
                                     <span className="text-xs font-medium text-emerald-700 tabular-nums">{opportunitySums[contact.id].toLocaleString('de-DE')} €</span>
@@ -2645,9 +2899,13 @@ export default function AdminPage() {
                                   <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => setProductPickerContact(contact)} title="Produkte / Mögliche Sales">
                                     Produkte
                                   </Button>
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }} title="Termin mit diesem Lead">
+                                    <Calendar className="w-3.5 h-3.5 mr-0.5 inline" />
+                                    Termin
+                                  </Button>
                                 </div>
                               </TableCell>
-                              <TableCell style={{ width: tableColumnWidths.status, maxWidth: tableColumnWidths.status, minWidth: 0 }} className="overflow-hidden min-w-0">
+                              <TableCell style={{ width: getTableColWidth('status'), maxWidth: getTableColWidth('status'), minWidth: 0 }} className="overflow-hidden min-w-0 rounded-r-lg">
                                 <Button type="button" variant="outline" size="sm" className={`h-7 w-full min-w-0 text-xs justify-start font-semibold ${getStatusColor(contact.status)} border-current/30`} title="Klicken zum Ändern" onClick={() => setStatusDialogContact(contact)}>
                                   <span className="truncate block">{getStatusLabel(contact.status)}</span>
                                 </Button>
@@ -2671,6 +2929,7 @@ export default function AdminPage() {
                     onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
                     onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
                     onProductsClick={() => setProductPickerContact(contact)}
+                    onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
                     opportunitySum={opportunitySums[contact.id]}
                     getProfileUrl={getProfileUrl}
                     getProfileLabel={getProfileLabel}
@@ -2851,6 +3110,164 @@ export default function AdminPage() {
               </ul>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Termin anlegen / bearbeiten (global: aus Kalender oder aus Lead) */}
+      <Dialog open={calendarDialogOpen} onOpenChange={(open) => { if (!open) { setCalendarDialogOpen(false); setCalendarEditEvent(null); setCalendarFromContact(null); } }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{calendarEditEvent ? 'Termin bearbeiten' : calendarFromContact ? 'Termin mit Lead' : 'Termin anlegen'}</DialogTitle>
+            <DialogDescription>
+              {calendarFromContact ? `Lead: ${calendarFromContact.company || `${calendarFromContact.first_name || ''} ${calendarFromContact.last_name || ''}`.trim() || 'Kontakt'}` : 'Vertriebler, Titel, Start und Ende.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            {(calendarFromContact || calendarForm.contact_id) && (
+              <div className="rounded-lg bg-muted/50 p-2 text-sm text-muted-foreground">
+                {calendarFromContact ? `Lead: ${calendarFromContact.company || [calendarFromContact.first_name, calendarFromContact.last_name].filter(Boolean).join(' ').trim() || 'Kontakt'}` : `Lead verknüpft (ID ${calendarForm.contact_id})`}
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Titel *</Label>
+              <Input value={calendarForm.title} onChange={(e) => setCalendarForm(f => ({ ...f, title: e.target.value }))} placeholder="z. B. Kundenanruf" className="mt-1 h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Vertriebler</Label>
+              <select value={calendarForm.sales_rep} onChange={(e) => setCalendarForm(f => ({ ...f, sales_rep: e.target.value as 'sven' | 'pascal' }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="sven">Sven</option>
+                <option value="pascal">Pascal</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Start (Datum)</Label>
+                <Input type="date" value={calendarForm.startDate} onChange={(e) => setCalendarForm(f => ({ ...f, startDate: e.target.value }))} className="mt-1 h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Start (Uhrzeit)</Label>
+                <Input type="time" value={calendarForm.startTime} onChange={(e) => setCalendarForm(f => ({ ...f, startTime: e.target.value }))} className="mt-1 h-9" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Ende (Datum)</Label>
+                <Input type="date" value={calendarForm.endDate} onChange={(e) => setCalendarForm(f => ({ ...f, endDate: e.target.value }))} className="mt-1 h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Ende (Uhrzeit)</Label>
+                <Input type="time" value={calendarForm.endTime} onChange={(e) => setCalendarForm(f => ({ ...f, endTime: e.target.value }))} className="mt-1 h-9" />
+              </div>
+            </div>
+            <div className="border-t pt-3 mt-1">
+              <Label className="text-xs font-semibold">Termin-Vorbereitung (Vertrieb)</Label>
+              <div className="grid gap-2 mt-2">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Empfohlene Produkte</Label>
+                  <div className="flex flex-wrap gap-1 mt-1 max-h-24 overflow-y-auto rounded border border-input p-2">
+                    {products.map((p) => {
+                      const checked = calendarForm.recommendedProductIds.includes(p.id);
+                      return (
+                        <label key={p.id} className="inline-flex items-center gap-1 text-xs cursor-pointer">
+                          <input type="checkbox" checked={checked} onChange={() => setCalendarForm(f => ({ ...f, recommendedProductIds: checked ? f.recommendedProductIds.filter(id => id !== p.id) : [...f.recommendedProductIds, p.id] }))} className="rounded" />
+                          {p.name}
+                        </label>
+                      );
+                    })}
+                    {products.length === 0 && <span className="text-xs text-muted-foreground">Keine Produkte angelegt.</span>}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Website-Zustand</Label>
+                  <select value={calendarForm.website_state} onChange={(e) => setCalendarForm(f => ({ ...f, website_state: e.target.value }))} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
+                    <option value="">—</option>
+                    <option value="keine">Keine</option>
+                    <option value="vorhanden">Vorhanden</option>
+                    <option value="veraltet">Veraltet</option>
+                    <option value="unbekannt">Unbekannt</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Google-Zustand</Label>
+                  <select value={calendarForm.google_state} onChange={(e) => setCalendarForm(f => ({ ...f, google_state: e.target.value }))} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
+                    <option value="">—</option>
+                    <option value="kein_profil">Kein Profil</option>
+                    <option value="profil_vorhanden">Profil vorhanden</option>
+                    <option value="bewertungen_vorhanden">Bewertungen vorhanden</option>
+                    <option value="ausbaufähig">Ausbaufähig</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Social-Media-Zustand</Label>
+                  <select value={calendarForm.social_media_state} onChange={(e) => setCalendarForm(f => ({ ...f, social_media_state: e.target.value }))} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
+                    <option value="">—</option>
+                    <option value="keine">Keine</option>
+                    <option value="teilweise">Teilweise</option>
+                    <option value="aktiv">Aktiv</option>
+                    <option value="unbekannt">Unbekannt</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Notizen</Label>
+              <Textarea value={calendarForm.notes} onChange={(e) => setCalendarForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="mt-1 text-sm" placeholder="Optional" />
+            </div>
+          </div>
+          <DialogFooter>
+            {calendarEditEvent && (
+              <Button
+                variant="destructive"
+                className="mr-auto"
+                onClick={async () => {
+                  if (!confirm('Termin wirklich löschen?')) return;
+                  try {
+                    const res = await fetch(`/api/admin/calendar/events/${calendarEditEvent.id}`, { method: 'DELETE', credentials: 'include' });
+                    if (!res.ok) return;
+                    setCalendarEvents(prev => prev.filter(e => e.id !== calendarEditEvent.id));
+                    setCalendarUpcomingEvents(prev => prev.filter(e => e.id !== calendarEditEvent.id));
+                    setCalendarDialogOpen(false);
+                    setCalendarEditEvent(null);
+                    setCalendarFromContact(null);
+                  } catch (e) { console.error(e); }
+                }}
+              >
+                Löschen
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => { setCalendarDialogOpen(false); setCalendarEditEvent(null); setCalendarFromContact(null); }}>Abbrechen</Button>
+            <Button
+              className="bg-[#cb530a] hover:bg-[#a84308]"
+              onClick={async () => {
+                const startDate = calendarForm.startDate || new Date().toISOString().slice(0, 10);
+                const endDate = calendarForm.endDate || startDate;
+                const start_at = `${startDate}T${calendarForm.startTime || '09:00'}:00`;
+                const end_at = `${endDate}T${calendarForm.endTime || '09:30'}:00`;
+                if (!calendarForm.title.trim()) return;
+                const payload = { title: calendarForm.title, sales_rep: calendarForm.sales_rep, start_at, end_at, notes: calendarForm.notes || null, contact_id: calendarForm.contact_id ?? null, recommended_product_ids: calendarForm.recommendedProductIds, website_state: calendarForm.website_state || null, google_state: calendarForm.google_state || null, social_media_state: calendarForm.social_media_state || null };
+                try {
+                  if (calendarEditEvent) {
+                    const res = await fetch(`/api/admin/calendar/events/${calendarEditEvent.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) });
+                    if (!res.ok) { const d = await res.json(); alert(d.error || 'Fehler'); return; }
+                    const { data } = await res.json();
+                    setCalendarEvents(prev => prev.map(e => e.id === data.id ? data : e));
+                    setCalendarUpcomingEvents(prev => prev.map(e => e.id === data.id ? data : e));
+                  } else {
+                    const res = await fetch('/api/admin/calendar/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) });
+                    if (!res.ok) { const d = await res.json(); alert(d.error || 'Fehler'); return; }
+                    const { data } = await res.json();
+                    setCalendarEvents(prev => [...prev, data].sort((a, b) => a.start_at.localeCompare(b.start_at)));
+                    setCalendarUpcomingEvents(prev => [...prev, data].sort((a, b) => a.start_at.localeCompare(b.start_at)));
+                  }
+                  setCalendarDialogOpen(false);
+                  setCalendarEditEvent(null);
+                  setCalendarFromContact(null);
+                } catch (e) { console.error(e); alert('Fehler'); }
+              }}
+            >
+              {calendarEditEvent ? 'Speichern' : 'Anlegen'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -3053,6 +3470,7 @@ function ContactCard({
   fullWidth = false,
   onAssignedChange,
   onStatusClick,
+  onCalendarClick,
 }: {
   contact: ContactSubmission;
   leadStatuses: readonly { value: string; label: string }[];
@@ -3071,8 +3489,8 @@ function ContactCard({
   getSourceBorderClass: (source: string | null | undefined) => string;
   fullWidth?: boolean;
   onAssignedChange?: (assignedTo: string | null) => void;
-  /** Wenn gesetzt: Klick auf Status-Badge/Button öffnet diesen Callback (z. B. zentrales Status-Popup) statt eigenem Dialog */
   onStatusClick?: () => void;
+  onCalendarClick?: () => void;
 }) {
   const profileUrl = getProfileUrl(contact);
   const profileLabel = getProfileLabel(contact);
@@ -3090,7 +3508,7 @@ function ContactCard({
   };
   return (
     <Card
-      className={`rounded-xl border border-border/80 bg-card shadow-sm hover:shadow-md transition-all duration-200 p-4 cursor-context-menu ${getSourceBorderClass(contact.source)}`}
+      className={`rounded-xl border border-border/80 bg-white shadow-sm hover:shadow-md transition-all duration-200 p-4 cursor-context-menu ${getSourceBorderClass(contact.source)}`}
       onContextMenu={(e) => {
         e.preventDefault();
         onContextMenu(e);
@@ -3266,6 +3684,12 @@ function ContactCard({
         >
           Notizen {contact.notes ? 'bearbeiten' : 'hinzufügen'}
         </Button>
+        {onCalendarClick && (
+          <Button type="button" variant="outline" size="sm" className="h-9 rounded-md border-input" onClick={onCalendarClick} title="Termin mit diesem Lead anlegen">
+            <Calendar className="w-4 h-4 mr-1.5" />
+            Termin legen
+          </Button>
+        )}
         {!onStatusClick && (
           <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
             <DialogContent className="sm:max-w-sm">

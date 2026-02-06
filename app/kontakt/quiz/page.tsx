@@ -15,6 +15,8 @@ interface QuizData {
   companySize?: string;
   selectedPaket?: string;
   optionalAddons?: string | string[];
+  /** Add-on-Schritt (Paket 1: Google; Paket 2: Social none/basic/growth/pro) */
+  addons?: string | string[];
 }
 
 const BASE_STEPS = [
@@ -162,6 +164,18 @@ function QuizContent() {
     setIsSubmitting(true);
 
     try {
+      const addons = quizData.addons;
+      let bundleSummary: { paket: string; totalMonthlyNetto: number; label: string } | undefined;
+      if (paket === '1') {
+        const withGoogle = Array.isArray(addons) && addons.includes('google-bewertungen');
+        const total = withGoogle ? 398 : 299;
+        bundleSummary = { paket: '1', totalMonthlyNetto: total, label: withGoogle ? 'Basis + Google Bewertungen (398 €/Monat)' : 'Basis pur (299 €/Monat)' };
+      } else if (paket === '2') {
+        const total = addons === 'social-pro' ? 1348 : addons === 'social-growth' ? 1048 : addons === 'social-basic' ? 848 : 599;
+        const label = addons === 'social-pro' ? 'Professional + Social Pro (1.348 €/Monat)' : addons === 'social-growth' ? 'Professional + Social Growth (1.048 €/Monat)' : addons === 'social-basic' ? 'Professional + Social Basic (848 €/Monat)' : 'Professional pur (599 €/Monat)';
+        bundleSummary = { paket: '2', totalMonthlyNetto: total, label };
+      }
+
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -169,7 +183,7 @@ function QuizContent() {
         },
         body: JSON.stringify({
           ...formData,
-          quizData: quizData,
+          quizData: { ...quizData, ...(bundleSummary && { bundleSummary }) },
         }),
       });
 

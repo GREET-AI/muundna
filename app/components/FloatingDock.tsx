@@ -128,7 +128,7 @@ export function FloatingDock() {
                     <Link
                       href={getRoute(item.title)}
                       onClick={() => setOpenDropup(null)}
-                      className={`flex shrink-0 items-center justify-center gap-1 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${
+                      className={`flex shrink-0 items-center justify-center gap-1.5 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${
                         item.cta
                           ? 'bg-[#a84308] hover:bg-[#8f3a07]'
                           : 'hover:bg-white/20'
@@ -150,7 +150,7 @@ export function FloatingDock() {
                   ) : (
                     <Link
                       href={item.href ?? getRoute(item.title)}
-                      className={`flex shrink-0 items-center justify-center rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${
+                      className={`flex shrink-0 items-center justify-center gap-1.5 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${
                         item.cta
                           ? 'bg-[#a84308] hover:bg-[#8f3a07]'
                           : 'hover:bg-white/20'
