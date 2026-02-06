@@ -77,7 +77,7 @@ const ADDON_STEP_PAKET1 = {
   subtitle: 'Sie können Ihr Paket um folgende Option erweitern:',
   type: 'multiple' as const,
   options: [
-    { id: 'google-bewertungen', label: 'Google Bewertungen +99 €/Monat (Rezensions-Management, automatisierte Kundenanfragen)' },
+    { id: 'google-bewertungen', label: 'Google Bewertungen +99 €/Monat (Rezensions-Management, automatisierte Kundenanfragen)', optional: true },
   ]
 };
 
@@ -87,10 +87,10 @@ const ADDON_STEP_PAKET2 = {
   subtitle: 'Wählen Sie optional ein Social-Media-Add-on:',
   type: 'single' as const,
   options: [
-    { id: 'social-none', label: 'Kein Social-Media-Add-on' },
-    { id: 'social-basic', label: 'Social Basic +249 €/Monat (1–2 Plattformen, 1–2 Posts/Woche)' },
-    { id: 'social-growth', label: 'Social Growth +449 €/Monat (2–3 Plattformen, 2–3 Posts/Woche, Community)' },
-    { id: 'social-pro', label: 'Social Pro +749 €/Monat (3–4 Plattformen, 3+ Posts/Woche, Community, Basis-Ads)' },
+    { id: 'social-none', label: 'Kein Social-Media-Add-on', optional: false },
+    { id: 'social-basic', label: 'Social Basic +249 €/Monat', detail: '1 Plattform, 2 Posts/Woche', optional: true },
+    { id: 'social-growth', label: 'Social Growth +449 €/Monat', detail: '3 Plattformen, je 2 Posts/Woche, Community', optional: true },
+    { id: 'social-pro', label: 'Social Pro +749 €/Monat', detail: '3 Plattformen, 3 Posts/Woche, inkl. viraler Reel-Content', optional: true },
   ]
 };
 
@@ -440,33 +440,48 @@ function QuizContent() {
                       </p>
                     )}
 
-                    <div className={`grid ${currentStepData.options.length === 4 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-2 sm:gap-3 mb-6 md:mb-8`}>
+                    <div className={`grid ${currentStepData.id === 'addons' ? 'grid-cols-1 sm:grid-cols-2' : currentStepData.options.length === 4 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4 mb-6 md:mb-8`}>
                       {currentStepData.options.map((option) => {
                         const Icon = 'icon' in option ? option.icon : undefined;
                         const isSelected = Array.isArray(selectedOptions)
                           ? selectedOptions.includes(option.id)
                           : selectedOptions === option.id;
+                        const isAddonCard = currentStepData.id === 'addons';
+                        const isOptional = Boolean('optional' in option && option.optional);
+                        const detail = 'detail' in option && typeof option.detail === 'string' ? option.detail : null;
 
                         return (
                           <button
                             key={option.id}
                             type="button"
                             onClick={() => handleOptionSelect(currentStepData.id, option.id, currentStepData.type)}
-                            className={`p-3 sm:p-4 rounded-xl border-2 transition-all text-left w-full ${
+                            className={`rounded-xl border-2 transition-all text-left w-full ${
+                              isAddonCard ? 'p-4 sm:p-5 shadow-sm hover:shadow-md' : 'p-3 sm:p-4'
+                            } ${
                               isSelected
                                 ? 'border-[#cb530a] bg-[#fef3ed]'
                                 : 'border-gray-300 hover:border-[#cb530a]/50'
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center flex-1 min-w-0">
-                                {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#cb530a] mr-2 sm:mr-3 flex-shrink-0" />}
-                                <span className="font-semibold text-sm sm:text-sm text-gray-800 break-words">
-                                  {option.label}
-                                </span>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center flex-wrap gap-2">
+                                  {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#cb530a] flex-shrink-0" />}
+                                  <span className="font-semibold text-sm sm:text-base text-gray-800 break-words">
+                                    {option.label}
+                                  </span>
+                                  {isAddonCard && isOptional && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                      Optional
+                                    </span>
+                                  )}
+                                </div>
+                                {isAddonCard && detail && (
+                                  <p className="mt-1.5 text-sm text-gray-600 break-words">{detail}</p>
+                                )}
                               </div>
                               {isSelected && (
-                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#cb530a] rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#cb530a] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                   <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                 </div>
                               )}

@@ -317,7 +317,7 @@ export default function AdminPage() {
     if (!isAuthenticated) return;
     setContactsPage(0);
     if (activeNav === 'leads') loadContacts(true, 0);
-    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung'].includes(activeNav)) loadContacts(undefined, 0);
+    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung', 'smart-leads-anrufen', 'smart-neue-leads', 'smart-heute-anrufen', 'smart-follow-up', 'smart-kein-kontakt-3'].includes(activeNav)) loadContacts(undefined, 0);
   }, [activeNav, isAuthenticated]);
 
   useEffect(() => {
@@ -363,7 +363,10 @@ export default function AdminPage() {
       if (activeNav === 'smart-heute-anrufen' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep && (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch'].includes(c.status));
       if (activeNav === 'smart-leads-anrufen') return filtered.filter((c) => (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
       if (activeNav === 'smart-kein-kontakt-3') { const d = new Date(); d.setDate(d.getDate() - 3); return filtered.filter((c) => new Date(c.updated_at) < d); }
-      if (activeNav === 'smart-neue-leads') return filtered.filter((c) => c.status === 'neu');
+      if (activeNav === 'smart-neue-leads') {
+        const leadSources = ['gelbe_seiten', '11880', 'google_places'];
+        return filtered.filter((c) => c.status === 'neu' && c.source && leadSources.includes(c.source));
+      }
       if (activeNav === 'smart-follow-up') return filtered.filter((c) => c.status === 'wiedervorlage' || c.status === 'qualifiziert');
       return filtered;
     })();
@@ -529,8 +532,8 @@ export default function AdminPage() {
     if (stored === 'sven' || stored === 'pascal') setSalesRep(stored);
   }, []);
 
-  /** Views mit Server-Pagination (limit/offset), Rest lädt mit Cap und filtert clientseitig */
-  const PAGINATED_VIEWS = ['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'leads'];
+  /** Views mit Server-Pagination (limit/offset) – Tabelle/Pipeline immer nur eine Seite */
+  const PAGINATED_VIEWS = ['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'leads', 'smart-neue-leads', 'smart-leads-anrufen', 'smart-heute-anrufen', 'smart-follow-up', 'smart-kein-kontakt-3'];
   const isPaginatedView = PAGINATED_VIEWS.includes(activeNav);
 
   const loadContacts = async (leadsOnly?: boolean, pageOverride?: number) => {
@@ -539,13 +542,17 @@ export default function AdminPage() {
     try {
       const params = new URLSearchParams();
       const page = pageOverride ?? contactsPage;
-      if (leadsOnly) params.set('leads_only', '1');
-      if (isPaginatedView || leadsOnly) {
+      if (activeNav === 'leads') params.set('leads_only', '1');
+      if (isPaginatedView) {
         params.set('limit', String(CONTACTS_PAGE_SIZE));
-        params.set('offset', String((isPaginatedView ? page : 0) * CONTACTS_PAGE_SIZE));
+        params.set('offset', String(page * CONTACTS_PAGE_SIZE));
+      }
+      if (['smart-neue-leads', 'smart-leads-anrufen', 'smart-heute-anrufen', 'smart-follow-up', 'smart-kein-kontakt-3'].includes(activeNav)) {
+        params.set('view', activeNav);
       }
       if (searchTerm.trim()) params.set('search', searchTerm.trim());
       if (activeNav === 'meine-kontakte' && salesRep) params.set('assigned_to', salesRep);
+      if (activeNav === 'smart-heute-anrufen' && salesRep) params.set('assigned_to', salesRep);
       const statusParam = activeNav === 'deals'
         ? (statusFilter !== 'alle' ? statusFilter : 'offen,kontaktversuch,verbunden,qualifiziert,kontaktiert,in_bearbeitung')
         : (activeNav === 'kunden' || activeNav === 'kundenprojekte')
@@ -555,7 +562,7 @@ export default function AdminPage() {
       if (infoFilter.includes('email')) params.set('has_email', '1');
       if (infoFilter.includes('website')) params.set('has_website', '1');
       if (infoFilter.includes('profile')) params.set('has_profile', '1');
-      if (!isPaginatedView && !leadsOnly && !['kalender', 'produkt-tool', 'bewertungs-funnel', 'angebots-erstellung', 'scraper-gelbeseiten', 'scraper-11880'].includes(activeNav)) {
+      if (!isPaginatedView && !['kalender', 'produkt-tool', 'bewertungs-funnel', 'angebots-erstellung', 'scraper-gelbeseiten', 'scraper-11880'].includes(activeNav)) {
         params.set('limit', '3000');
       }
       const url = `/api/admin/contacts?${params.toString()}`;
@@ -1007,10 +1014,16 @@ export default function AdminPage() {
   PIPELINE_COLUMNS.forEach(col => {
     contactsByStatus[col] = filteredContacts.filter(c => statusToPipelineColumn(c.status) === col);
   });
-  const kpiNeu = contactsByStatus.neu?.length ?? 0;
-  const kpiAktiv = (contactsByStatus.offen?.length ?? 0) + (contactsByStatus.kontaktversuch?.length ?? 0) + (contactsByStatus.verbunden?.length ?? 0) + (contactsByStatus.qualifiziert?.length ?? 0) + filteredContacts.filter(c => ['kontaktiert', 'in_bearbeitung'].includes(c.status)).length;
-  const kpiNichtQual = (contactsByStatus.nicht_qualifiziert?.length ?? 0) + (contactsByStatus.wiedervorlage?.length ?? 0);
-  const kpiKunde = (contactsByStatus.kunde?.length ?? 0) + filteredContacts.filter(c => c.status === 'abgeschlossen').length;
+  let kpiNeu = contactsByStatus.neu?.length ?? 0;
+  let kpiAktiv = (contactsByStatus.offen?.length ?? 0) + (contactsByStatus.kontaktversuch?.length ?? 0) + (contactsByStatus.verbunden?.length ?? 0) + (contactsByStatus.qualifiziert?.length ?? 0) + filteredContacts.filter(c => ['kontaktiert', 'in_bearbeitung'].includes(c.status)).length;
+  let kpiNichtQual = (contactsByStatus.nicht_qualifiziert?.length ?? 0) + (contactsByStatus.wiedervorlage?.length ?? 0);
+  let kpiKunde = (contactsByStatus.kunde?.length ?? 0) + filteredContacts.filter(c => c.status === 'abgeschlossen').length;
+  if (isPaginatedView && ['smart-neue-leads', 'smart-leads-anrufen', 'smart-heute-anrufen', 'smart-follow-up', 'smart-kein-kontakt-3'].includes(activeNav)) {
+    kpiNeu = activeNav === 'smart-neue-leads' ? contactsTotal : 0;
+    kpiAktiv = ['smart-leads-anrufen', 'smart-heute-anrufen', 'smart-kein-kontakt-3'].includes(activeNav) ? contactsTotal : 0;
+    kpiNichtQual = activeNav === 'smart-follow-up' ? contactsTotal : 0;
+    kpiKunde = 0;
+  }
 
   const showLoginOrProfile = !isAuthenticated || salesRep === null;
   if (showLoginOrProfile) {
@@ -1168,6 +1181,9 @@ export default function AdminPage() {
           showStats: false
         };
       case 'smart-heute-anrufen': {
+        if (isPaginatedView) {
+          return { title: 'Heute anrufen', description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch). Die Zuordnung erfolgt automatisch durch das System.', contacts, showStats: true };
+        }
         const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
         const early = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch'].includes(c.status);
         const mine = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : filteredContacts;
@@ -1179,6 +1195,9 @@ export default function AdminPage() {
         };
       }
       case 'smart-leads-anrufen': {
+        if (isPaginatedView) {
+          return { title: 'Hot Leads', description: 'Alle mit Telefonnummer in aktiven Phasen. Die Zuordnung erfolgt automatisch durch das System.', contacts, showStats: true };
+        }
         const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
         const active = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status);
         return {
@@ -1189,9 +1208,12 @@ export default function AdminPage() {
         };
       }
       case 'smart-kein-kontakt-3': {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const noContact = (c: ContactSubmission) => new Date(c.updated_at) < sevenDaysAgo;
+        if (isPaginatedView) {
+          return { title: '3 Tage+', description: 'Keine Aktivität seit mehr als 3 Tagen – Vertrieb sollte zeitnah nachfassen. Die Zuordnung erfolgt automatisch durch das System.', contacts, showStats: true };
+        }
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        const noContact = (c: ContactSubmission) => new Date(c.updated_at) < threeDaysAgo;
         return {
           title: '3 Tage+',
           description: 'Keine Aktivität seit mehr als 3 Tagen – Vertrieb sollte zeitnah nachfassen. Die Zuordnung erfolgt automatisch durch das System.',
@@ -1199,14 +1221,23 @@ export default function AdminPage() {
           showStats: true
         };
       }
-      case 'smart-neue-leads':
+      case 'smart-neue-leads': {
+        if (isPaginatedView) {
+          return { title: 'Neue Leads', description: 'Leads aus Gelben Seiten, 11880, Google – Status „Neu“, noch nicht bearbeitet', contacts, showStats: true };
+        }
+        const leadSources = ['gelbe_seiten', '11880', 'google_places'];
+        const isFromLeadSource = (c: ContactSubmission) => (c.source && leadSources.includes(c.source)) || false;
         return {
           title: 'Neue Leads',
-          description: 'Status „Neu“ – noch nicht bearbeitet',
-          contacts: filteredContacts.filter(c => c.status === 'neu'),
+          description: 'Leads aus Gelben Seiten, 11880, Google – Status „Neu“, noch nicht bearbeitet',
+          contacts: filteredContacts.filter(c => c.status === 'neu' && isFromLeadSource(c)),
           showStats: true
         };
+      }
       case 'smart-follow-up':
+        if (isPaginatedView) {
+          return { title: 'Follow-up nötig', description: 'Wiedervorlage oder Qualifiziert – nächster Schritt', contacts, showStats: true };
+        }
         return {
           title: 'Follow-up nötig',
           description: 'Wiedervorlage oder Qualifiziert – nächster Schritt',
@@ -1902,7 +1933,7 @@ export default function AdminPage() {
               </Card>
             )}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <p className="text-sm text-muted-foreground">Pakete (z. B. Basis, Professional, Enterprise), Add-ons (z. B. Google Bewertungen, Social Basic/Growth/Pro), Module (Enterprise-Konfigurator), Einzelprodukte.</p>
+              <p className="text-sm text-muted-foreground">Pakete (z. B. Basis, Professional, Enterprise), Add-ons (z. B. Google Bewertungen, Social Basic: 1 Plattform/2 Posts Woche, Growth: 3 Plattformen/je 2 Posts, Pro: 3 Plattformen/3 Posts inkl. Reels), Module (Enterprise-Konfigurator), Einzelprodukte.</p>
               <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={() => { setProductEditProduct(null); setProductForm({ name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: products.length * 10, for_package: '' }); setProductDialogOpen(true); }}>
                 <Briefcase className="w-4 h-4 mr-2" />
                 Produkt hinzufügen
@@ -1948,7 +1979,7 @@ export default function AdminPage() {
               <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{productEditProduct ? 'Produkt bearbeiten' : 'Produkt anlegen'}</DialogTitle>
-                  <DialogDescription>Abgestimmt mit Website: Pakete (Basis/Professional/Enterprise), Add-ons (z. B. Google +99 €, Social Basic/Growth/Pro), Module für den Enterprise-Konfigurator.</DialogDescription>
+                  <DialogDescription>Abgestimmt mit Website: Pakete (Basis/Professional/Enterprise), Add-ons (z. B. Google +99 €, Social Basic: 1 Plattform/2 Posts Woche, Growth: 3 Plattformen/je 2 Posts, Pro: 3 Plattformen/3 Posts inkl. Reels), Module für den Enterprise-Konfigurator.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-3 py-2">
                   <div>
@@ -3002,9 +3033,9 @@ export default function AdminPage() {
                   Einträge {(contactsPage * CONTACTS_PAGE_SIZE) + 1}–{Math.min((contactsPage + 1) * CONTACTS_PAGE_SIZE, contactsTotal)} von {contactsTotal}
                 </span>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage === 0 || loading} onClick={() => { const prev = contactsPage - 1; setContactsPage(prev); loadContacts(activeNav === 'leads', prev); }}>Zurück</Button>
+                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage === 0 || loading} onClick={() => { const prev = contactsPage - 1; setContactsPage(prev); loadContacts(undefined, prev); }}>Zurück</Button>
                   <span className="text-sm tabular-nums">Seite {contactsPage + 1} von {Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE)}</span>
-                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage >= Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE) - 1 || loading} onClick={() => { const next = contactsPage + 1; setContactsPage(next); loadContacts(activeNav === 'leads', next); }}>Weiter</Button>
+                  <Button variant="outline" size="sm" className="h-8" disabled={contactsPage >= Math.ceil(contactsTotal / CONTACTS_PAGE_SIZE) - 1 || loading} onClick={() => { const next = contactsPage + 1; setContactsPage(next); loadContacts(undefined, next); }}>Weiter</Button>
                 </div>
               </div>
             )}
@@ -3204,7 +3235,7 @@ export default function AdminPage() {
                       onClick={() => {
                         const prev = contactsPage - 1;
                         setContactsPage(prev);
-                        loadContacts(activeNav === 'leads', prev);
+                        loadContacts(undefined, prev);
                       }}
                     >
                       Zurück
@@ -3218,7 +3249,7 @@ export default function AdminPage() {
                       onClick={() => {
                         const next = contactsPage + 1;
                         setContactsPage(next);
-                        loadContacts(activeNav === 'leads', next);
+                        loadContacts(undefined, next);
                       }}
                     >
                       Weiter

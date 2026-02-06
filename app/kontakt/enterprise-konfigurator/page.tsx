@@ -15,9 +15,9 @@ const ENTERPRISE_MODULES = [
   { id: 'telefonie-24h', label: '24/7-Option (nur mit Telefonie)', price: 200, details: 'Telefonie rund um die Uhr', requires: 'telefonie' as const },
   { id: 'email-kalender', label: 'E-Mail, Kalender & Terminlegung', price: 299, details: 'Max. 300 E-Mails, 200 Termine, CRM-Sync. Extra: 0,50 €/E-Mail, 3 €/Termin.' },
   { id: 'google', label: 'Google Bewertungen (erweitert)', price: 199, details: 'Unbegrenzt Anfragen, Automatisierung, Reporting. Basis max. 100; Extra: 3 €/Anfrage.' },
-  { id: 'social-basic', label: 'Social Media Basic', price: 249, details: '1–2 Plattformen, 1–2 Posts/Woche (Mix Bild/Video), max. 8 Posts/Monat. Extra: 30 €/Post.' },
-  { id: 'social-growth', label: 'Social Media Growth', price: 449, details: '2–3 Plattformen, 2–3 Posts/Woche, Community max. 50 Interaktionen, max. 12 Posts/Monat. Extra: 25 €/Post.' },
-  { id: 'social-pro', label: 'Social Media Pro', price: 749, details: '3–4 Plattformen, 3+ Posts/Woche, Voll-Mix + Community bis 8 Std., max. 20 Posts/Monat. Extra: 20 €/Post.' },
+  { id: 'social-basic', label: 'Social Media Basic', price: 249, details: '1 Plattform, 2 Posts/Woche (Mix Bild/Video), max. 8 Posts/Monat. Extra: 30 €/Post.' },
+  { id: 'social-growth', label: 'Social Media Growth', price: 449, details: '3 Plattformen, je 2 Posts/Woche, Community max. 50 Interaktionen, max. 12 Posts/Monat. Extra: 25 €/Post.' },
+  { id: 'social-pro', label: 'Social Media Pro', price: 749, details: '3 Plattformen, 3 Posts/Woche inkl. viraler Reel-Content, Voll-Mix + Community bis 8 Std., max. 20 Posts/Monat. Extra: 20 €/Post.' },
   { id: 'reporting', label: 'Reporting & Dokumentation', price: 99, details: 'Wöchentliche/monatliche KPIs, Custom-Dashboards.' },
   { id: 'website', label: 'Website-Entwicklung & Betreuung', priceOnce: 2000, priceMonthly: 99, details: 'Einmalig ab 2.000 € (Basis-Site: responsiv, SEO) + 99 €/Monat (Updates, Hosting, max. 4 Std. Änderungen; Extra: 50 €/Stunde). E-Commerce +500 € einmalig.' },
 ] as const;

@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const leadsOnly = url.searchParams.get('leads_only') === '1';
+    const view = url.searchParams.get('view') || null;
     const scrapeBatchId = url.searchParams.get('scrape_batch_id') || null;
     const limitParam = url.searchParams.get('limit');
     const offsetParam = url.searchParams.get('offset');
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     const hasEmail = url.searchParams.get('has_email') === '1';
     const hasWebsite = url.searchParams.get('has_website') === '1';
     const hasProfile = url.searchParams.get('has_profile') === '1';
+    const hasPhone = url.searchParams.get('has_phone') === '1';
 
     const usePagination = limitParam != null && limitParam !== '';
     const limit = usePagination ? Math.min(Math.max(1, parseInt(limitParam, 10) || 50), 500) : undefined;
@@ -44,15 +46,37 @@ export async function GET(request: NextRequest) {
     if (leadsOnly) {
       query = query.in('source', ['gelbe_seiten', '11880', 'google_places']);
     }
+    if (view === 'smart-neue-leads') {
+      query = query.in('source', ['gelbe_seiten', '11880', 'google_places']).eq('status', 'neu');
+    }
+    if (view === 'smart-leads-anrufen') {
+      query = query
+        .in('status', ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'])
+        .not('phone', 'is', null).neq('phone', '');
+    }
+    if (view === 'smart-heute-anrufen') {
+      if (assignedTo) query = query.eq('assigned_to', assignedTo);
+      query = query
+        .in('status', ['neu', 'offen', 'kontaktversuch'])
+        .not('phone', 'is', null).neq('phone', '');
+    }
+    if (view === 'smart-follow-up') {
+      query = query.in('status', ['wiedervorlage', 'qualifiziert']);
+    }
+    if (view === 'smart-kein-kontakt-3') {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      query = query.lt('updated_at', threeDaysAgo.toISOString());
+    }
     if (scrapeBatchId) {
       query = query.eq('scrape_batch_id', scrapeBatchId);
     }
-    if (statusFilter && statusFilter !== 'alle') {
+    if (!view && statusFilter && statusFilter !== 'alle') {
       const statuses = statusFilter.split(',').map((s) => s.trim()).filter(Boolean);
       if (statuses.length === 1) query = query.eq('status', statuses[0]);
       else if (statuses.length > 1) query = query.in('status', statuses);
     }
-    if (assignedTo) {
+    if (assignedTo && view !== 'smart-heute-anrufen') {
       query = query.eq('assigned_to', assignedTo);
     }
     if (search.length >= 2) {
@@ -64,6 +88,9 @@ export async function GET(request: NextRequest) {
     }
     if (hasEmail) {
       query = query.not('email', 'is', null).not('email', 'eq', '');
+    }
+    if (hasPhone && !view) {
+      query = query.not('phone', 'is', null).neq('phone', '');
     }
     if (hasWebsite) {
       query = query.ilike('notes', '%Website:%');

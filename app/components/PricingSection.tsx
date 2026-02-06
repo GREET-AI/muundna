@@ -27,7 +27,12 @@ export default function PricingSection() {
       description: 'Erweiterte Telefonbetreuung + optionale Social-Media-Add-ons',
       price: 'ab 599',
       period: ' €/Monat',
-      subline: 'Google Bewertungen inklusive · Social modular: Basic +249 €, Growth +449 €, Pro +749 €',
+      includedNote: 'Google Bewertungen inklusive',
+      optionalAddons: [
+        { label: 'Social Basic', price: '+249 €/Monat', detail: '1 Plattform, 2 Posts/Woche' },
+        { label: 'Social Growth', price: '+449 €/Monat', detail: '3 Plattformen, je 2 Posts/Woche, Community' },
+        { label: 'Social Pro', price: '+749 €/Monat', detail: '3 Plattformen, 3 Posts/Woche, inkl. viraler Reel-Content' }
+      ],
       features: [
         'Erweiterte Telefonie (Branding, Team-Weiterleitung bis 3 Mitarbeiter)',
         'E-Mail, Kalender & Terminlegung (erweitert)',
@@ -39,14 +44,13 @@ export default function PricingSection() {
     },
     {
       name: 'Paket 3: Enterprise',
-      description: 'Voll modular – fixe Preise pro Komponente, Volumenrabatte 10–20 %',
+      description: 'Voll modular – fixe Preise pro Komponente',
       price: 'ab ca. 999',
       period: ' €/Monat',
-      subline: 'Auf Anfrage · Rabatt ab 1.000 € (10 %), ab 1.500 € (15 %), ab 2.000 € (20 %)',
       features: [
         'Telefonie, E-Mail/Kalender, Google Bewertungen, Social (custom) – frei kombinierbar',
         'Reporting & Dokumentation (z. B. 99 €/Monat)',
-        'Website: einmalig ab 2.000 € + 99 €/Monat minimale Betreuung',
+        'Website: ab 2.000 € (einmalig) + 99 €/Monat minimale Betreuung – Einstiegspreis',
         '24/7-Option, CRM-Sync, unbegrenzte Google-Anfragen je nach Modul',
         'Individuelle Anpassungen & dedizierter Support'
       ],
@@ -105,6 +109,19 @@ export default function PricingSection() {
                       )}
                       {'subline' in pkg && pkg.subline && (
                         <p className="text-sm text-gray-500 mt-2">{pkg.subline}</p>
+                      )}
+                      {'includedNote' in pkg && pkg.includedNote && (
+                        <p className="text-sm text-gray-600 mt-2">{pkg.includedNote}</p>
+                      )}
+                      {'optionalAddons' in pkg && Array.isArray(pkg.optionalAddons) && pkg.optionalAddons.length > 0 && (
+                        <div className="mt-2 text-xs">
+                          <p className="text-gray-500 font-medium mb-1">Zusätzlich buchbar:</p>
+                          <ul className="space-y-0.5 text-gray-600">
+                            {pkg.optionalAddons.map((addon: { label: string; price: string; detail: string }, i: number) => (
+                              <li key={i}><span className="font-medium">{addon.label}</span> – {addon.detail}</li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
                     <ul className="space-y-3 mb-8">
