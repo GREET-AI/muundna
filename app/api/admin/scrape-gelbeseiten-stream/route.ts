@@ -8,6 +8,7 @@ import type { Browser } from 'playwright';
 import { buildGelbeSeitenSearchUrl } from '@/lib/scraper-sources';
 import { extractLeadsFromHtml, parseGelbeSeitenProfilePage } from '@/lib/scrape-gelbeseiten-parse';
 import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { launchScraperBrowser } from '@/lib/playwright-browser';
 import type { ScrapedLeadInsert } from '@/types/scraper-lead';
 
 function randomMs(min: number, max: number): number {
@@ -56,20 +57,8 @@ export async function POST(request: NextRequest) {
       try {
         send({ phase: 'anzeigen_sammeln' });
 
-        const { chromium } = await import('playwright');
         await delay(randomMs(1500, 4000));
-
-        browser = await chromium.launch({
-          headless: true,
-          args: [
-            '--disable-blink-features=AutomationControlled',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--window-size=1920,1080',
-          ],
-        });
+        browser = await launchScraperBrowser();
 
         const context = await browser.newContext({
           viewport: { width: 1920, height: 1080 },

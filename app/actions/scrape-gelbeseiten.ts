@@ -32,22 +32,9 @@ export async function scrapeGelbeSeiten(
   let browser: Browser | null = null;
 
   try {
-    const { chromium } = await import('playwright');
-
+    const { launchScraperBrowser } = await import('@/lib/playwright-browser');
     await delay(randomMs(2000, 5000));
-
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--disable-blink-features=AutomationControlled',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-        '--window-size=1920,1080',
-      ],
-    });
+    browser = await launchScraperBrowser();
 
     const context = await browser.newContext({
       viewport: { width: 1920, height: 1080 },
