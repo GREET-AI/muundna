@@ -125,9 +125,9 @@ export function FloatingDock() {
                   onMouseLeave={scheduleClose}
                 >
                   {hasSub ? (
-                    <button
-                      type="button"
-                      onClick={() => setOpenDropup(isOpen ? null : i)}
+                    <Link
+                      href={getRoute(item.title)}
+                      onClick={() => setOpenDropup(null)}
                       className={`flex shrink-0 items-center justify-center gap-1 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${
                         item.cta
                           ? 'bg-[#a84308] hover:bg-[#8f3a07]'
@@ -146,7 +146,7 @@ export function FloatingDock() {
                         className={`hidden h-4 w-4 shrink-0 transition-transform sm:block ${isOpen ? 'rotate-180' : ''}`}
                         aria-hidden
                       />
-                    </button>
+                    </Link>
                   ) : (
                     <Link
                       href={item.href ?? getRoute(item.title)}
@@ -178,13 +178,6 @@ export function FloatingDock() {
                         className="absolute bottom-full left-1/2 mb-1 min-w-[220px] -translate-x-1/2 rounded-xl border border-[#cb530a]/50 bg-[#a84308]/95 shadow-xl shadow-black/50"
                       >
                         <div className="py-2">
-                          <Link
-                            href={getRoute(item.title)}
-                            className="block px-4 py-2 text-sm font-semibold text-white hover:bg-[#cb530a]/20 hover:text-[#cb530a]"
-                            onClick={() => setOpenDropup(null)}
-                          >
-                            Übersicht
-                          </Link>
                           {(item.submenu ?? []).map((sub) => (
                             <Link
                               key={sub}
