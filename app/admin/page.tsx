@@ -71,6 +71,9 @@ interface QuizData {
   timeframe?: string[];
   targetGroup?: string[];
   companySize?: string;
+  selectedPaket?: string;
+  addons?: string | string[];
+  bundleSummary?: { paket?: string; totalMonthlyNetto?: number; label?: string };
 }
 
 const SALES_REPS = [{ value: 'sven', label: 'Sven' }, { value: 'pascal', label: 'Pascal' }] as const;
@@ -900,6 +903,9 @@ export default function AdminPage() {
     if (key === 'timeframe') {
       return <Clock className="w-4 h-4" />;
     }
+    if (key === 'bundle') {
+      return <Briefcase className="w-4 h-4 text-[#cb530a]" />;
+    }
     return null;
   };
 
@@ -939,6 +945,26 @@ export default function AdminPage() {
 
     const quiz: QuizData = quizData;
     const sections = [];
+
+    // Paket & Add-ons zuerst (aus Quiz mit ?paket=1 oder ?paket=2)
+    const bundle = quiz.bundleSummary;
+    if (bundle && typeof bundle === 'object' && bundle.label) {
+      sections.push({
+        title: 'Gewähltes Paket',
+        items: [bundle.label],
+        key: 'bundle' as const
+      });
+    } else if (quiz.selectedPaket) {
+      const paketLabels: Record<string, string> = { '1': 'Paket 1: Basis', '2': 'Paket 2: Professional', 'enterprise': 'Enterprise' };
+      const addons = quiz.addons;
+      const addonStr = Array.isArray(addons) ? addons.join(', ') : (addons ? String(addons) : '');
+      const label = addonStr ? `${paketLabels[quiz.selectedPaket] || quiz.selectedPaket} + ${addonStr}` : (paketLabels[quiz.selectedPaket] || quiz.selectedPaket);
+      sections.push({
+        title: 'Paket / Add-ons',
+        items: [label],
+        key: 'bundle' as const
+      });
+    }
 
     if (quiz.targetGroup && quiz.targetGroup.length > 0) {
       sections.push({
