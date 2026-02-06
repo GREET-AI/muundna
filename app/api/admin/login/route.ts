@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   createAdminSessionCookie,
@@ -6,6 +7,15 @@ import {
 } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
+
+/** Timing-sicherer Passwort-Vergleich (verhindert Timing-Attacken). */
+function verifyPassword(password: string, secret: string): boolean {
+  const key = 'admin-login-timing-safe-v1';
+  const expected = createHmac('sha256', key).update(secret, 'utf8').digest();
+  const actual = createHmac('sha256', key).update(password, 'utf8').digest();
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(actual, expected);
+}
 
 /** POST /api/admin/login – Passwort prüfen, bei Erfolg Session-Cookie setzen (nur server-seitig, kein NEXT_PUBLIC_Passwort) */
 export async function POST(request: NextRequest) {
@@ -29,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Passwort erforderlich' }, { status: 400 });
     }
 
-    if (password !== secret) {
+    if (!verifyPassword(password, secret)) {
       return NextResponse.json({ error: 'Ungültiges Passwort' }, { status: 401 });
     }
 
