@@ -127,12 +127,12 @@ export default function TerminorganisationPage() {
 
         <StatsSection
           stats={[
-            { value: 95, suffix: '%', label: 'Termine optimal geplant', icon: '📅' },
-            { value: 50, suffix: '%', label: 'Zeitersparnis', icon: '⏰' },
-            { value: 0, suffix: '', label: 'Verpasste Termine', icon: '✅' },
-            { value: 100, suffix: '%', label: 'Kundenzufriedenheit', icon: '😊' }
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauumfeld', icon: '🏗️' },
+            { value: 6, suffix: '', label: 'Dienstleistungen, die ineinandergreifen', icon: '💼' },
+            { value: 1, suffix: '', label: 'Zentraler Kalender für Ihr Team', icon: '📅' },
+            { value: 24, suffix: '/7', label: 'Optionale Erreichbarkeit', icon: '⏰' }
           ]}
-          title="Effiziente Terminorganisation in Zahlen"
+          title="Effiziente Terminorganisation – unsere Basis"
         />
 
         <FeaturesGridSection

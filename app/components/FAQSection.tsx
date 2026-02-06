@@ -13,11 +13,11 @@ export default function FAQSection() {
     },
     {
       question: 'Wie lange sind Sie an den Vertrag gebunden?',
-      answer: 'Alle unsere Pakete sind monatlich kündbar. Es gibt keine langfristigen Bindungen – Sie können jederzeit flexibel anpassen oder kündigen. Das macht uns zur idealen Lösung für wachsende Unternehmen oder saisonale Schwankungen.'
+      answer: 'Alle Pakete sind monatlich kündbar. Es gibt keine langfristigen Bindungen; Sie können jederzeit flexibel anpassen oder kündigen. Das macht uns zur idealen Lösung für wachsende Unternehmen oder saisonale Schwankungen.'
     },
     {
       question: 'Welche Dienstleistungen sind in den Paketen enthalten?',
-      answer: 'Unsere Pakete umfassen Telefonservice, Terminorganisation, Social Media Betreuung, Google Bewertungen, Dokumentation & Reporting sowie Webdesign & App Lösungen. Je nach Paket variieren Umfang und Intensität. Im Enterprise-Paket sind alle Leistungen enthalten plus individuelle Anpassungen und dedizierter Support.'
+      answer: 'Paket 1 (Basis) enthält Telefonie, E-Mail, Kalender & Terminlegung – Google Bewertungen optional für +99 €/Monat. Paket 2 (Professional) erweitert die Telefonie, inkl. Google Bewertungen; Social Media ist modular buchbar (Basic, Growth, Pro). Paket 3 (Enterprise) ist voll modular: Telefonie, E-Mail/Kalender, Google, Social, Reporting frei kombinierbar mit Volumenrabatten. Website/Webdesign ist ein separates Modul (einmalig ab 2.000 € + 99 €/Monat Betreuung). Alle Preise netto, monatlich kündbar nach Probezeit.'
     },
     {
       question: 'Können Sie sich die Dienstleistungen vorher anschauen?',

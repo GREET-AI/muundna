@@ -122,8 +122,8 @@ export default function TelefonservicePage() {
           stats={[
             { value: 100, suffix: '%', label: 'Anrufe entgegengenommen', icon: '📞' },
             { value: 24, suffix: '/7', label: 'Verfügbarkeit', icon: '⏰' },
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
-            { value: 2, suffix: ' Min', label: 'Durchschnittliche Antwortzeit', icon: '⚡' }
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauumfeld', icon: '🏗️' },
+            { value: 2, suffix: ' Min', label: 'Reaktionsziel für Rückrufe', icon: '⚡' }
           ]}
           title="Ihre Zahlen sprechen für sich"
         />

@@ -135,9 +135,9 @@ export default function UeberUnsPage() {
         <StatsSection
           stats={[
             { value: 10, suffix: '+', label: 'Jahre Erfahrung', icon: '🎯' },
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
-            { value: 3, suffix: '', label: 'DACH-Länder', icon: '🌍' },
-            { value: 6, suffix: '', label: 'Dienstleistungen', icon: '💼' }
+            { value: 1, suffix: '', label: 'Standort Oberderdingen', icon: '📍' },
+            { value: 3, suffix: '', label: 'DACH-Länder betreut', icon: '🌍' },
+            { value: 6, suffix: '', label: 'Kern-Dienstleistungen', icon: '💼' }
           ]}
           title="Muckenfuss & Nagel in Zahlen"
         />

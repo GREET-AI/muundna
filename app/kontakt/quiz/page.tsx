@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Footer from '../../components/Footer';
+import { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Building2, Wrench, Users, Calendar, MapPin, Phone, Mail, Home, User } from 'lucide-react';
 import IconInput from '../../components/ui/IconInput';
@@ -13,28 +13,11 @@ interface QuizData {
   timeframe?: string[];
   location?: string;
   companySize?: string;
+  selectedPaket?: string;
+  optionalAddons?: string | string[];
 }
 
-export default function QuizPage() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [quizData, setQuizData] = useState<QuizData>({});
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    street: '',
-    city: '',
-    privacyAccepted: false
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
-
-  const steps = [
+const BASE_STEPS = [
     {
       id: 'targetGroup',
       title: 'Ich bin...',
@@ -85,6 +68,59 @@ export default function QuizPage() {
       ]
     },
   ];
+
+const ADDON_STEP_PAKET1 = {
+  id: 'addons',
+  title: 'Optionale Zusatzleistungen (Paket 1)',
+  subtitle: 'Sie können Ihr Paket um folgende Option erweitern:',
+  type: 'multiple' as const,
+  options: [
+    { id: 'google-bewertungen', label: 'Google Bewertungen +99 €/Monat (Rezensions-Management, automatisierte Kundenanfragen)' },
+  ]
+};
+
+const ADDON_STEP_PAKET2 = {
+  id: 'addons',
+  title: 'Optionale Zusatzleistungen (Paket 2)',
+  subtitle: 'Wählen Sie optional ein Social-Media-Add-on:',
+  type: 'single' as const,
+  options: [
+    { id: 'social-none', label: 'Kein Social-Media-Add-on' },
+    { id: 'social-basic', label: 'Social Basic +249 €/Monat (1–2 Plattformen, 1–2 Posts/Woche)' },
+    { id: 'social-growth', label: 'Social Growth +449 €/Monat (2–3 Plattformen, 2–3 Posts/Woche, Community)' },
+    { id: 'social-pro', label: 'Social Pro +749 €/Monat (3–4 Plattformen, 3+ Posts/Woche, Community, Basis-Ads)' },
+  ]
+};
+
+function QuizContent() {
+  const searchParams = useSearchParams();
+  const paket = searchParams.get('paket'); // '1' | '2' | null
+
+  const steps = useMemo(() => {
+    // Mit Paket: zuerst Paket-Add-ons, dann allgemeine Fragen (ohne „Ich interessiere mich für…“)
+    if (paket === '1') return [ADDON_STEP_PAKET1, BASE_STEPS[0], BASE_STEPS[2], BASE_STEPS[3]];
+    if (paket === '2') return [ADDON_STEP_PAKET2, BASE_STEPS[0], BASE_STEPS[2], BASE_STEPS[3]];
+    // Ohne Paket-Parameter: ursprünglicher Funnel mit allen Schritten
+    return BASE_STEPS;
+  }, [paket]);
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [quizData, setQuizData] = useState<QuizData>({ ...(paket && { selectedPaket: paket }) });
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    street: '',
+    city: '',
+    privacyAccepted: false
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const handleOptionSelect = (stepId: string, optionId: string, type: string) => {
     setQuizData(prev => {
@@ -162,11 +198,18 @@ export default function QuizPage() {
   };
 
   const currentStepData = steps[currentStep];
-  const selectedOptions = quizData[currentStepData?.id as keyof QuizData] as string[] || [];
+  const selectedOptions = quizData[currentStepData?.id as keyof QuizData] ?? (currentStepData?.type === 'multiple' ? [] : '');
+  const isAddonStep = currentStepData?.id === 'addons';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="pt-20 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-[#fff3e7] via-white to-[#ffe1c7] relative overflow-hidden quiz-bg">
+      {/* Orange animierter Hintergrund-Effekt */}
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute -top-32 -left-32 w-80 h-80 bg-[#cb530a]/40 rounded-full blur-3xl animate-quiz-pulse" />
+        <div className="absolute top-40 -right-32 w-96 h-96 bg-[#a84308]/30 rounded-full blur-3xl animate-quiz-pulse-delayed" />
+      </div>
+
+      <main className="relative z-10 pt-20 pb-16 flex items-center">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             {/* Progress Bar */}
@@ -344,18 +387,18 @@ export default function QuizPage() {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-12"
                 >
                   {/* Left: Info Section */}
-                  <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#cb530a] mb-4 break-words">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 border border-white/70">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#cb530a] mb-3 break-words">
                       Qualität aus Verantwortung.
                     </h2>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 break-words">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 break-words">
                       Warum für Muckenfuss & Nagel entscheiden?
                     </h3>
-                    <p className="text-gray-700 mb-6">
+                    <p className="text-gray-700 text-sm sm:text-base mb-4">
                       Wählen Sie Muckenfuss & Nagel für innovative Lösungen und erstklassigen Service. 
                       Unsere Bürodienstleistungen kombinieren Branchenkenntnis mit modernster Technologie.
                     </p>
-                    <ul className="space-y-3">
+                    <ul className="space-y-2 text-sm">
                       {[
                         'Made in Germany – Höchste Qualität.',
                         'Branchenkenntnis – 10+ Jahre Bau-Erfahrung.',
@@ -373,8 +416,8 @@ export default function QuizPage() {
                   </div>
 
                   {/* Right: Quiz Section */}
-                  <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 break-words">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 border border-white/70">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 break-words">
                       {currentStepData.title}
                     </h2>
                     {currentStepData.subtitle && (
@@ -383,7 +426,7 @@ export default function QuizPage() {
                       </p>
                     )}
 
-                    <div className={`grid ${currentStepData.options.length === 4 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4 mb-6 md:mb-8`}>
+                    <div className={`grid ${currentStepData.options.length === 4 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-2 sm:gap-3 mb-6 md:mb-8`}>
                       {currentStepData.options.map((option) => {
                         const Icon = 'icon' in option ? option.icon : undefined;
                         const isSelected = Array.isArray(selectedOptions)
@@ -395,7 +438,7 @@ export default function QuizPage() {
                             key={option.id}
                             type="button"
                             onClick={() => handleOptionSelect(currentStepData.id, option.id, currentStepData.type)}
-                            className={`p-3 sm:p-4 md:p-6 rounded-lg border-2 transition-all text-left w-full ${
+                            className={`p-3 sm:p-4 rounded-xl border-2 transition-all text-left w-full ${
                               isSelected
                                 ? 'border-[#cb530a] bg-[#fef3ed]'
                                 : 'border-gray-300 hover:border-[#cb530a]/50'
@@ -404,7 +447,7 @@ export default function QuizPage() {
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center flex-1 min-w-0">
                                 {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#cb530a] mr-2 sm:mr-3 flex-shrink-0" />}
-                                <span className="font-semibold text-sm sm:text-base text-gray-800 break-words">
+                                <span className="font-semibold text-sm sm:text-sm text-gray-800 break-words">
                                   {option.label}
                                 </span>
                               </div>
@@ -433,9 +476,11 @@ export default function QuizPage() {
                         type="button"
                         onClick={handleNext}
                         disabled={
-                          currentStepData.type === 'multiple'
-                            ? (selectedOptions as string[]).length === 0
-                            : !selectedOptions
+                          isAddonStep
+                            ? false
+                            : currentStepData.type === 'multiple'
+                              ? (selectedOptions as string[]).length === 0
+                              : !selectedOptions
                         }
                         className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-[#cb530a] text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-[#a84308] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
@@ -451,7 +496,6 @@ export default function QuizPage() {
           </div>
         </div>
       </main>
-      <Footer />
       <Toast
         show={showToast}
         message={toastMessage}
@@ -460,6 +504,18 @@ export default function QuizPage() {
         duration={5000}
       />
     </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Laden…</p>
+      </div>
+    }>
+      <QuizContent />
+    </Suspense>
   );
 }
 

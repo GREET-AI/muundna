@@ -87,9 +87,9 @@ export default function ZielgruppenPage() {
         <StatsSection
           stats={[
             { value: 6, suffix: '', label: 'Zielgruppen', icon: '🎯' },
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
-            { value: 3, suffix: '', label: 'DACH-Länder', icon: '🌍' },
-            { value: 10, suffix: '+', label: 'Jahre Erfahrung', icon: '🏗️' }
+            { value: 3, suffix: '', label: 'DACH-Länder betreut', icon: '🌍' },
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauwesen', icon: '🏗️' },
+            { value: 1, suffix: '', label: 'Standort Oberderdingen', icon: '📍' }
           ]}
           title="Unsere Zielgruppen in Zahlen"
         />

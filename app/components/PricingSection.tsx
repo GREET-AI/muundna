@@ -8,53 +8,54 @@ import AnimatedCard3D from './ui/AnimatedCard3D';
 export default function PricingSection() {
   const packages = [
     {
-      name: 'Basis',
-      description: 'Perfekt für kleine Betriebe',
+      name: 'Paket 1: Basis',
+      description: 'Einsteigerfreundlich – Kernkommunikation',
       price: 'ab 299',
-      period: '/ Monat',
+      period: ' €/Monat',
+      subline: 'Optional: Google Bewertungen +99 €/Monat',
       features: [
-        'Telefonservice (bis 20 Anrufe/Monat)',
-        'Terminorganisation',
+        'Professionelle Telefonie (Anrufannahme, Weiterleitung)',
         'E-Mail-Betreuung',
-        'Monatliche Dokumentation'
+        'Kalendermanagement & Terminlegung',
+        'Optional: Google Bewertungen (Rezensions-Management, automatisierte Kundenanfragen)',
+        'Fair-Use: z. B. 80 Anrufe, 50 E-Mails, 30 Termine/Monat – Extras auf Anfrage'
       ],
       popular: false
     },
     {
-      name: 'Professional',
-      description: 'Ideal für wachsende Unternehmen',
+      name: 'Paket 2: Professional',
+      description: 'Erweiterte Telefonbetreuung + optionale Social-Media-Add-ons',
       price: 'ab 599',
-      period: '/ Monat',
+      period: ' €/Monat',
+      subline: 'Google Bewertungen inklusive · Social modular: Basic +249 €, Growth +449 €, Pro +749 €',
       features: [
-        'Telefonservice (unbegrenzt)',
-        'Terminorganisation',
-        'Social Media Betreuung',
-        'Google Bewertungen',
-        'Dokumentation & Reporting',
-        'Prioritärer Support'
+        'Erweiterte Telefonie (Branding, Team-Weiterleitung bis 3 Mitarbeiter)',
+        'E-Mail, Kalender & Terminlegung (erweitert)',
+        'Google Bewertungen inkl. Rezensions-Management & Optimierung',
+        'Monatliches Reporting',
+        'Social Media modular: Plattform-, Content- und Häufigkeits-Auswahl'
       ],
       popular: true
     },
     {
-      name: 'Enterprise',
-      description: 'Komplettlösung für große Betriebe',
-      price: 'Auf Anfrage',
-      period: '',
+      name: 'Paket 3: Enterprise',
+      description: 'Voll modular – fixe Preise pro Komponente, Volumenrabatte 10–20 %',
+      price: 'ab ca. 999',
+      period: ' €/Monat',
+      subline: 'Auf Anfrage · Rabatt ab 1.000 € (10 %), ab 1.500 € (15 %), ab 2.000 € (20 %)',
       features: [
-        'Alle Professional Features',
-        'Dedizierter Account Manager',
-        'Individuelle Anpassungen',
-        '24/7 Support',
-        'Custom Reporting',
-        'Team-Schulungen',
-        'Webdesign & App Lösungen'
+        'Telefonie, E-Mail/Kalender, Google Bewertungen, Social (custom) – frei kombinierbar',
+        'Reporting & Dokumentation (z. B. 99 €/Monat)',
+        'Website: einmalig ab 2.000 € + 99 €/Monat minimale Betreuung',
+        '24/7-Option, CRM-Sync, unbegrenzte Google-Anfragen je nach Modul',
+        'Individuelle Anpassungen & dedizierter Support'
       ],
       popular: false
     }
   ];
 
   return (
-    <section className="py-20 bg-white bg-dot-pattern relative">
+    <section id="pricing" className="py-20 bg-white bg-dot-pattern relative">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
@@ -102,6 +103,9 @@ export default function PricingSection() {
                           {pkg.period}
                         </span>
                       )}
+                      {'subline' in pkg && pkg.subline && (
+                        <p className="text-sm text-gray-500 mt-2">{pkg.subline}</p>
+                      )}
                     </div>
                     <ul className="space-y-3 mb-8">
                       {pkg.features.map((feature, idx) => (
@@ -115,12 +119,28 @@ export default function PricingSection() {
                     </ul>
                   </div>
                   <div className="p-8 pt-0">
-                    <Link
-                      href={getRoute('Quiz')}
-                      className="block w-full text-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors"
-                    >
-                      Jetzt anfragen
-                    </Link>
+                    {index === 2 ? (
+                      <Link
+                        href="/kontakt/enterprise-konfigurator"
+                        className="block w-full text-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors"
+                      >
+                        Jetzt zusammenstellen
+                      </Link>
+                    ) : index === 0 ? (
+                      <Link
+                        href="/kontakt/quiz?paket=1"
+                        className="block w-full text-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors"
+                      >
+                        Jetzt anfragen
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/kontakt/quiz?paket=2"
+                        className="block w-full text-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors"
+                      >
+                        Jetzt anfragen
+                      </Link>
+                    )}
                   </div>
                 </div>
               </AnimatedCard3D>
@@ -128,12 +148,15 @@ export default function PricingSection() {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center max-w-2xl mx-auto">
+          <p className="text-gray-600 text-sm mb-2">
+            Alle Preise netto zzgl. MwSt. · Monatlich kündbar · Monatlicher Report inklusive.
+          </p>
           <p className="text-gray-600 text-sm mb-4">
-            Alle Preise netto zzgl. Umsatzsteuer
+            Fair-Use-Grenzen inklusive; Extra-Gebühren bei Überschreitung (z. B. pro Anruf/E-Mail) – Details im Angebot.
           </p>
           <p className="text-gray-600 text-sm">
-            Individuelle Anpassungen möglich. 
+            Individuelle Kombinationen möglich. 
             <Link href={getRoute('Kontakt')} className="text-[#cb530a] hover:underline ml-1">
               Kontaktieren Sie uns
             </Link>

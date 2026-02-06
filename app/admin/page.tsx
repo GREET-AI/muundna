@@ -72,6 +72,20 @@ interface QuizData {
 
 const SALES_REPS = [{ value: 'sven', label: 'Sven' }, { value: 'pascal', label: 'Pascal' }] as const;
 
+export type AngebotForm = {
+  headline: string;
+  subline: string;
+  kundeName: string;
+  kundeFirma: string;
+  kundeStrasse: string;
+  kundePlzOrt: string;
+  produkt: string;
+  preis: string;
+  originalPreis: string;
+  laufzeit: string;
+  zusatz: string;
+};
+
 export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -127,6 +141,29 @@ export default function AdminPage() {
   const streamingLeadsRef = useRef<ScrapedLeadInsert[]>([]);
   /** Fehler beim Laden der Kontakte (z. B. Failed to fetch) */
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** Angebotserstellung: Formular + Vorschau */
+  const [angebot, setAngebot] = useState({
+    headline: 'Ihr persönliches Angebot',
+    subline: 'Ihr Büro. Ihr Geschäft. Unsere Expertise.',
+    kundeName: '',
+    kundeFirma: '',
+    kundeStrasse: '',
+    kundePlzOrt: '',
+    produkt: '',
+    preis: '',
+    originalPreis: '',
+    laufzeit: '',
+    zusatz: '',
+  });
+  const ANGEBOT_PRODUKTE = [
+    'Telefonservice & Kommunikation',
+    'Terminorganisation',
+    'Social Media Betreuung',
+    'Google Bewertungen',
+    'Dokumentation & Reporting',
+    'Webdesign & App Lösungen',
+    'Individuelles Paket',
+  ];
   /** History-Dialog: globale Nutzeraktionen */
   type ActivityLogEntry = { id: number; contact_id: number; sales_rep: string; action: string; old_value: string | null; new_value: string | null; created_at: string; contact_submissions?: { company?: string; first_name?: string; last_name?: string } | null };
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -208,7 +245,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     if (activeNav === 'leads') loadContacts(true);
-    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel'].includes(activeNav)) loadContacts();
+    else if (['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'bewertungs-funnel', 'angebots-erstellung'].includes(activeNav)) loadContacts();
   }, [activeNav, isAuthenticated]);
 
   /** Popup „Scraper fertig“ nach 6 Sekunden ausblenden */
@@ -819,8 +856,9 @@ export default function AdminPage() {
 
   const toolsSubItems: { id: string; label: string }[] = [
     { id: 'bewertungs-funnel', label: 'Bewertungs-Funnel' },
+    { id: 'angebots-erstellung', label: 'Angebotserstellung' },
   ];
-  const isToolsActive = activeNav === 'bewertungs-funnel';
+  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung';
 
   // Logik für verschiedene Views basierend auf Status (und Vertriebler bei "Meine Kontakte")
   const getViewData = () => {
@@ -879,6 +917,8 @@ export default function AdminPage() {
         };
       case 'bewertungs-funnel':
         return { title: 'Bewertungs-Funnel', description: 'Google-Bewertungs-Einladungen im Namen von Kunden versenden', contacts: [], showStats: false };
+      case 'angebots-erstellung':
+        return { title: 'Angebotserstellung', description: 'Angebote gestalten, Vorschau anzeigen und als PDF speichern', contacts: [], showStats: false };
       case 'scraper-gelbeseiten':
         return { title: 'Gelbe Seiten', description: 'Leads aus gelbeseiten.de scrapen', contacts: [], showStats: false };
       case 'scraper-11880':
@@ -1264,6 +1304,94 @@ export default function AdminPage() {
                 </Card>
               </>
             )}
+          </div>
+        ) : activeNav === 'angebots-erstellung' ? (
+          <div className="p-6 min-h-[calc(100vh-4rem)]">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Angebotserstellung</h2>
+            <p className="text-sm text-muted-foreground mb-6">Angebot gestalten, im neuen Tab als Vorschau anzeigen und per Drucken → &quot;Als PDF speichern&quot; herunterladen.</p>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="rounded-xl border border-border/80 bg-card p-5">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> Design &amp; Inhalt</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Überschrift (orangener Balken)</Label>
+                    <Input value={angebot.headline} onChange={(e) => setAngebot(a => ({ ...a, headline: e.target.value }))} placeholder="Ihr persönliches Angebot" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Unterzeile (z. B. Slogan)</Label>
+                    <Input value={angebot.subline} onChange={(e) => setAngebot(a => ({ ...a, subline: e.target.value }))} placeholder="Ihr Büro. Ihr Geschäft. Unsere Expertise." className="mt-1 h-9" />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Kunde (Ansprechpartner)</Label>
+                      <Input value={angebot.kundeName} onChange={(e) => setAngebot(a => ({ ...a, kundeName: e.target.value }))} placeholder="Name" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Firma</Label>
+                      <Input value={angebot.kundeFirma} onChange={(e) => setAngebot(a => ({ ...a, kundeFirma: e.target.value }))} placeholder="Firmenname" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Straße</Label>
+                      <Input value={angebot.kundeStrasse} onChange={(e) => setAngebot(a => ({ ...a, kundeStrasse: e.target.value }))} placeholder="Straße, Hausnr." className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">PLZ und Ort</Label>
+                      <Input value={angebot.kundePlzOrt} onChange={(e) => setAngebot(a => ({ ...a, kundePlzOrt: e.target.value }))} placeholder="12345 Berlin" className="mt-1 h-9" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+              <Card className="rounded-xl border border-border/80 bg-card p-5">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Briefcase className="w-4 h-4" /> Leistung &amp; Konditionen</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Produkt / Leistung</Label>
+                    <select
+                      value={angebot.produkt} onChange={(e) => setAngebot(a => ({ ...a, produkt: e.target.value }))}
+                      className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">— Bitte wählen —</option>
+                      {ANGEBOT_PRODUKTE.map(p => (<option key={p} value={p}>{p}</option>))}
+                    </select>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Unser Preis netto (€)</Label>
+                      <Input value={angebot.preis} onChange={(e) => setAngebot(a => ({ ...a, preis: e.target.value }))} placeholder="z. B. 499" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Originalpreis netto (für Rabatt-Anzeige)</Label>
+                      <Input value={angebot.originalPreis} onChange={(e) => setAngebot(a => ({ ...a, originalPreis: e.target.value }))} placeholder="z. B. 599 (optional)" className="mt-1 h-9" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Laufzeit</Label>
+                    <Input value={angebot.laufzeit} onChange={(e) => setAngebot(a => ({ ...a, laufzeit: e.target.value }))} placeholder="z. B. 12 Monate" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Zusatz / Anmerkungen (optional)</Label>
+                    <Textarea value={angebot.zusatz} onChange={(e) => setAngebot(a => ({ ...a, zusatz: e.target.value }))} rows={2} className="mt-1 text-sm" placeholder="Optionale Details …" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                className="bg-[#cb530a] hover:bg-[#a84308]"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const q = encodeURIComponent(JSON.stringify(angebot));
+                    window.open('/angebot?d=' + q, '_blank', 'noopener,noreferrer');
+                  }
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Vorschau in neuem Tab
+              </Button>
+              <p className="text-sm text-muted-foreground self-center">Öffnet die Angebotsseite unter /angebot. Dort: &quot;Als PDF speichern&quot; oder AGB-Button oben rechts.</p>
+            </div>
           </div>
         ) : activeNav === 'scraper-gelbeseiten' ? (
           /* ——— Gelbe Seiten: gesamter Content-Bereich gelb, kein weißes Karten-Element ——— */

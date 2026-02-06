@@ -86,12 +86,12 @@ export default function ReferenzenPage() {
 
         <StatsSection
           stats={[
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
-            { value: 95, suffix: '%', label: 'Zufriedenheitsrate', icon: '⭐' },
-            { value: 2, suffix: '+', label: 'Jahre Durchschnitt', icon: '📅' },
-            { value: 100, suffix: '%', label: 'Weiterempfehlung', icon: '💬' }
+            { value: 4, suffix: '+', label: 'Branchen-Beispiele', icon: '🏗️' },
+            { value: 3, suffix: '', label: 'DACH-Länder betreut', icon: '🌍' },
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauwesen', icon: '🎯' },
+            { value: 6, suffix: '', label: 'Kern-Dienstleistungen', icon: '💼' }
           ]}
-          title="Unsere Erfolgszahlen"
+          title="Unsere Referenzen im Überblick"
         />
 
         <TestimonialsSection />

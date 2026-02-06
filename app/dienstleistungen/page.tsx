@@ -156,9 +156,9 @@ export default function DienstleistungenPage() {
         <StatsSection
           stats={[
             { value: 6, suffix: '', label: 'Dienstleistungen', icon: '💼' },
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
-            { value: 100, suffix: '%', label: 'Zufriedenheit', icon: '⭐' },
-            { value: 24, suffix: '/7', label: 'Verfügbarkeit', icon: '⏰' }
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauwesen', icon: '🏗️' },
+            { value: 3, suffix: '', label: 'DACH-Länder betreut', icon: '🌍' },
+            { value: 24, suffix: '/7', label: 'Optionale Erreichbarkeit', icon: '⏰' }
           ]}
           title="Unsere Dienstleistungen im Überblick"
         />

@@ -103,6 +103,13 @@ export default function WebdesignAppPage() {
               </div>
             </div>
 
+            <div className="bg-white rounded-lg p-6 mb-8 border-2 border-[#cb530a]/30">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Website-Entwicklung & Betreuung</h3>
+              <p className="text-gray-700 text-sm mb-2">
+                Einmalig ab 2.000 € (Basis-Site: responsiv, SEO, Kalender-Integration) + 99 €/Monat minimale Betreuung (Updates, Hosting, kleine Änderungen). Max. 4 Std. Änderungen/Monat inklusive; Erweiterungen (z. B. E-Commerce) auf Anfrage. Alle Preise netto zzgl. MwSt.
+              </p>
+            </div>
+
             <div className="bg-[#fef3ed] rounded-lg p-8 text-center border border-[#fef3ed]">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Jetzt durchstarten

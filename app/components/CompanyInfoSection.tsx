@@ -8,10 +8,10 @@ import NumberTicker from './ui/NumberTicker';
 
 export default function CompanyInfoSection() {
   const stats = [
-    { label: 'Jahre Erfahrung', value: 10, suffix: '+' },
-    { label: 'Zufriedene Kunden', value: 50, suffix: '+' },
-    { label: 'DACH-Länder', value: 3 },
-    { label: 'Dienstleistungen', value: 6 }
+    { label: 'Jahre Erfahrung im Bauwesen', value: 10, suffix: '+' },
+    { label: 'Standort Oberderdingen', value: 1 },
+    { label: 'DACH-Länder betreut', value: 3 },
+    { label: 'Kern-Dienstleistungen', value: 6 }
   ];
 
   const values = [

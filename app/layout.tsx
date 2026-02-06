@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "./components/CookieBanner";
-import { FloatingDock } from "./components/FloatingDock";
+import ConditionalDock from "./components/ConditionalDock";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -79,7 +79,7 @@ export default function RootLayout({
         <div className="min-h-screen pb-20">
           {children}
         </div>
-        <FloatingDock />
+        <ConditionalDock />
         <CookieBanner />
       </body>
     </html>

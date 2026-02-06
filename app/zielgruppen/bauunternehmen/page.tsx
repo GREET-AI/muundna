@@ -95,8 +95,8 @@ export default function BauunternehmenPage() {
           stats={[
             { value: 40, suffix: '%', label: 'Mehr Effizienz', icon: '⚡' },
             { value: 100, suffix: '%', label: 'Projekte dokumentiert', icon: '📋' },
-            { value: 24, suffix: '/7', label: 'Support verfügbar', icon: '🤝' },
-            { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' }
+            { value: 24, suffix: '/7', label: 'Optionale Erreichbarkeit', icon: '🤝' },
+            { value: 10, suffix: '+', label: 'Jahre Erfahrung im Bauumfeld', icon: '🏗️' }
           ]}
           title="Ihre Vorteile als Bauunternehmen"
         />

@@ -15,26 +15,32 @@ const testimonials = [
   {
     quote:
       'Seit 2 Jahren betreuen uns Muckenfuss & Nagel. Die Kundenkommunikation hat sich deutlich verbessert und wir können uns voll auf unser Handwerk konzentrieren.',
-    name: 'Michael K.',
-    title: 'Handwerksbetrieb, Bretten · Telefonservice & Terminorganisation',
+    name: 'Ugnius Reich',
+    title: 'Ofenbau Reich, Menzingen',
   },
   {
     quote:
       'Die komplette Übernahme der Büroarbeit ermöglicht es uns, uns auf große Projekte zu konzentrieren. Professionell, zuverlässig und immer erreichbar.',
-    name: 'Sarah M.',
-    title: 'Bauunternehmen, Karlsruhe · Vollständige Bürodienstleistungen',
+    name: 'Jürgen Brand',
+    title: 'Bauunternehmung Brand, Bretten',
   },
   {
     quote:
-      'Durch die professionelle Online-Präsenz konnten wir viele neue Kunden gewinnen. Die Google Bewertungen haben sich deutlich verbessert.',
-    name: 'Thomas R.',
-    title: 'Dachdeckerei, Bruchsal · Social Media & Google Bewertungen',
+      'Durch die professionelle Betreuung können wir uns auf unsere Malerarbeiten konzentrieren. Terminorganisation und Büroservice laufen zuverlässig.',
+    name: 'Pascal Bleschner',
+    title: 'Malermeister, Stutensee',
   },
   {
     quote:
-      'Effiziente Terminorganisation und vollständige Dokumentation. Wir sind sehr zufrieden mit der Zusammenarbeit.',
-    name: 'Stefan B.',
-    title: 'Sanierungsbetrieb, Oberderdingen · Telefonservice & Dokumentation',
+      'Effiziente Terminorganisation und Dokumentation. Wir sind sehr zufrieden mit der Zusammenarbeit.',
+    name: 'Christoph Boxtaler',
+    title: 'Schweißerfachbetrieb',
+  },
+  {
+    quote:
+      'Zuverlässiger Telefonservice und Büroarbeit im Hintergrund – so können wir uns aufs Zimmern konzentrieren.',
+    name: 'Falk Welker',
+    title: 'Zimmermann, Kürnbach',
   },
 ];
 
