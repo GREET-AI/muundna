@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "./components/CookieBanner";
+import { FloatingDock } from "./components/FloatingDock";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -11,8 +12,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://muckenfussundnagel.de'),
   title: "Muckenfuss & Nagel - Bürodienstleistungen für Handwerksbetriebe",
-  description: "Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen: Telefonservice, Kommunikation, Terminorganisation, Social Media Betreuung und Google Bewertungen. Deutschland, Schweiz, Österreich.",
-  keywords: ["Bürodienstleistungen", "Handwerksbetriebe", "Bauunternehmen", "Telefonservice", "Terminorganisation", "Social Media", "Google Bewertungen", "DACH"],
+  description: "Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen: Telefonservice, Kommunikation, Terminorganisation, Social Media Betreuung, Google Bewertungen, Webdesign & Apps. Deutschland, Schweiz, Österreich.",
+  keywords: ["Bürodienstleistungen", "Handwerksbetriebe", "Bauunternehmen", "Telefonservice", "Terminorganisation", "Social Media", "Google Bewertungen", "Webdesign", "Apps", "DACH"],
   authors: [{ name: "Muckenfuss & Nagel" }],
   creator: "Muckenfuss & Nagel",
   publisher: "Muckenfuss & Nagel",
@@ -27,10 +28,10 @@ export const metadata: Metadata = {
     url: "https://muckenfussundnagel.de",
     siteName: "Muckenfuss & Nagel",
     title: "Muckenfuss & Nagel - Bürodienstleistungen für Handwerksbetriebe",
-    description: "Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen: Telefonservice, Kommunikation, Terminorganisation, Social Media Betreuung und Google Bewertungen.",
+    description: "Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen: Telefonservice, Kommunikation, Terminorganisation, Social Media Betreuung, Google Bewertungen, Webdesign & Apps.",
     images: [
       {
-        url: "/images/logo.png",
+        url: "/logoneu.png",
         width: 1200,
         height: 630,
         alt: "Muckenfuss & Nagel Logo",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Muckenfuss & Nagel - Bürodienstleistungen für Handwerksbetriebe",
     description: "Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen.",
-    images: ["/images/logo.png"],
+    images: ["/logoneu.png"],
   },
   robots: {
     index: true,
@@ -71,8 +72,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
+      <head>
+        <link rel="preload" href="/images/Handwerker%20(2).png" as="image" />
+      </head>
       <body className={`${inter.variable} antialiased`}>
-        {children}
+        <div className="min-h-screen pb-20">
+          {children}
+        </div>
+        <FloatingDock />
         <CookieBanner />
       </body>
     </html>

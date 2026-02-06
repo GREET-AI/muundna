@@ -754,7 +754,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full border-2 border-gray-200">
           <div className="text-center mb-6">
             <Image
-              src="/images/logo.png"
+              src="/logoneu.png"
               alt="Muckenfuss & Nagel Logo"
               width={120}
               height={60}
@@ -764,7 +764,7 @@ export default function AdminPage() {
               {showProfileStep ? 'Profil wählen' : 'Admin Login'}
             </h1>
             <p className="text-sm text-gray-600 mt-2">
-              {showProfileStep ? 'Als welcher Vertriebler möchtest du arbeiten?' : 'Muckenfuss & Nagel CRM'}
+              {showProfileStep ? 'Als welcher Vertriebler möchten Sie arbeiten?' : 'Muckenfuss & Nagel CRM'}
             </p>
           </div>
           {showProfileStep ? (
@@ -836,7 +836,7 @@ export default function AdminPage() {
       case 'meine-kontakte':
         return {
           title: 'Meine Kontakte',
-          description: salesRep ? `Nur dir zugewiesene Leads (${salesRep === 'sven' ? 'Sven' : 'Pascal'})` : 'Zugewiesene Kontakte',
+          description: salesRep ? `Nur Ihnen zugewiesene Leads (${salesRep === 'sven' ? 'Sven' : 'Pascal'})` : 'Zugewiesene Kontakte',
           contacts: myContacts,
           showStats: true
         };
@@ -902,7 +902,7 @@ export default function AdminPage() {
         <div className="p-5 border-b border-neutral-800/80 shrink-0">
           <Link href="/" className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-neutral-800/50 transition-colors">
             <Image
-              src="/images/logo.png"
+              src="/logoneu.png"
               alt="Muckenfuss & Nagel Logo"
               width={180}
               height={90}

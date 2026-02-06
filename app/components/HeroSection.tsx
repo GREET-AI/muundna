@@ -2,6 +2,8 @@
 
 import { ReactNode } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Home } from 'lucide-react';
 
 interface HeroSectionProps {
   title: string;
@@ -19,11 +21,11 @@ export default function HeroSection({
   children,
 }: HeroSectionProps) {
   return (
-    <section className="relative h-[60vh] min-h-[500px] w-full overflow-hidden">
+    <section className="relative min-h-screen h-screen w-full overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <Image
-          src={backgroundImage || "/images/herobackgeneral.png"}
+          src={backgroundImage || "/images/Büro.png"}
           alt=""
           fill
           className="object-cover"
@@ -32,6 +34,15 @@ export default function HeroSection({
         />
         <div className="absolute inset-0 bg-black/30" />
       </div>
+
+      {/* Home-Button oben links */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 z-20 flex items-center justify-center w-12 h-12 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+        aria-label="Zur Startseite"
+      >
+        <Home className="w-7 h-7" strokeWidth={2} />
+      </Link>
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">

@@ -163,3 +163,44 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* Marquee-Banner: Lauftext nach links */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-marquee-left {
+  animation: marquee 45s linear infinite;
+}
+.animate-marquee-right {
+  animation: marquee-reverse 280s linear infinite;
+}
+
+/* Infinite Moving Cards: Endlos-Scroll */
+@keyframes infinite-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 1.5rem)); }
+}
+.animate-infinite-scroll {
+  animation: infinite-scroll var(--infinite-scroll-duration, 40s) linear infinite;
+}
+
+/* FloatingDock: Orange-Rand-Animation */
+@keyframes dock-border-pulse {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Punktemuster im Hintergrund (wie immosparplan-experts) */
+.bg-dot-pattern {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(100, 116, 139, 0.14) 1.5px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+}

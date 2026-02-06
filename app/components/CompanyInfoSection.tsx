@@ -11,7 +11,7 @@ export default function CompanyInfoSection() {
     { label: 'Jahre Erfahrung', value: 10, suffix: '+' },
     { label: 'Zufriedene Kunden', value: 50, suffix: '+' },
     { label: 'DACH-Länder', value: 3 },
-    { label: 'Dienstleistungen', value: 5 }
+    { label: 'Dienstleistungen', value: 6 }
   ];
 
   const values = [
@@ -38,7 +38,7 @@ export default function CompanyInfoSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white bg-dot-pattern relative">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}

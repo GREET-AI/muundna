@@ -8,23 +8,23 @@ export default function FAQSection() {
 
   const faqs = [
     {
-      question: 'Warum sollte ich meine Büroarbeit an Muckenfuss & Nagel auslagern?',
+      question: 'Warum sollten Sie Ihre Büroarbeit an Muckenfuss & Nagel auslagern?',
       answer: 'Bei Muckenfuss & Nagel können Sie sich voll auf Ihr Handwerk konzentrieren, während wir alle administrativen Aufgaben übernehmen. Das bedeutet keine monatelange Vertragsbindung, flexible Anpassung nach Bedarf und professionelle Betreuung durch ein Team mit 10+ Jahren Branchenerfahrung. Sie sparen Zeit, steigern Ihre Produktivität und gewinnen neue Kunden durch professionelle Online-Präsenz.'
     },
     {
-      question: 'Wie lange bin ich an den Vertrag gebunden?',
+      question: 'Wie lange sind Sie an den Vertrag gebunden?',
       answer: 'Alle unsere Pakete sind monatlich kündbar. Es gibt keine langfristigen Bindungen – Sie können jederzeit flexibel anpassen oder kündigen. Das macht uns zur idealen Lösung für wachsende Unternehmen oder saisonale Schwankungen.'
     },
     {
       question: 'Welche Dienstleistungen sind in den Paketen enthalten?',
-      answer: 'Unsere Pakete umfassen Telefonservice, Terminorganisation, Social Media Betreuung, Google Bewertungen und Dokumentation & Reporting. Je nach Paket variieren Umfang und Intensität. Im Enterprise-Paket sind alle Leistungen enthalten plus individuelle Anpassungen und dedizierter Support.'
+      answer: 'Unsere Pakete umfassen Telefonservice, Terminorganisation, Social Media Betreuung, Google Bewertungen, Dokumentation & Reporting sowie Webdesign & App Lösungen. Je nach Paket variieren Umfang und Intensität. Im Enterprise-Paket sind alle Leistungen enthalten plus individuelle Anpassungen und dedizierter Support.'
     },
     {
-      question: 'Kann ich mir die Dienstleistungen vorher anschauen?',
+      question: 'Können Sie sich die Dienstleistungen vorher anschauen?',
       answer: 'Ja, gerne! Wir bieten eine kostenlose, unverbindliche Beratung an. Dabei besprechen wir Ihre individuellen Bedürfnisse und erstellen ein maßgeschneidertes Angebot. Sie können auch einen kostenlosen Probetag nutzen, um unsere Services kennenzulernen.'
     },
     {
-      question: 'Wie schnell kann ich starten?',
+      question: 'Wie schnell können Sie starten?',
       answer: 'Nach der unverbindlichen Beratung und Angebotserstellung können wir in der Regel innerhalb von 1-2 Wochen starten. Bei dringenden Anfragen sind auch schnellere Starttermine möglich. Kontaktieren Sie uns einfach für eine individuelle Abstimmung.'
     },
     {
@@ -42,7 +42,7 @@ export default function FAQSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white bg-dot-pattern relative">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">

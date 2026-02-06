@@ -1,6 +1,5 @@
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
+import ZielgruppenSlider from '../components/ZielgruppenSlider';
 import CookieBanner from '../components/CookieBanner';
 import StatsSection from '../components/StatsSection';
 import BenefitsSection from '../components/BenefitsSection';
@@ -25,12 +24,6 @@ export default function ZielgruppenPage() {
       href: '/zielgruppen/bauunternehmen'
     },
     {
-      title: 'Hoch- & Tiefbau',
-      description: 'Spezialisiert auf Hoch- und Tiefbauunternehmen',
-      icon: '🏢',
-      href: '/zielgruppen/hoch-tiefbau'
-    },
-    {
       title: 'Straßen- & Brückenbau',
       description: 'Bürodienstleistungen für Straßen- und Brückenbauunternehmen',
       icon: '🛣️',
@@ -43,23 +36,17 @@ export default function ZielgruppenPage() {
       href: '/zielgruppen/sanierung'
     },
     {
-      title: 'Dachdecker & Zimmermänner',
-      description: 'Professionelle Betreuung für Dachdecker und Zimmermänner',
+      title: 'Dachdecker & Zimmerleute',
+      description: 'Professionelle Betreuung für Dachdecker und Zimmerleute',
       icon: '🏠',
-      href: '/zielgruppen/dachdecker-zimmermaenner'
+      href: '/zielgruppen/dachdecker-zimmerleute'
     }
   ];
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
-        <HeroSection
-          title="Zielgruppen"
-          subtitle="Ihre Branche"
-          description="Professionelle Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen in allen Bereichen"
-          backgroundImage="/images/herobackgeneral2.png"
-        />
+        <ZielgruppenSlider />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">

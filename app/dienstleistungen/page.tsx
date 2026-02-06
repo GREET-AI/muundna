@@ -1,5 +1,3 @@
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner';
 import StatsSection from '../components/StatsSection';
@@ -7,8 +5,10 @@ import BenefitsSection from '../components/BenefitsSection';
 import CTASection from '../components/CTASection';
 import ExpertiseCTABanner from '../components/ExpertiseCTABanner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRoute } from '../utils/routes';
 import AnimatedCard3D from '../components/ui/AnimatedCard3D';
+import DienstleistungenSlider from '../components/DienstleistungenSlider';
 
 export default function DienstleistungenPage() {
   const services = [
@@ -22,7 +22,8 @@ export default function DienstleistungenPage() {
         'Rückrufservice',
         '24/7 Verfügbarkeit möglich'
       ],
-      href: '/dienstleistungen/telefonservice'
+      href: '/dienstleistungen/telefonservice',
+      image: '/images/Dienstleistungen/Telefonieren.jpeg'
     },
     {
       title: 'Terminorganisation',
@@ -34,7 +35,8 @@ export default function DienstleistungenPage() {
         'Konfliktvermeidung',
         'Monatliche Übersichten'
       ],
-      href: '/dienstleistungen/terminorganisation'
+      href: '/dienstleistungen/terminorganisation',
+      image: '/images/Dienstleistungen/Termenirung.jpeg'
     },
     {
       title: 'Social Media Betreuung',
@@ -46,7 +48,8 @@ export default function DienstleistungenPage() {
         'Analytics & Reporting',
         'Markenaufbau'
       ],
-      href: '/dienstleistungen/social-media'
+      href: '/dienstleistungen/social-media',
+      image: '/images/Dienstleistungen/SocialMedia.jpeg'
     },
     {
       title: 'Google Bewertungen',
@@ -58,7 +61,8 @@ export default function DienstleistungenPage() {
         'Monitoring & Analyse',
         'Strategische Optimierung'
       ],
-      href: '/dienstleistungen/google-bewertungen'
+      href: '/dienstleistungen/google-bewertungen',
+      image: '/images/Dienstleistungen/GoogleBewertungen.jpeg'
     },
     {
       title: 'Dokumentation & Reporting',
@@ -70,29 +74,37 @@ export default function DienstleistungenPage() {
         'Transparente Abrechnung',
         'Individuelle Auswertungen'
       ],
-      href: '/dienstleistungen/dokumentation'
+      href: '/dienstleistungen/dokumentation',
+      image: '/images/Dienstleistungen/Raport.jpeg'
+    },
+    {
+      title: 'Webdesign & App Lösungen',
+      description: 'Professionelle Websites und maßgeschneiderte App-Lösungen für Ihr Unternehmen. Moderne, responsive Designs die Kunden überzeugen.',
+      features: [
+        'Responsive Website-Design',
+        'Moderne CMS-Lösungen',
+        'Individuelle App-Entwicklung',
+        'Suchmaschinenoptimierung',
+        'Wartung und Support'
+      ],
+      href: '/dienstleistungen/webdesign-app',
+      image: '/images/Dienstleistungen/SocialMedia.jpeg'
     }
   ];
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
-        <HeroSection
-          title="Unsere Dienstleistungen"
-          subtitle="Services"
-          description="Professionelle Bürodienstleistungen speziell für Handwerksbetriebe und Bauunternehmen"
-          backgroundImage="/images/herobackgeneral2.png"
-        />
+        <DienstleistungenSlider />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="space-y-12">
             {services.map((service, index) => (
               <AnimatedCard3D key={index}>
-                <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow border border-gray-200">
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex-1">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow border border-gray-200">
+                <div className="flex flex-col md:flex-row gap-0">
+                  <div className="flex-1 p-8 order-2 md:order-1">
                     <h2 className="text-3xl font-bold text-gray-800 mb-4">
                       {service.title}
                     </h2>
@@ -114,6 +126,9 @@ export default function DienstleistungenPage() {
                       Mehr Details →
                     </Link>
                   </div>
+                  <div className="relative w-full md:w-80 lg:w-96 shrink-0 aspect-[4/3] md:aspect-auto md:min-h-[280px] order-1 md:order-2">
+                    <Image src={service.image} alt={service.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 384px" />
+                  </div>
                 </div>
               </div>
               </AnimatedCard3D>
@@ -129,7 +144,7 @@ export default function DienstleistungenPage() {
                 Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch.
               </p>
               <Link
-                href={getRoute('Kontakt')}
+                href={getRoute('Quiz')}
                 className="inline-flex items-center justify-center px-8 py-4 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors text-lg"
               >
                 Jetzt Kontakt aufnehmen
@@ -140,7 +155,7 @@ export default function DienstleistungenPage() {
 
         <StatsSection
           stats={[
-            { value: 5, suffix: '', label: 'Dienstleistungen', icon: '💼' },
+            { value: 6, suffix: '', label: 'Dienstleistungen', icon: '💼' },
             { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
             { value: 100, suffix: '%', label: 'Zufriedenheit', icon: '⭐' },
             { value: 24, suffix: '/7', label: 'Verfügbarkeit', icon: '⏰' }

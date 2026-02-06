@@ -46,14 +46,15 @@ export default function PricingSection() {
         'Individuelle Anpassungen',
         '24/7 Support',
         'Custom Reporting',
-        'Team-Schulungen'
+        'Team-Schulungen',
+        'Webdesign & App Lösungen'
       ],
       popular: false
     }
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white bg-dot-pattern relative">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
@@ -75,8 +76,8 @@ export default function PricingSection() {
               className={`relative ${pkg.popular ? 'md:-mt-4 md:mb-4' : ''}`}
             >
               {pkg.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#cb530a] text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  BELIEBTEST
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 bg-[#cb530a] text-white px-4 py-1 rounded-full text-sm font-semibold shadow-md">
+                  Stolz empfohlen
                 </div>
               )}
               <AnimatedCard3D>
@@ -115,7 +116,7 @@ export default function PricingSection() {
                   </div>
                   <div className="p-8 pt-0">
                     <Link
-                      href={getRoute('Kontakt')}
+                      href={getRoute('Quiz')}
                       className="block w-full text-center px-6 py-3 bg-[#cb530a] text-white font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors"
                     >
                       Jetzt anfragen

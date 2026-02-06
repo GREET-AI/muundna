@@ -1,16 +1,14 @@
-import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 
 export default function CookiesPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Cookie-Richtlinie"
           subtitle="Rechtliches"
-          backgroundImage="/images/herobackgeneral4.png"
+          backgroundImage="/images/Büro.png"
         />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
@@ -63,7 +61,7 @@ export default function CookiesPage() {
                 <div className="mb-6">
                   <h4 className="text-xl font-semibold text-gray-800 mb-3">Statistik-Cookies</h4>
                   <p className="text-gray-700 mb-2">
-                    Die technische Speicherung oder der Zugriff, der ausschließlich zu statistischen Zwecken erfolgt. Die technische Speicherung oder der Zugriff, der ausschließlich zu anonymen statistischen Zwecken verwendet wird. Ohne eine Vorladung, die freiwillige Zustimmung deines Internetdienstanbieters oder zusätzliche Aufzeichnungen von Dritten können die zu diesem Zweck gespeicherten oder abgerufenen Informationen allein in der Regel nicht dazu verwendet werden, dich zu identifizieren.
+                    Die technische Speicherung oder der Zugriff, der ausschließlich zu statistischen Zwecken erfolgt. Die technische Speicherung oder der Zugriff, der ausschließlich zu anonymen statistischen Zwecken verwendet wird. Ohne eine Vorladung, die freiwillige Zustimmung Ihres Internetdienstanbieters oder zusätzliche Aufzeichnungen von Dritten können die zu diesem Zweck gespeicherten oder abgerufenen Informationen allein in der Regel nicht dazu verwendet werden, Sie zu identifizieren.
                   </p>
                 </div>
 

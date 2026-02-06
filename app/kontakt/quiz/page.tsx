@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Building2, Wrench, Users, Calendar, MapPin, Phone, Mail, Home, User } from 'lucide-react';
@@ -44,7 +43,6 @@ export default function QuizPage() {
       options: [
         { id: 'handwerksbetrieb', label: 'Handwerksbetrieb', icon: Wrench },
         { id: 'bauunternehmen', label: 'Bauunternehmen', icon: Building2 },
-        { id: 'hoch-tiefbau', label: 'Hoch- & Tiefbau', icon: Building2 },
         { id: 'sanierung', label: 'Sanierung & Renovierung', icon: Home },
       ]
     },
@@ -59,6 +57,7 @@ export default function QuizPage() {
         { id: 'social-media', label: 'Social Media Betreuung' },
         { id: 'google-bewertungen', label: 'Google Bewertungen' },
         { id: 'dokumentation', label: 'Dokumentation & Reporting' },
+        { id: 'webdesign-app', label: 'Webdesign & App Lösungen' },
         { id: 'mehrere', label: 'Mehrere Dienstleistungen' },
       ]
     },
@@ -167,7 +166,6 @@ export default function QuizPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <main className="pt-20 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">

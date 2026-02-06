@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -15,13 +14,12 @@ import { getRoute } from '../../utils/routes';
 export default function HandwerksbetriebePage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Handwerksbetriebe"
           subtitle="Zielgruppe"
           description="Professionelle Bürodienstleistungen speziell für Handwerksbetriebe"
-          backgroundImage="/images/herobackgeneral3.png"
+          backgroundImage="/images/Handwerker.png"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">

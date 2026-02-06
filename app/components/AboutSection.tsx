@@ -30,7 +30,7 @@ export default function AboutSection() {
                 <li>• Hoch- und Tiefbau</li>
                 <li>• Straßenbau & Brückenbau</li>
                 <li>• Sanierung von Wohnobjekten</li>
-                <li>• Dachdecker & Zimmermänner</li>
+                <li>• Dachdecker & Zimmerleute</li>
               </ul>
             </div>
             

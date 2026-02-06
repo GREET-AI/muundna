@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -16,13 +15,12 @@ import AnimatedList from '../../components/ui/AnimatedList';
 export default function StrassenBrueckenbauPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Straßen- & Brückenbau"
           subtitle="Zielgruppe"
           description="Bürodienstleistungen für Straßen- und Brückenbauunternehmen"
-          backgroundImage="/images/herobackgeneral6.png"
+          backgroundImage="/images/Brückenbau.png"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">

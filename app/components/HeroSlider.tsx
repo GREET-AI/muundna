@@ -22,36 +22,28 @@ const slides: Slide[] = [
     subtitle: 'Für Handwerksbetriebe',
     description:
       'Professionelle Telefonservice, Kommunikation und Organisation für Ihr Bauunternehmen',
-    image: '/images/herobackgeneral2.png'
+    image: '/images/Handwerker%20(2).png'
   },
   {
     id: 2,
-    title: 'SOCIAL MEDIA & GOOGLE',
-    subtitle: 'Online-Präsenz optimieren',
-    description: 'Steigern Sie Ihre Sichtbarkeit mit professioneller Social Media Betreuung und Google Bewertungen',
-    image: '/images/herobackgeneral3.png'
-  },
-  {
-    id: 3,
-    title: 'TERMINORGANISATION',
-    subtitle: 'Effiziente Kundenbetreuung',
-    description:
-      'Organisieren Sie Kundentermine professionell und sparen Sie wertvolle Zeit',
-    image: '/images/herobackgeneral4.png'
-  },
-  {
-    id: 4,
     title: '10+ JAHRE ERFAHRUNG',
     subtitle: 'Im Bauwesen',
     description: 'Hoch- und Tiefbau, Straßenbau, Brückenbau, Sanierung - wir verstehen Ihr Geschäft',
-    image: '/images/herobackgeneral5.png'
+    image: '/images/Ingenieur.png'
   },
   {
-    id: 5,
-    title: 'DEUTSCHLAND, SCHWEIZ, ÖSTERREICH',
-    subtitle: 'Überregionale Betreuung',
-    description: 'Wir betreuen Handwerksbetriebe und Bauunternehmen in ganz DACH',
-    image: '/images/herobackgeneral6.png'
+    id: 3,
+    title: 'BAUUNTERNEHMEN',
+    subtitle: 'Effiziente Lösungen',
+    description: 'Komplette Bürodienstleistungen für Bauunternehmen – von Telefonservice bis Social Media.',
+    image: '/images/Bauunternehmen.png'
+  },
+  {
+    id: 4,
+    title: 'STRASSEN- & BRÜCKENBAU',
+    subtitle: 'Bürodienstleistungen für Infrastruktur',
+    description: 'Wir unterstützen Straßen- und Brückenbauunternehmen bei allen administrativen Aufgaben.',
+    image: '/images/Brückenbau.png'
   }
 ];
 
@@ -114,15 +106,15 @@ export default function HeroSlider() {
       <div className="absolute inset-0 flex items-center">
         <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full">
           <div className="max-w-2xl w-full pb-24 sm:pb-8">
-            {/* Title Box */}
-            <div className="mb-4 mt-8 sm:mt-0">
-              <div className="inline-block bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3 mb-2 max-w-full">
+            {/* Headline + Sub-Headline (Sub-Headline immer unter der Headline) */}
+            <div className="mb-4 mt-8 sm:mt-0 flex flex-col gap-2 max-w-full">
+              <div className="inline-block w-fit rounded-lg bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3">
                 <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-wide break-words">
                   {currentSlideData.title}
                 </h2>
               </div>
               {currentSlideData.subtitle && (
-                <div className="inline-block bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3 max-w-full">
+                <div className="inline-block w-fit rounded-lg bg-gray-800 bg-opacity-90 px-3 sm:px-4 md:px-6 py-2 sm:py-3">
                   <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-semibold break-words">
                     {currentSlideData.subtitle}
                   </h3>
@@ -131,7 +123,7 @@ export default function HeroSlider() {
             </div>
 
             {/* Description Box */}
-            <div className="bg-[#cb530a] px-3 sm:px-4 md:px-6 py-3 sm:py-4 inline-block shadow-lg mb-6 max-w-full">
+            <div className="rounded-lg bg-[#cb530a] px-3 sm:px-4 md:px-6 py-3 sm:py-4 inline-block shadow-lg mb-6 max-w-full">
               <p className="text-white text-sm sm:text-base md:text-lg font-medium leading-relaxed break-words">
                 {currentSlideData.description}
               </p>
@@ -140,7 +132,7 @@ export default function HeroSlider() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link
-                href={getRoute('Kontakt')}
+                href={getRoute('Quiz')}
                 className="inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-3 sm:py-4 bg-[#cb530a] text-white text-sm sm:text-base md:text-lg font-semibold rounded-lg shadow-lg hover:bg-[#a84308] transition-colors whitespace-nowrap"
               >
                 Jetzt Anfragen

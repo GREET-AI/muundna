@@ -1,6 +1,5 @@
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
+import ReferenzenSlider from '../components/ReferenzenSlider';
 import CookieBanner from '../components/CookieBanner';
 import StatsSection from '../components/StatsSection';
 import TestimonialsSection from '../components/TestimonialsSection';
@@ -40,14 +39,8 @@ export default function ReferenzenPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
-        <HeroSection
-          title="Referenzen"
-          subtitle="Unsere Kunden"
-          description="Erfolgreiche Zusammenarbeit mit Handwerksbetrieben und Bauunternehmen"
-          backgroundImage="/images/herobackgeneral4.png"
-        />
+        <ReferenzenSlider />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">

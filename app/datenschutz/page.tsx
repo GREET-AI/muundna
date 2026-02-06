@@ -1,16 +1,14 @@
-import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 
 export default function DatenschutzPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Datenschutz"
           subtitle="Rechtliches"
-          backgroundImage="/images/herobackgeneral3.png"
+          backgroundImage="/images/Büro.png"
         />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">

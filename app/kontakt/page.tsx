@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
+import KontaktHero from '../components/KontaktHero';
 import CTASection from '../components/CTASection';
 import GlowingEffect from '../components/ui/GlowingEffect';
 import StatefulButton from '../components/ui/StatefulButton';
@@ -168,15 +167,8 @@ export default function KontaktPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
-        <HeroSection
-          title="Kontakt"
-          subtitle="Kontakt aufnehmen"
-          description="Wie Sie uns erreichen können"
-          backgroundImage="/images/herobackgeneral5.png"
-        />
-
+        <KontaktHero />
         <ExpertiseCTABanner />
 
         {/* Schnell-Kontakt Sektion */}
@@ -363,6 +355,7 @@ export default function KontaktPage() {
                         <option>Social Media Betreuung</option>
                         <option>Google Bewertungen</option>
                         <option>Dokumentation & Reporting</option>
+                        <option>Webdesign & App Lösungen</option>
                         <option>Mehrere Dienstleistungen</option>
                       </select>
                     </div>

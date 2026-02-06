@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -10,36 +9,41 @@ import ProcessSection from '../../components/ProcessSection';
 import CTASection from '../../components/CTASection';
 import ExpertiseCTABanner from '../../components/ExpertiseCTABanner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRoute } from '../../utils/routes';
 
 
 export default function SocialMediaPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Social Media Betreuung"
           subtitle="Dienstleistung"
           description="Professionelle Betreuung Ihrer Social Media Kanäle für mehr Sichtbarkeit"
-          backgroundImage="/images/herobackgeneral5.png"
+          backgroundImage="/images/Dienstleistungen/SocialMedia.jpeg"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">
-                Warum Social Media für Handwerksbetriebe?
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Immer mehr Kunden suchen Handwerker und Bauunternehmen online. Eine professionelle
-                Social Media Präsenz hilft Ihnen, neue Kunden zu gewinnen und Ihr Unternehmen
-                positiv darzustellen. Wir übernehmen die komplette Betreuung Ihrer Social Media
-                Kanäle - von der Content-Erstellung bis zum Community Management.
-              </p>
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-12">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                    Warum Social Media für Handwerksbetriebe?
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">
+                    Immer mehr Kunden suchen Handwerker und Bauunternehmen online. Eine professionelle
+                    Social Media Präsenz hilft Ihnen, neue Kunden zu gewinnen und Ihr Unternehmen
+                    positiv darzustellen. Wir übernehmen die komplette Betreuung Ihrer Social Media
+                    Kanäle – von der Content-Erstellung bis zum Community Management.
+                  </p>
+                </div>
+                <div className="relative aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <Image src="/images/Dienstleistungen/SocialMedia.jpeg" alt="Social Media Betreuung" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+                </div>
               </div>
-            </div>
+            <div className="max-w-4xl mx-auto">
 
             <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">
@@ -113,6 +117,8 @@ export default function SocialMediaPage() {
                 Jetzt unverbindlich anfragen
               </Link>
             </div>
+          </div>
+          </div>
           </div>
         </section>
 

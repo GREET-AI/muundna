@@ -1,26 +1,18 @@
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
+import TeamHeroGrid from '../components/TeamHeroGrid';
 import CookieBanner from '../components/CookieBanner';
 import StatsSection from '../components/StatsSection';
 import FeaturesGridSection from '../components/FeaturesGridSection';
 import CTASection from '../components/CTASection';
 import ExpertiseCTABanner from '../components/ExpertiseCTABanner';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getRoute } from '../utils/routes';
 
 export default function UeberUnsPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
-        <HeroSection
-          title="Über Muckenfuss & Nagel"
-          subtitle="Unternehmen"
-          description="10+ Jahre Erfahrung im Bauwesen - Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen"
-          backgroundImage="/images/herobackgeneral3.png"
-        />
+        <TeamHeroGrid />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
@@ -38,7 +30,7 @@ export default function UeberUnsPage() {
                   </p>
                   <p className="text-lg text-gray-700 leading-relaxed">
                     Unsere Expertise umfasst Hoch- und Tiefbau, Straßenbau, Brückenbau, Sanierung von
-                    Wohnobjekten sowie die Arbeit mit Dachdeckern und Zimmermännern. Diese praktische
+                    Wohnobjekten sowie die Arbeit mit Dachdeckern und Zimmerleuten. Diese praktische
                     Erfahrung ermöglicht es uns, Bürodienstleistungen anzubieten, die perfekt auf die
                     Bedürfnisse der Baubranche zugeschnitten sind.
                   </p>
@@ -86,6 +78,49 @@ export default function UeberUnsPage() {
               </ul>
             </div>
 
+            <section id="geschichte" className="scroll-mt-24 mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Unternehmensgeschichte</h2>
+              <div className="space-y-4 text-gray-700">
+                <p className="leading-relaxed">
+                  Muckenfuss & Nagel wurde von einem erfahrenen Bauprofi gegründet, der über 10 Jahre praktische Erfahrung im Bauwesen gesammelt hat. Während dieser Zeit wurde deutlich, dass viele Handwerksbetriebe und Bauunternehmen Unterstützung bei Büroaufgaben benötigen. Aus dieser Erfahrung entstand die Idee, Bürodienstleistungen speziell für die Baubranche anzubieten.
+                </p>
+                <p className="leading-relaxed">
+                  Heute betreuen wir Handwerksbetriebe und Bauunternehmen in Deutschland, der Schweiz und Österreich. Unser Standort in Oberderdingen ist der Ausgangspunkt für unsere überregionale Betreuung.
+                </p>
+              </div>
+            </section>
+
+            <section id="standort" className="scroll-mt-24 mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Standort</h2>
+              <div className="space-y-4 text-gray-700">
+                <p className="leading-relaxed">
+                  Unser Standort befindet sich in Oberderdingen, Landkreis Karlsruhe in Baden-Württemberg. Von hier aus betreuen wir Kunden in ganz Deutschland, der Schweiz und Österreich.
+                </p>
+                <p className="leading-relaxed">
+                  Durch moderne Kommunikationstechnologien können wir Sie ortsunabhängig professionell betreuen – Telefonservice, Terminorganisation, Social Media und alle anderen Dienstleistungen funktionieren überregional.
+                </p>
+              </div>
+            </section>
+
+            <section id="kompetenz" className="scroll-mt-24 mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Erfahrung & Kompetenz</h2>
+              <div className="space-y-4 text-gray-700">
+                <p className="leading-relaxed">
+                  Unser Gründer bringt über 10 Jahre praktische Erfahrung im Bauwesen mit: Hoch- und Tiefbau, Straßen- und Brückenbau, Sanierung, Zusammenarbeit mit Dachdeckern und Zimmerleuten. Zusätzlich verfügen wir über umfassende Kompetenz in Bürodienstleistungen – von Telefonkommunikation über Terminorganisation bis zu Social Media, Dokumentation und Webdesign.
+                </p>
+                <p className="leading-relaxed">
+                  Die Kombination aus Bau-Erfahrung und Büro-Expertise macht uns zum idealen Partner für Handwerksbetriebe und Bauunternehmen.
+                </p>
+              </div>
+            </section>
+
+            <section id="team" className="scroll-mt-24 mb-12">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Team & Büro</h3>
+              <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8">
+                Unser Team und unsere Arbeitsumgebung – hier entstehen Ihre Bürolösungen.
+              </p>
+            </section>
+
             <div className="text-center">
               <Link
                 href={getRoute('Kontakt')}
@@ -102,7 +137,7 @@ export default function UeberUnsPage() {
             { value: 10, suffix: '+', label: 'Jahre Erfahrung', icon: '🎯' },
             { value: 50, suffix: '+', label: 'Zufriedene Kunden', icon: '😊' },
             { value: 3, suffix: '', label: 'DACH-Länder', icon: '🌍' },
-            { value: 5, suffix: '', label: 'Dienstleistungen', icon: '💼' }
+            { value: 6, suffix: '', label: 'Dienstleistungen', icon: '💼' }
           ]}
           title="Muckenfuss & Nagel in Zahlen"
         />

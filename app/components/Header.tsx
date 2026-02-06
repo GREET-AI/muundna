@@ -10,10 +10,7 @@ export default function Header() {
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
 
   const menuItems = [
-    {
-      title: 'Über uns',
-      submenu: ['Unternehmensgeschichte', 'Standort', 'Erfahrung & Kompetenz']
-    },
+    { title: 'Über uns' },
     {
       title: 'Dienstleistungen',
       submenu: [
@@ -21,7 +18,8 @@ export default function Header() {
         'Terminorganisation',
         'Social Media Betreuung',
         'Google Bewertungen',
-        'Dokumentation & Reporting'
+        'Dokumentation & Reporting',
+        'Webdesign & App Lösungen'
       ]
     },
     {
@@ -29,10 +27,9 @@ export default function Header() {
       submenu: [
         'Handwerksbetriebe',
         'Bauunternehmen',
-        'Hoch- & Tiefbau',
         'Straßen- & Brückenbau',
         'Sanierung & Renovierung',
-        'Dachdecker & Zimmermänner'
+        'Dachdecker & Zimmerleute'
       ]
     },
     { title: 'Referenzen' },
@@ -47,7 +44,7 @@ export default function Header() {
           <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
             <div className="relative w-16 h-16 md:w-24 md:h-24">
               <Image
-                src="/images/logo.png"
+                src="/logoneu.png"
                 alt="Muckenfuss & Nagel Logo"
                 fill
                 className="object-contain"
@@ -108,7 +105,7 @@ export default function Header() {
           {/* CTA Button & Mobile Menu Button */}
           <div className="flex items-center gap-4">
             <Link
-              href={getRoute('Kontakt')}
+              href={getRoute('Quiz')}
               className="hidden lg:inline-flex items-center justify-center px-6 py-2.5 bg-[#cb530a] hover:bg-[#a84308] text-white font-semibold rounded-lg shadow-lg transition-all hover:shadow-xl"
             >
               Jetzt Anfragen
@@ -154,36 +151,39 @@ export default function Header() {
                 <li key={index}>
                   {item.submenu ? (
                     <>
-                      <Link
-                        href={getRoute(item.title)}
-                        className="block text-white font-medium py-2 hover:text-[#cb530a]"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {item.title}
-                      </Link>
-                      <button
-                        onClick={() =>
-                          setOpenSubmenu(openSubmenu === index ? null : index)
-                        }
-                        className="w-full text-left text-gray-300 text-sm font-medium py-2 flex items-center justify-between hover:text-[#cb530a]"
-                      >
-                        Untermenü
-                        <svg
-                          className={`w-4 h-4 transition-transform ${
-                            openSubmenu === index ? 'rotate-90' : ''
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      <div className="flex items-center justify-between gap-2">
+                        <Link
+                          href={getRoute(item.title)}
+                          className="flex-1 text-white font-medium py-2 hover:text-[#cb530a]"
+                          onClick={() => setIsMenuOpen(false)}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </button>
+                          {item.title}
+                        </Link>
+                        <button
+                          onClick={() =>
+                            setOpenSubmenu(openSubmenu === index ? null : index)
+                          }
+                          className="p-2 text-white hover:text-[#cb530a] shrink-0"
+                          aria-label={openSubmenu === index ? 'Untermenü schließen' : 'Untermenü öffnen'}
+                        >
+                          <svg
+                            className={`w-5 h-5 transition-transform ${
+                              openSubmenu === index ? 'rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                       {openSubmenu === index && (
                         <ul className="pl-4 mt-2 space-y-1 border-l-2 border-[#cb530a]/30">
                           {item.submenu.map((subItem, subIndex) => (
@@ -214,7 +214,7 @@ export default function Header() {
             </ul>
             <div className="mt-6 pt-6 border-t border-gray-800">
               <Link
-                href={getRoute('Kontakt')}
+                href={getRoute('Quiz')}
                 className="block w-full text-center px-6 py-3 bg-[#cb530a] hover:bg-[#a84308] text-white font-semibold rounded-lg shadow-lg transition-all"
                 onClick={() => setIsMenuOpen(false)}
               >

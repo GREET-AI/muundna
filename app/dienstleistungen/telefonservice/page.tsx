@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -10,27 +9,40 @@ import UseCasesSection from '../../components/UseCasesSection';
 import CTASection from '../../components/CTASection';
 import ExpertiseCTABanner from '../../components/ExpertiseCTABanner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRoute } from '../../utils/routes';
 import AnimatedList from '../../components/ui/AnimatedList';
 
 export default function TelefonservicePage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Telefonservice & Kommunikation"
           subtitle="Dienstleistung"
           description="Professionelle telefonische Kundenbetreuung während Ihrer Arbeitszeiten"
-          backgroundImage="/images/herobackgeneral3.png"
+          backgroundImage="/images/Dienstleistungen/Telefonieren.jpeg"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-12">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                    Ihre Vorteile
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    Professionelle telefonische Kundenbetreuung – wir übernehmen Anrufe, beantworten Fragen und leiten wichtige Informationen weiter.
+                  </p>
+                </div>
+                <div className="relative aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <Image src="/images/Dienstleistungen/Telefonieren.jpeg" alt="Telefonservice & Kommunikation" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+                </div>
+              </div>
               <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">
-                Ihre Vorteile
+                Ihre Vorteile im Überblick
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex items-start">
@@ -102,7 +114,7 @@ export default function TelefonservicePage() {
                 Jetzt unverbindlich anfragen
               </Link>
             </div>
-            </div>
+          </div>
           </div>
         </section>
 

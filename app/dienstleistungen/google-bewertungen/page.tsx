@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import ExpertiseCTABanner from '../../components/ExpertiseCTABanner';
 import Footer from '../../components/Footer';
@@ -10,37 +9,42 @@ import UseCasesSection from '../../components/UseCasesSection';
 import ProcessSection from '../../components/ProcessSection';
 import CTASection from '../../components/CTASection';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRoute } from '../../utils/routes';
 
 
 export default function GoogleBewertungenPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Google Bewertungen"
           subtitle="Dienstleistung"
           description="Optimierung und Betreuung Ihrer Google Bewertungen für mehr Vertrauen"
-          backgroundImage="/images/herobackgeneral6.png"
+          backgroundImage="/images/Dienstleistungen/GoogleBewertungen.jpeg"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">
-                Warum Google Bewertungen wichtig sind
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Über 80% der Kunden lesen vor der Auftragsvergabe die Google Bewertungen eines
-                Handwerkers oder Bauunternehmens. Positive Bewertungen steigern nicht nur Ihre
-                Sichtbarkeit, sondern auch das Vertrauen potenzieller Kunden. Wir helfen Ihnen,
-                mehr positive Bewertungen zu erhalten und professionell mit allen Bewertungen
-                umzugehen.
-              </p>
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-12">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                    Warum Google Bewertungen wichtig sind
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">
+                    Über 80% der Kunden lesen vor der Auftragsvergabe die Google Bewertungen eines
+                    Handwerkers oder Bauunternehmens. Positive Bewertungen steigern nicht nur Ihre
+                    Sichtbarkeit, sondern auch das Vertrauen potenzieller Kunden. Wir helfen Ihnen,
+                    mehr positive Bewertungen zu erhalten und professionell mit allen Bewertungen
+                    umzugehen.
+                  </p>
+                </div>
+                <div className="relative aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <Image src="/images/Dienstleistungen/GoogleBewertungen.jpeg" alt="Google Bewertungen" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+                </div>
               </div>
-            </div>
+            <div className="max-w-4xl mx-auto">
 
             <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">
@@ -114,6 +118,8 @@ export default function GoogleBewertungenPage() {
                 Jetzt unverbindlich anfragen
               </Link>
             </div>
+          </div>
+          </div>
           </div>
         </section>
 

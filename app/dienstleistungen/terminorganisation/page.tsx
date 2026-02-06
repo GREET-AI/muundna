@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -10,35 +9,40 @@ import ProcessSection from '../../components/ProcessSection';
 import CTASection from '../../components/CTASection';
 import ExpertiseCTABanner from '../../components/ExpertiseCTABanner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRoute } from '../../utils/routes';
 
 
 export default function TerminorganisationPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Terminorganisation"
           subtitle="Dienstleistung"
           description="Effiziente Planung und Organisation Ihrer Kundentermine"
-          backgroundImage="/images/herobackgeneral4.png"
+          backgroundImage="/images/Dienstleistungen/Termenirung.jpeg"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">
-                Optimale Terminplanung für Ihr Unternehmen
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Als Handwerksbetrieb oder Bauunternehmen haben Sie viele Termine zu koordinieren:
-                Kundentermine, Baustellenbesichtigungen, Angebotserstellungen und mehr. Wir übernehmen
-                die komplette Terminorganisation und sorgen dafür, dass Ihr Kalender optimal ausgelastet ist.
-              </p>
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-12">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                    Optimale Terminplanung für Ihr Unternehmen
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">
+                    Als Handwerksbetrieb oder Bauunternehmen haben Sie viele Termine zu koordinieren:
+                    Kundentermine, Baustellenbesichtigungen, Angebotserstellungen und mehr. Wir übernehmen
+                    die komplette Terminorganisation und sorgen dafür, dass Ihr Kalender optimal ausgelastet ist.
+                  </p>
+                </div>
+                <div className="relative aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <Image src="/images/Dienstleistungen/Termenirung.jpeg" alt="Terminorganisation" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+                </div>
               </div>
-            </div>
+            <div className="max-w-4xl mx-auto">
 
             <div className="bg-gray-50 rounded-lg p-8 mb-8 border border-gray-200">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">
@@ -116,6 +120,8 @@ export default function TerminorganisationPage() {
                 Jetzt unverbindlich anfragen
               </Link>
             </div>
+          </div>
+          </div>
           </div>
         </section>
 

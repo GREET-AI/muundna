@@ -14,9 +14,9 @@ export function slugify(text: string): string {
 export const routes = {
   // Über uns
   'Über uns': '/ueber-uns',
-  'Unternehmensgeschichte': '/ueber-uns/geschichte',
-  'Standort': '/ueber-uns/standort',
-  'Erfahrung & Kompetenz': '/ueber-uns/kompetenz',
+  'Unternehmensgeschichte': '/ueber-uns#geschichte',
+  'Standort': '/ueber-uns#standort',
+  'Erfahrung & Kompetenz': '/ueber-uns#kompetenz',
   
   // Dienstleistungen
   'Dienstleistungen': '/dienstleistungen',
@@ -25,15 +25,15 @@ export const routes = {
   'Social Media Betreuung': '/dienstleistungen/social-media',
   'Google Bewertungen': '/dienstleistungen/google-bewertungen',
   'Dokumentation & Reporting': '/dienstleistungen/dokumentation',
+  'Webdesign & App Lösungen': '/dienstleistungen/webdesign-app',
   
   // Zielgruppen
   'Zielgruppen': '/zielgruppen',
   'Handwerksbetriebe': '/zielgruppen/handwerksbetriebe',
   'Bauunternehmen': '/zielgruppen/bauunternehmen',
-  'Hoch- & Tiefbau': '/zielgruppen/hoch-tiefbau',
   'Straßen- & Brückenbau': '/zielgruppen/strassen-brueckenbau',
   'Sanierung & Renovierung': '/zielgruppen/sanierung',
-  'Dachdecker & Zimmermänner': '/zielgruppen/dachdecker-zimmermaenner',
+  'Dachdecker & Zimmerleute': '/zielgruppen/dachdecker-zimmerleute',
   
   // Referenzen
   'Referenzen': '/referenzen',

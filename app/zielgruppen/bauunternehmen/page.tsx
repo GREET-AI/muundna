@@ -1,4 +1,3 @@
-import Header from '../../components/Header';
 import HeroSection from '../../components/HeroSection';
 import Footer from '../../components/Footer';
 import CookieBanner from '../../components/CookieBanner';
@@ -15,13 +14,12 @@ import { getRoute } from '../../utils/routes';
 export default function BauunternehmenPage() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main>
         <HeroSection
           title="Bauunternehmen"
           subtitle="Zielgruppe"
           description="Professionelle Bürodienstleistungen für Bauunternehmen"
-          backgroundImage="/images/herobackgeneral4.png"
+          backgroundImage="/images/Bauunternehmen.png"
         />
         <ExpertiseCTABanner />
         <section className="py-20 bg-white">

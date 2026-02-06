@@ -74,9 +74,9 @@ export default function CookieBanner() {
                       Cookie-Zustimmung verwalten
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Um dir ein optimales Erlebnis zu bieten, verwenden wir Technologien wie Cookies, 
-                      um Geräteinformationen zu speichern und/oder darauf zuzugreifen. Wenn du diesen 
-                      Technologien zustimmst, können wir Daten wie das Surfverhalten oder eindeutige IDs 
+                      Um Ihnen ein optimales Erlebnis zu bieten, verwenden wir Technologien wie Cookies, 
+                      um Geräteinformationen zu speichern und/oder darauf zuzugreifen. Wenn Sie diesen 
+                      Technologien zustimmen, können wir Daten wie das Surfverhalten oder eindeutige IDs 
                       auf dieser Website verarbeiten.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
