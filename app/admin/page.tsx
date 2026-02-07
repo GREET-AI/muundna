@@ -157,6 +157,8 @@ export default function AdminPage() {
   const [sidebarFlyout, setSidebarFlyout] = useState<'tools' | 'kunden' | null>(null);
   const kundenBtnRef = useRef<HTMLButtonElement>(null);
   const toolsBtnRef = useRef<HTMLButtonElement>(null);
+  const sidebarWrapRef = useRef<HTMLDivElement>(null);
+  const flyoutPanelRef = useRef<HTMLDivElement>(null);
   const flyoutHoveredRef = useRef(false);
   const flyoutCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Flyout: immer Unterkante des Buttons, Menü öffnet immer nach oben */
@@ -373,6 +375,25 @@ export default function AdminPage() {
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
   }, [infoFilterOpen]);
+
+  /** Flyout schließen, wenn Maus die Sidebar- oder Flyout-Zone verlässt (z. B. zu den Content-Cards) */
+  useEffect(() => {
+    if (!sidebarFlyout) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const sidebarEl = sidebarWrapRef.current;
+      const flyoutEl = flyoutPanelRef.current;
+      if (!sidebarEl || !flyoutEl) return;
+      const sr = sidebarEl.getBoundingClientRect();
+      const fr = flyoutEl.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      const inSidebar = x >= sr.left && x <= sr.right && y >= sr.top && y <= sr.bottom;
+      const inFlyout = x >= fr.left && x <= fr.right && y >= fr.top && y <= fr.bottom;
+      if (!inSidebar && !inFlyout) setSidebarFlyout(null);
+    };
+    document.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => document.removeEventListener('mousemove', onMouseMove);
+  }, [sidebarFlyout]);
 
   /** Team-Liste laden wenn Team-Bereich sichtbar und Berechtigung */
   const canManageUsers = currentUser?.permissions?.includes('admin') || currentUser?.permissions?.includes('users.manage');
@@ -1454,6 +1475,7 @@ export default function AdminPage() {
 
       {/* Sidebar – nur die inneren Cards sichtbar, kein Schatten/Hintergrund */}
       <div
+        ref={sidebarWrapRef}
         className="admin-sidebar-wrap fixed z-40 flex"
         style={{ left: APP_PADDING, top: APP_PADDING, bottom: APP_PADDING, width: SIDEBAR_WIDTH }}
         onMouseEnter={() => {
@@ -1467,8 +1489,8 @@ export default function AdminPage() {
           }, 200);
         }}
       >
-        <aside className="w-full h-full flex flex-col shrink-0 bg-transparent">
-          <nav className="admin-sidebar-nav flex-1 py-2 px-0 min-h-0 overflow-y-auto space-y-1 w-full">
+        <aside className="w-full h-full flex flex-col shrink-0 bg-transparent scrollbar-hide">
+          <nav className="admin-sidebar-nav scrollbar-hide flex-1 pt-0 pb-2 px-0 min-h-0 overflow-y-auto space-y-1 w-full">
             {/* 1. Logout + Start – komplett weiß */}
             <div className="w-full rounded-xl border border-neutral-300 bg-white px-2 py-4">
               <button
@@ -1613,6 +1635,7 @@ export default function AdminPage() {
         {/* Flyout im gleichen Styling wie die zugehörige Card (Kunden = CRM, Tools = Tools-Card) */}
         {sidebarFlyout && (
           <div
+            ref={flyoutPanelRef}
             className={`fixed w-52 border border-neutral-300 rounded-xl flex flex-col py-2.5 z-50 shadow-md ${sidebarFlyout === 'kunden' ? 'bg-neutral-100' : 'bg-neutral-200'}`}
             style={{ left: APP_PADDING + SIDEBAR_WIDTH + 4, bottom: window.innerHeight - flyoutPosition.buttonBottom }}
             onMouseEnter={() => {
