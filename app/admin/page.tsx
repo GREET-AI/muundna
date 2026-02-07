@@ -1510,6 +1510,12 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* Hintergrund hinter der Sidebar (ganze linke Spalte weiß, inkl. Root-Padding damit kein schmaler Streifen) */}
+      <div
+        className="fixed z-30 bg-white"
+        style={{ left: 0, top: 0, bottom: 0, width: contentLeft + APP_PADDING }}
+        aria-hidden
+      />
       {/* Sidebar – nur die inneren Cards sichtbar, kein Schatten/Hintergrund */}
       <div
         ref={sidebarWrapRef}
@@ -1526,7 +1532,7 @@ export default function AdminPage() {
           }, 200);
         }}
       >
-        <aside className="w-full h-full flex flex-col shrink-0 bg-transparent scrollbar-hide">
+        <aside className="w-full h-full flex flex-col shrink-0 bg-white scrollbar-hide">
           <nav className="admin-sidebar-nav scrollbar-hide flex-1 pt-0 pb-2 px-0 min-h-0 overflow-y-auto space-y-1 w-full">
             {/* 1. Logout + Start – komplett weiß */}
             <div className="w-full rounded-xl border border-neutral-300 bg-white px-2 py-4">
