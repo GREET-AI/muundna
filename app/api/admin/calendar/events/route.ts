@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
-
-function checkAdminAuth(request: NextRequest): boolean {
-  const cookie = request.cookies.get('admin_session')?.value;
-  return isAdminAuthenticated(cookie);
-}
+import { getAdminSession } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!getAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
     }
@@ -50,9 +43,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!getAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
     }

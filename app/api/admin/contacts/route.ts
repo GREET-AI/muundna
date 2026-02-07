@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase-admin';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
-
-function checkAdminAuth(request: NextRequest): boolean {
-  const cookie = request.cookies.get('admin_session')?.value;
-  return isAdminAuthenticated(cookie);
-}
+import { getAdminSession } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    const session = getAdminSession(request);
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -43,6 +39,7 @@ export async function GET(request: NextRequest) {
       .select('*', usePagination ? { count: 'exact' } : undefined)
       .order('created_at', { ascending: false });
 
+    query = query.eq('tenant_id', session.tid);
     if (leadsOnly) {
       query = query.in('source', ['gelbe_seiten', '11880', 'google_places']);
     }
@@ -136,9 +133,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -170,7 +166,7 @@ export async function PATCH(request: NextRequest) {
     // Alte Werte für Aktivitätslog laden (falls changed_by gesetzt)
     let oldRow: Record<string, unknown> | null = null;
     if (salesRep && id != null) {
-      const { data: existing } = await supabaseAdmin.from('contact_submissions').select('*').eq('id', id).single();
+      const { data: existing } = await supabaseAdmin.from('contact_submissions').select('*').eq('id', id).eq('tenant_id', session.tid).single();
       oldRow = (existing as Record<string, unknown>) ?? null;
     }
 
@@ -180,6 +176,7 @@ export async function PATCH(request: NextRequest) {
       .from('contact_submissions')
       .update(updateData)
       .eq('id', id)
+      .eq('tenant_id', session.tid)
       .select()
       .single();
     data = result.data;
@@ -192,6 +189,7 @@ export async function PATCH(request: NextRequest) {
         .from('contact_submissions')
         .update(updateData)
         .eq('id', id)
+        .eq('tenant_id', session.tid)
         .select()
         .single();
       data = result.data;
@@ -236,9 +234,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -256,7 +253,8 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabaseAdmin
       .from('contact_submissions')
       .delete()
-      .eq('id', Number(id));
+      .eq('id', Number(id))
+      .eq('tenant_id', session.tid);
 
     if (deleteError) {
       console.error('Fehler beim Löschen:', deleteError);

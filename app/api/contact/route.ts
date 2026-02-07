@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 // E-Mail-Benachrichtigung senden (asynchron)
 async function sendEmailNotification(contactData: any) {
@@ -193,27 +194,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Daten in Supabase speichern (falls konfiguriert)
-    if (supabase) {
-      const { data, error } = await supabase
+    // Nutze supabaseAdmin für tenant_id-Zuordnung; Fallback: anon-Client
+    const insertPayload = {
+      first_name: body.firstName,
+      last_name: body.lastName,
+      email: body.email,
+      phone: body.phone || null,
+      service: body.service || null,
+      message: body.message || null,
+      street: body.street || null,
+      city: body.city || null,
+      company: body.company || null,
+      quiz_data: body.quizData || null,
+      status: 'neu',
+      source: 'website_form',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>;
+
+    if (supabaseAdmin) {
+      const { data: defaultTenant } = await supabaseAdmin
+        .from('tenants')
+        .select('id')
+        .eq('slug', process.env.DEFAULT_TENANT_SLUG || 'muckenfuss-nagel')
+        .limit(1)
+        .maybeSingle();
+      if (defaultTenant?.id) insertPayload.tenant_id = defaultTenant.id;
+    }
+
+    const client = supabaseAdmin ?? supabase;
+    if (client) {
+      const { data, error } = await client
         .from('contact_submissions')
-        .insert([
-          {
-            first_name: body.firstName,
-            last_name: body.lastName,
-            email: body.email,
-            phone: body.phone || null,
-            service: body.service || null,
-            message: body.message || null,
-            street: body.street || null,
-            city: body.city || null,
-            company: body.company || null,
-            quiz_data: body.quizData || null,
-            status: 'neu',
-            source: 'website_form',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
+        .insert([insertPayload])
         .select();
 
       if (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin-auth';
 
 type Recipient = { name?: string; email: string; kunde?: string; googleLink?: string };
 type Template = { kunde: string; googleLink: string; messageBody: string };
@@ -14,10 +14,7 @@ function fillTemplate(body: string, name: string, kunde: string, link: string): 
 
 export async function POST(request: NextRequest) {
   try {
-    const cookie = request.cookies.get('admin_session')?.value;
-    if (!isAdminAuthenticated(cookie)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!getAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const apiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || 'onboarding@resend.dev';

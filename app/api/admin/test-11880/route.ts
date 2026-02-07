@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scrape11880 } from '@/app/actions/scrape-11880';
 import { build11880SearchUrl } from '@/lib/scraper-sources';
 import { extract11880DetailUrls } from '@/lib/scrape-11880-parse';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin-auth';
 
 /**
  * Backend-Test für 11880-Scraper.
@@ -11,10 +11,7 @@ import { isAdminAuthenticated } from '@/lib/admin-auth';
  * Auth: Session-Cookie (nach Login unter /admin)
  */
 export async function GET(request: NextRequest) {
-  const cookie = request.cookies.get('admin_session')?.value;
-  if (!isAdminAuthenticated(cookie)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!getAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const keyword = searchParams.get('keyword') ?? 'Maurer';

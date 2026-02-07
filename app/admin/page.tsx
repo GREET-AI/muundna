@@ -9,7 +9,7 @@ import {
   MessageSquare, TrendingUp, BarChart3, User,
   Contact, Euro, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
   Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History,
-  Flame, Magnet, AtSign, UserCircle, LogOut
+  Flame, AtSign, UserCircle, LogOut, BookOpen, Trash2, GraduationCap, Download, KeyRound
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -23,7 +23,7 @@ import {
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import { scrapeGelbeSeiten } from '@/app/actions/scrape-gelbeseiten';
 import { scrape11880 } from '@/app/actions/scrape-11880';
@@ -76,7 +76,8 @@ interface QuizData {
   bundleSummary?: { paket?: string; totalMonthlyNetto?: number; label?: string };
 }
 
-const SALES_REPS = [{ value: 'sven', label: 'Sven' }, { value: 'pascal', label: 'Pascal' }] as const;
+/** Aktuelle Nutzer für Zuweisung/Kalender (username → Anzeige) */
+type TeamMember = { id: string; username: string; display_name: string; department_label: string | null };
 
 export type AngebotForm = {
   headline: string;
@@ -93,10 +94,10 @@ export type AngebotForm = {
 };
 
 export default function AdminPage() {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [salesRep, setSalesRep] = useState<'sven' | 'pascal' | null>(null);
-  const [loginPendingProfile, setLoginPendingProfile] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [contacts, setContacts] = useState<ContactSubmission[]>([]);
   const [contactsTotal, setContactsTotal] = useState(0);
   const [contactsPage, setContactsPage] = useState(0);
@@ -125,7 +126,7 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState<{ first_name: string; last_name: string; email: string; phone: string; street: string; city: string; company: string; notes: string }>({ first_name: '', last_name: '', email: '', phone: '', street: '', city: '', company: '', notes: '' });
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; contact: ContactSubmission } | null>(null);
   const [viewMode, setViewMode] = useState<'pipeline' | 'table'>('table');
-  const [activeNav, setActiveNav] = useState('contacts');
+  const [activeNav, setActiveNav] = useState('start');
   // Lead-Scraping (Gelbe Seiten + 11880 – unabhängig, laufen im Hintergrund)
   const [scrapeKeyword, setScrapeKeyword] = useState('');
   const [scrapeLocation, setScrapeLocation] = useState('');
@@ -142,16 +143,24 @@ export default function AdminPage() {
   const [scraperMenuOpen, setScraperMenuOpen] = useState(true);
   /** Tools-Submenü aufgeklappt */
   const [toolsMenuOpen, setToolsMenuOpen] = useState(true);
+  /** Aktueller User aus /me (für Berechtigungen, z. B. Team-Verwaltung) */
+  const [currentUser, setCurrentUser] = useState<{ username?: string; display_name?: string | null; department_label?: string | null; permissions?: string[]; features?: string[] } | null>(null);
+  /** Team-Verwaltung: Liste + Formular */
+  const [teamUsers, setTeamUsers] = useState<Array<{ id: string; username: string; display_name: string | null; department_key: string | null; department_label: string | null; is_active: boolean; last_login_at: string | null; created_at: string; role: string | null }>>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<Array<{ key: string; label: string }>>([]);
+  const [newUserForm, setNewUserForm] = useState({ username: '', password: '', display_name: '', role: 'mitarbeiter', department_key: '' });
+  const [newUserSubmitting, setNewUserSubmitting] = useState(false);
+  const [newUserMessage, setNewUserMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   /** Canva-Sidebar: welcher Flyout (Unterpunkte) sichtbar ist; null = zu beim Verlassen der Bar */
-  const [sidebarFlyout, setSidebarFlyout] = useState<'quellen' | 'tools' | 'kunden' | null>(null);
-  /** Flyout vertikal an den Menüpunkt anpassen (top in px); bei wenig Platz nach unten → nach oben öffnen */
-  const [flyoutTop, setFlyoutTop] = useState(0);
-  const [flyoutOpenUp, setFlyoutOpenUp] = useState(false);
-  const quellenBtnRef = useRef<HTMLButtonElement>(null);
+  const [sidebarFlyout, setSidebarFlyout] = useState<'tools' | 'kunden' | null>(null);
   const kundenBtnRef = useRef<HTMLButtonElement>(null);
   const toolsBtnRef = useRef<HTMLButtonElement>(null);
   const flyoutHoveredRef = useRef(false);
-  const FLYOUT_ESTIMATED_HEIGHT = 220;
+  const flyoutCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Flyout: immer Unterkante des Buttons, Menü öffnet immer nach oben */
+  const [flyoutPosition, setFlyoutPosition] = useState<{ buttonBottom: number }>({ buttonBottom: 0 });
   /** Pro Quelle: ausgewählt für Import/CSV (Duplikate standardmäßig abgewählt) */
   const [selectedScrapedLeadsGS, setSelectedScrapedLeadsGS] = useState<boolean[]>([]);
   const [selectedScrapedLeads11880, setSelectedScrapedLeads11880] = useState<boolean[]>([]);
@@ -217,20 +226,32 @@ export default function AdminPage() {
   const [productForm, setProductForm] = useState<{ name: string; description: string; price_display: string; price_period: string; price_min: string; price_once: string; product_type: Product['product_type']; subline: string; features: string[]; sort_order: number; for_package: string }>({
     name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: 0, for_package: '',
   });
+  /** Digitale Produkte (Ablefy-Modul): Kurse, Downloads, Mitglieder */
+  type DpProduct = { id: string; tenant_id: string; type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string | null; price_cents: number; image_url: string | null; is_published: boolean; sort_order: number; created_at: string; updated_at: string };
+  type DpProductFile = { id: string; product_id: string; title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string | null; sort_order: number };
+  const [dpProducts, setDpProducts] = useState<DpProduct[]>([]);
+  const [dpMigrationRequired, setDpMigrationRequired] = useState(false);
+  const [dpProductDialogOpen, setDpProductDialogOpen] = useState(false);
+  const [dpEditProduct, setDpEditProduct] = useState<(DpProduct & { files?: DpProductFile[] }) | null>(null);
+  const [dpDeleteId, setDpDeleteId] = useState<string | null>(null);
+  const [dpProductForm, setDpProductForm] = useState<{ type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string; price_cents: number; image_url: string; is_published: boolean; sort_order: number }>({
+    type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: 0,
+  });
+  const [dpFileForm, setDpFileForm] = useState<{ title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string }>({ title: '', file_type: 'file', file_url: '' });
   /** Kalender: Termine, angezeigter Monat, Filter Vertriebler */
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [calendarFilterSalesRep, setCalendarFilterSalesRep] = useState<'alle' | 'sven' | 'pascal'>('alle');
+  const [calendarFilterSalesRep, setCalendarFilterSalesRep] = useState<string>('alle');
   const [calendarMigrationRequired, setCalendarMigrationRequired] = useState(false);
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   const [calendarEditEvent, setCalendarEditEvent] = useState<CalendarEvent | null>(null);
   const [calendarFromContact, setCalendarFromContact] = useState<ContactSubmission | null>(null);
   const [calendarUpcomingEvents, setCalendarUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [calendarForm, setCalendarForm] = useState<{
-    title: string; startDate: string; startTime: string; endDate: string; endTime: string; sales_rep: 'sven' | 'pascal'; notes: string;
+    title: string; startDate: string; startTime: string; endDate: string; endTime: string; sales_rep: string; notes: string;
     contact_id: number | null; recommendedProductIds: number[]; website_state: string; google_state: string; social_media_state: string;
   }>({
-    title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: 'sven', notes: '',
+    title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: '', notes: '',
     contact_id: null, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '',
   });
   /** Top-Bar: Anstehende Termine (Dropdown für eingeloggten User) */
@@ -290,20 +311,37 @@ export default function AdminPage() {
   const importResult = activeNav === 'scraper-gelbeseiten' ? importResultGS : importResult11880;
   const setSelectedScrapedLeadsCurrent = activeNav === 'scraper-gelbeseiten' ? setSelectedScrapedLeadsGS : setSelectedScrapedLeads11880;
 
-  /** Beim Laden: Session prüfen (Cookie), dann Profil aus localStorage wiederherstellen */
+  /** Beim Laden: Session prüfen (Cookie), User-Info + Team-Liste für Dropdowns */
   useEffect(() => {
     fetch('/api/admin/me', { credentials: 'include' })
-      .then((r) => {
-        if (r.ok) {
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok && data.user) {
+          setCurrentUser(data.user);
           setIsAuthenticated(true);
-          const profile = localStorage.getItem('admin_profile');
-          if (profile === 'sven' || profile === 'pascal') setSalesRep(profile);
-          else setLoginPendingProfile(true);
           loadContacts();
         }
       })
       .catch(() => {});
   }, []);
+
+  /** Team-Mitglieder für Zuweisung/Kalender-Dropdown (alle eingeloggten User) */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch('/api/admin/team-members', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => { setTeamMembers(data.data ?? []); })
+      .catch(() => setTeamMembers([]));
+  }, [isAuthenticated]);
+
+  /** Abteilungen für Team-Formular (wenn eingeloggt) */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch('/api/admin/departments', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => { setDepartments(data.data ?? []); })
+      .catch(() => setDepartments([]));
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!selectedContact?.id) {
@@ -336,6 +374,26 @@ export default function AdminPage() {
     return () => document.removeEventListener('click', close);
   }, [infoFilterOpen]);
 
+  /** Team-Liste laden wenn Team-Bereich sichtbar und Berechtigung */
+  const canManageUsers = currentUser?.permissions?.includes('admin') || currentUser?.permissions?.includes('users.manage');
+  const canAccessDigitalProducts = Boolean(
+    currentUser?.features?.includes('digital_products') &&
+    (currentUser?.permissions?.includes('admin') || currentUser?.permissions?.includes('digital_products.*'))
+  );
+  useEffect(() => {
+    if (!isAuthenticated || activeNav !== 'team' || !canManageUsers) return;
+    setTeamLoading(true);
+    setTeamError(null);
+    fetch('/api/admin/users', { credentials: 'include' })
+      .then((r) => {
+        if (!r.ok) throw new Error(r.status === 403 ? 'Keine Berechtigung' : 'Fehler beim Laden');
+        return r.json();
+      })
+      .then((data) => { setTeamUsers(data.data ?? []); })
+      .catch((e) => { setTeamError(e.message); setTeamUsers([]); })
+      .finally(() => setTeamLoading(false));
+  }, [isAuthenticated, activeNav, canManageUsers]);
+
   /** Produkte aus DB laden (für Mögliche Sales & Angebot) */
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -348,6 +406,18 @@ export default function AdminPage() {
       .catch(() => {});
   }, [isAuthenticated]);
 
+  /** Digitale Produkte laden (wenn Bereich sichtbar) */
+  useEffect(() => {
+    if (!isAuthenticated || activeNav !== 'digital-products' || !canAccessDigitalProducts) return;
+    fetch('/api/admin/digital-products', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.migration_required) setDpMigrationRequired(true);
+        else setDpProducts(res.data ?? []);
+      })
+      .catch(() => setDpProducts([]));
+  }, [isAuthenticated, activeNav, canAccessDigitalProducts]);
+
 
   /** Opportunity-Summen für sichtbare Kontakte (muss vor jedem early return stehen, gleiche Hook-Reihenfolge) */
   useEffect(() => {
@@ -359,11 +429,11 @@ export default function AdminPage() {
       return matchSearch && matchStatus;
     });
     const viewContacts = (() => {
-      if (activeNav === 'meine-kontakte' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep);
+      if (activeNav === 'meine-kontakte' && currentUser?.username) return filtered.filter((c) => c.assigned_to === currentUser.username);
       if (activeNav === 'deals') return filtered.filter((c) => ['offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
       if (activeNav === 'kunden') return filtered.filter((c) => c.status === 'kunde' || c.status === 'abgeschlossen');
       if (activeNav === 'kundenprojekte') return filtered.filter((c) => c.status === 'abgeschlossen' || c.status === 'kunde');
-      if (activeNav === 'smart-heute-anrufen' && salesRep) return filtered.filter((c) => c.assigned_to === salesRep && (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch'].includes(c.status));
+      if (activeNav === 'smart-heute-anrufen' && currentUser?.username) return filtered.filter((c) => c.assigned_to === currentUser.username && (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch'].includes(c.status));
       if (activeNav === 'smart-leads-anrufen') return filtered.filter((c) => (c.phone || '').trim() && ['neu', 'offen', 'kontaktversuch', 'verbunden', 'qualifiziert', 'kontaktiert', 'in_bearbeitung'].includes(c.status));
       if (activeNav === 'smart-kein-kontakt-3') { const d = new Date(); d.setDate(d.getDate() - 3); return filtered.filter((c) => new Date(c.updated_at) < d); }
       if (activeNav === 'smart-neue-leads') {
@@ -379,7 +449,7 @@ export default function AdminPage() {
       .then((r) => r.json())
       .then((res) => setOpportunitySums(res.sums ?? {}))
       .catch(() => setOpportunitySums({}));
-  }, [isAuthenticated, activeNav, statusFilter, searchTerm, contacts.length, salesRep, contacts]);
+  }, [isAuthenticated, activeNav, statusFilter, searchTerm, contacts.length, currentUser?.username, contacts]);
 
   /** Bei geöffnetem Produkt-Picker: Zuordnung für Kontakt laden */
   useEffect(() => {
@@ -500,40 +570,33 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ password: pwd }),
+        body: JSON.stringify({ username: username.trim() || undefined, password: pwd }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setLoginPendingProfile(true);
+        if (data.bootstrap) {
+          alert('Admin-User wurde angelegt. Bitte ab jetzt mit Username "admin" und Ihrem Passwort anmelden.');
+          setUsername('admin');
+        }
+        const meRes = await fetch('/api/admin/me', { credentials: 'include' });
+        const meData = await meRes.json().catch(() => ({}));
+        if (meData?.user) setCurrentUser(meData.user);
+        setIsAuthenticated(true);
+        loadContacts();
       } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data?.error || 'Falsches Passwort!');
+        alert(data?.error || 'Anmeldung fehlgeschlagen.');
       }
     } catch {
       alert('Anmeldung fehlgeschlagen.');
     }
   };
 
-  const handleProfileSelect = (profile: 'sven' | 'pascal') => {
-    setSalesRep(profile);
-    localStorage.setItem('admin_profile', profile);
-    setIsAuthenticated(true);
-    setLoginPendingProfile(false);
-    loadContacts();
-  };
-
   const handleLogout = () => {
     fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     setIsAuthenticated(false);
-    setSalesRep(null);
-    localStorage.removeItem('admin_authenticated');
-    localStorage.removeItem('admin_profile');
+    setCurrentUser(null);
     setContacts([]);
   };
-
-  useEffect(() => {
-    const stored = localStorage.getItem('admin_profile');
-    if (stored === 'sven' || stored === 'pascal') setSalesRep(stored);
-  }, []);
 
   /** Views mit Server-Pagination (limit/offset) – Tabelle/Pipeline immer nur eine Seite */
   const PAGINATED_VIEWS = ['contacts', 'meine-kontakte', 'deals', 'kunden', 'kundenprojekte', 'leads', 'smart-neue-leads', 'smart-leads-anrufen', 'smart-heute-anrufen', 'smart-follow-up', 'smart-kein-kontakt-3'];
@@ -554,8 +617,8 @@ export default function AdminPage() {
         params.set('view', activeNav);
       }
       if (searchTerm.trim()) params.set('search', searchTerm.trim());
-      if (activeNav === 'meine-kontakte' && salesRep) params.set('assigned_to', salesRep);
-      if (activeNav === 'smart-heute-anrufen' && salesRep) params.set('assigned_to', salesRep);
+      if (activeNav === 'meine-kontakte' && currentUser?.username) params.set('assigned_to', currentUser.username);
+      if (activeNav === 'smart-heute-anrufen' && currentUser?.username) params.set('assigned_to', currentUser.username);
       const statusParam = activeNav === 'deals'
         ? (statusFilter !== 'alle' ? statusFilter : 'offen,kontaktversuch,verbunden,qualifiziert,kontaktiert,in_bearbeitung')
         : (activeNav === 'kunden' || activeNav === 'kundenprojekte')
@@ -653,7 +716,7 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id, status: newStatus, changed_by: salesRep ?? localStorage.getItem('admin_profile') })
+        body: JSON.stringify({ id, status: newStatus, changed_by: currentUser?.username ?? null })
       });
 
       if (!response.ok) {
@@ -680,7 +743,7 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id, notes: notesToSave, changed_by: salesRep ?? localStorage.getItem('admin_profile') })
+        body: JSON.stringify({ id, notes: notesToSave, changed_by: currentUser?.username ?? null })
       });
 
       if (!response.ok) {
@@ -702,13 +765,13 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id, assigned_to: assignedTo || null, changed_by: salesRep ?? localStorage.getItem('admin_profile') })
+        body: JSON.stringify({ id, assigned_to: assignedTo || null, changed_by: currentUser?.username ?? null })
       });
       if (!response.ok) throw new Error('Fehler beim Zuweisen');
       loadContacts();
     } catch (error) {
       console.error('Fehler:', error);
-      alert('Vertriebler-Zuordnung konnte nicht gespeichert werden.');
+      alert('Zuweisung konnte nicht gespeichert werden.');
     }
   };
 
@@ -718,7 +781,7 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id, ...payload, changed_by: salesRep ?? localStorage.getItem('admin_profile') })
+        body: JSON.stringify({ id, ...payload, changed_by: currentUser?.username ?? null })
       });
 
       if (!response.ok) {
@@ -781,10 +844,10 @@ export default function AdminPage() {
 
   /** Quelle für Anzeige und Farbcodierung */
   const getSourceLabel = (source: string | null | undefined) => {
-    if (!source) return 'Eigene';
+    if (!source) return '—';
     switch (source) {
-      case 'gelbe_seiten': return 'Gelbe Zauberer';
-      case '11880': return '11880 Zauberer';
+      case 'gelbe_seiten': return 'Gelbe Seiten';
+      case '11880': return '11880';
       case 'google_places': return 'Google';
       case 'website_form': case 'quiz': return 'Website';
       default: return source;
@@ -812,13 +875,13 @@ export default function AdminPage() {
   };
 
   const getProfileLabel = (contact: ContactSubmission): string | null => {
-    if (contact.source === 'gelbe_seiten') return 'Gelbe Zauberer Profil';
-    if (contact.source === '11880') return '11880 Zauberer Profil';
+    if (contact.source === 'gelbe_seiten') return 'Gelbe Seiten Profil';
+    if (contact.source === '11880') return '11880 Profil';
     if (!getProfileUrl(contact)) return null;
     const meta = contact.source_meta as { profile_url?: string } | undefined;
-    if (meta?.profile_url) return '11880 Zauberer Profil';
-    if ((contact.notes || '').includes('11880-Profil')) return '11880 Zauberer Profil';
-    return 'Gelbe Zauberer Profil';
+    if (meta?.profile_url) return '11880 Profil';
+    if ((contact.notes || '').includes('11880-Profil')) return '11880 Profil';
+    return 'Gelbe Seiten Profil';
   };
 
   /** Website aus Notizen parsen (beim Import: "Website: https://...") */
@@ -1051,9 +1114,7 @@ export default function AdminPage() {
     kpiKunde = 0;
   }
 
-  const showLoginOrProfile = !isAuthenticated || salesRep === null;
-  if (showLoginOrProfile) {
-    const showProfileStep = loginPendingProfile || (isAuthenticated && salesRep === null);
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full border-2 border-gray-200">
@@ -1065,43 +1126,39 @@ export default function AdminPage() {
               height={60}
               className="mx-auto mb-4"
             />
-            <h1 className="text-2xl font-bold text-gray-800">
-              {showProfileStep ? 'Profil wählen' : 'Admin Login'}
-            </h1>
-            <p className="text-sm text-gray-600 mt-2">
-              {showProfileStep ? 'Als welcher Vertriebler möchten Sie arbeiten?' : 'Muckenfuss & Nagel CRM'}
-            </p>
+            <h1 className="text-2xl font-bold text-gray-800">Admin Login</h1>
+            <p className="text-sm text-gray-600 mt-2">Muckenfuss & Nagel CRM</p>
           </div>
-          {showProfileStep ? (
-            <div className="flex flex-col gap-3">
-              {SALES_REPS.map(({ value, label }) => (
-                <Button
-                  key={value}
-                  type="button"
-                  onClick={() => handleProfileSelect(value)}
-                  className="w-full h-12 bg-[#cb530a] hover:bg-[#a84308] text-lg"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          ) : (
             <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin-username">Benutzername</Label>
+                <Input
+                  id="admin-username"
+                  type="text"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="z.B. admin"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="admin-password">Passwort</Label>
                 <Input
                   id="admin-password"
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
+              <p className="text-xs text-gray-500">
+                Erster Login? Lassen Sie den Benutzernamen leer und geben Sie nur Ihr bisheriges Passwort ein.
+              </p>
               <Button type="submit" className="w-full bg-[#cb530a] hover:bg-[#a84308]">
                 Anmelden
               </Button>
             </form>
-          )}
         </div>
       </div>
     );
@@ -1129,46 +1186,69 @@ export default function AdminPage() {
   ];
   const isSmartView = smartViewItems.some((s) => s.id === activeNav);
 
-  const scraperSubItems: { id: string; label: string }[] = [
-    { id: 'scraper-gelbeseiten', label: 'Gelbe Zauberer' },
-    { id: 'scraper-11880', label: '11880 Zauberer' },
-  ];
-  const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
-
+  /** Leadmagnet (getYELLOW/getGREEN) ist unter Tools, nicht mehr eigenes Menü */
   const toolsSubItems: { id: string; label: string }[] = [
     { id: 'produkt-tool', label: 'Produkt-Tool' },
+    ...(canAccessDigitalProducts ? [{ id: 'digital-products', label: 'Digitale Produkte' }] : []),
     { id: 'bewertungs-funnel', label: 'Bewertungs-Funnel' },
     { id: 'angebots-erstellung', label: 'Angebotserstellung' },
+    { id: 'scraper-gelbeseiten', label: 'getYELLOW' },
+    { id: 'scraper-11880', label: 'getGREEN' },
   ];
-  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool';
+  const isToolsActive = activeNav === 'bewertungs-funnel' || activeNav === 'angebots-erstellung' || activeNav === 'produkt-tool' || activeNav === 'digital-products' || activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
+  const isScraperActive = activeNav === 'scraper-gelbeseiten' || activeNav === 'scraper-11880';
+
+  /** Startseite: Karten → Rubriken (Zwischenseiten) oder direkt Kalender/Team */
+  const startPageCards: { id: string; label: string; description: string; image: string; Icon: typeof Contact }[] = [
+    { id: 'rubrik-contacts', label: 'Kontakte', description: 'Alle Kontakte, Leads und Ansprechpartner verwalten – durchsuchen, filtern und zuweisen.', image: '/images/Dienstleistungen/Telefonieren.jpeg', Icon: Contact },
+    { id: 'rubrik-kunden', label: 'Kunden', description: 'Bestehende Kunden und Partner – Status, Projekte und Übersicht.', image: '/images/Dienstleistungen/GoogleBewertungen.jpeg', Icon: Building2 },
+    { id: 'rubrik-leads', label: 'Akquise & Leads', description: 'Leads, Heute anrufen, Hot Leads, Follow-up – alle Akquise-Listen im Überblick.', image: '/images/Dienstleistungen/SocialMedia.jpeg', Icon: Target },
+    { id: 'kalender', label: 'Kalender', description: 'Termine anlegen, Kalender einsehen und anstehende Termine verwalten.', image: '/images/Dienstleistungen/Termenirung.jpeg', Icon: Calendar },
+    { id: 'rubrik-tools', label: 'Tools', description: 'Produkt-Tool, Digitale Produkte, Bewertungs-Funnel, Angebotserstellung, getYELLOW und getGREEN.', image: '/images/Dienstleistungen/Raport.jpeg', Icon: Wrench },
+    { id: 'team', label: 'Team', description: 'Benutzer und Berechtigungen verwalten – Teammitglieder anlegen und zuweisen.', image: '/images/Team/office1.jpeg', Icon: Users },
+  ];
+
+  /** Zwischenseiten: Rubrik-Titel und Unterpunkte (Karten) */
+  const rubrikConfig: Record<string, { title: string; subCards: { id: string; label: string }[] }> = {
+    'rubrik-contacts': { title: 'Kontakte', subCards: navItems.map((i) => ({ id: i.id, label: i.label })) },
+    'rubrik-kunden': { title: 'Kunden', subCards: kundenSubItems },
+    'rubrik-leads': { title: 'Akquise & Leads', subCards: smartViewItems.map((i) => ({ id: i.id, label: i.label })) },
+    'rubrik-tools': { title: 'Tools', subCards: toolsSubItems },
+  };
+  const isRubrik = (nav: string): nav is keyof typeof rubrikConfig => nav in rubrikConfig;
 
   // Logik für verschiedene Views; bei Pagination liefert die API bereits die gefilterte Seite → contacts direkt nutzen
   const getViewData = () => {
-    const myContacts = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : [];
+    const myContacts = currentUser?.username ? filteredContacts.filter(c => c.assigned_to === currentUser.username) : [];
     if (isPaginatedView) {
       const titles: Record<string, { title: string; description: string; showStats: boolean }> = {
-        'contacts': { title: 'Alle Kontakte', description: 'Alle Kontakte und Ansprechpartner', showStats: true },
-        'meine-kontakte': { title: 'Meine Kontakte', description: salesRep ? `Nur Ihnen zugewiesene Leads (${salesRep === 'sven' ? 'Sven' : 'Pascal'})` : 'Zugewiesene Kontakte', showStats: true },
+        'contacts': { title: 'Alle Kontakte', description: 'Alle Kontakte und Ansprechpartner. Professionell – Ads automatisch befüllt.', showStats: true },
+        'meine-kontakte': { title: 'Meine Kontakte', description: currentUser?.username ? 'Nur Ihnen zugewiesene Leads' : 'Zugewiesene Kontakte', showStats: true },
         'deals': { title: 'Abschlüsse', description: 'Aktive Verhandlungen und Angebote', showStats: true },
         'kunden': { title: 'Kunden', description: 'Bestehende Kunden und Partner', showStats: true },
         'kundenprojekte': { title: 'Kundenprojekte', description: 'Projekte für bestehende Kunden', showStats: false },
         'leads': { title: 'Alle Leads', description: '', showStats: false },
+        'smart-heute-anrufen': { title: 'Heute anrufen', description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch). Die Zuordnung erfolgt automatisch durch das System.', showStats: true },
+        'smart-leads-anrufen': { title: 'Hot Leads', description: 'Alle mit Telefonnummer in aktiven Phasen. Die Zuordnung erfolgt automatisch durch das System.', showStats: true },
+        'smart-kein-kontakt-3': { title: '3 Tage+', description: 'Keine Aktivität seit mehr als 3 Tagen – Vertrieb sollte zeitnah nachfassen. Die Zuordnung erfolgt automatisch durch das System.', showStats: true },
+        'smart-neue-leads': { title: 'Neue Leads', description: 'Leads aus Gelben Seiten, 11880, Google – Status „Neu“, noch nicht bearbeitet', showStats: true },
+        'smart-follow-up': { title: 'Follow-up nötig', description: 'Wiedervorlage oder Qualifiziert – nächster Schritt', showStats: true },
       };
-      const config = titles[activeNav] ?? { title: 'Kontakte', description: 'Alle Kontakte', showStats: true };
+      const config = titles[activeNav] ?? { title: 'Kontakte', description: 'Alle Kontakte. Professionell – Ads automatisch befüllt.', showStats: true };
       return { ...config, contacts };
     }
     switch (activeNav) {
       case 'contacts':
         return {
           title: 'Alle Kontakte',
-          description: 'Alle Kontakte und Ansprechpartner',
+          description: 'Alle Kontakte und Ansprechpartner. Professionell – Ads automatisch befüllt.',
           contacts: filteredContacts,
           showStats: true
         };
       case 'meine-kontakte':
         return {
           title: 'Meine Kontakte',
-          description: salesRep ? `Nur Ihnen zugewiesene Leads (${salesRep === 'sven' ? 'Sven' : 'Pascal'})` : 'Zugewiesene Kontakte',
+          description: currentUser?.username ? 'Nur Ihnen zugewiesene Leads' : 'Zugewiesene Kontakte',
           contacts: myContacts,
           showStats: true
         };
@@ -1212,7 +1292,7 @@ export default function AdminPage() {
         }
         const withPhone = (c: ContactSubmission) => (c.phone || '').trim().length > 0;
         const early = (c: ContactSubmission) => ['neu', 'offen', 'kontaktversuch'].includes(c.status);
-        const mine = salesRep ? filteredContacts.filter(c => c.assigned_to === salesRep) : filteredContacts;
+        const mine = currentUser?.username ? filteredContacts.filter(c => c.assigned_to === currentUser.username) : filteredContacts;
         return {
           title: 'Heute anrufen',
           description: 'Ihnen zugewiesene Leads mit Telefonnummer (Neu, Offen, Kontaktversuch). Die Zuordnung erfolgt automatisch durch das System.',
@@ -1279,13 +1359,15 @@ export default function AdminPage() {
       case 'angebots-erstellung':
         return { title: 'Angebotserstellung', description: 'Angebote gestalten, Vorschau anzeigen und als PDF speichern', contacts: [], showStats: false };
       case 'scraper-gelbeseiten':
-        return { title: 'Gelbe Zauberer', description: 'Wo die goldenen Kontakte aus dem Märchenbuch herfliegen', contacts: [], showStats: false };
+        return { title: 'getYELLOW', description: 'Lead-Suche über Gelbe Seiten', contacts: [], showStats: false };
       case 'scraper-11880':
-        return { title: '11880 Zauberer', description: 'Wo die Zauberer ihre Kontakte für euch herbeizaubern', contacts: [], showStats: false };
+        return { title: 'getGREEN', description: 'Lead-Suche über 11880', contacts: [], showStats: false };
+      case 'digital-products':
+        return { title: 'Digitale Produkte', description: 'Kurse, Downloads, Mitgliederbereiche – eigenes Modul (Ablefy-ähnlich)', contacts: [], showStats: false };
       default:
         return {
           title: 'Kontakte',
-          description: 'Alle Kontakte',
+          description: 'Alle Kontakte. Professionell – Ads automatisch befüllt.',
           contacts: filteredContacts,
           showStats: true
         };
@@ -1295,7 +1377,7 @@ export default function AdminPage() {
   const viewData = getViewData();
 
   const APP_PADDING = 8;
-  const SIDEBAR_WIDTH = 97;
+  const SIDEBAR_WIDTH = 127;
   const HEADER_HEIGHT = 40;
   const GAP = 12;
   const contentLeft = APP_PADDING + SIDEBAR_WIDTH + GAP;
@@ -1308,7 +1390,7 @@ export default function AdminPage() {
         className="fixed z-50 flex items-center justify-between px-4 h-10 bg-white border border-neutral-300 rounded-xl shadow-sm text-neutral-800"
         style={{ left: contentLeft, right: APP_PADDING, top: APP_PADDING }}
       >
-        <span className="text-xs text-neutral-600">Eingeloggt als <strong className="text-neutral-800">{salesRep === 'sven' ? 'Sven' : salesRep === 'pascal' ? 'Pascal' : '—'}</strong></span>
+        <span className="text-xs text-neutral-600">Eingeloggt als <strong className="text-neutral-800">{currentUser?.display_name && currentUser.display_name !== 'Administrator' ? currentUser.display_name : (currentUser?.username || '—')}</strong>{currentUser?.department_label ? ` · ${currentUser.department_label}` : ''}</span>
         <div className="flex items-center gap-1">
           <div className="relative" ref={upcomingTopbarRef}>
             <button
@@ -1320,7 +1402,7 @@ export default function AdminPage() {
                 const from = new Date().toISOString();
                 const to = new Date(); to.setDate(to.getDate() + 14);
                 const params = new URLSearchParams({ from, to: to.toISOString() });
-                if (salesRep) params.set('sales_rep', salesRep);
+                if (calendarFilterSalesRep !== 'alle') params.set('sales_rep', calendarFilterSalesRep);
                 fetch(`/api/admin/calendar/events?${params}`, { credentials: 'include' })
                   .then((r) => r.json())
                   .then((res) => { setUpcomingTopbarEvents(res.data ?? []); setUpcomingTopbarLoading(false); setUpcomingTopbarOpen(true); })
@@ -1370,212 +1452,218 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Sidebar – mit Abstand zu Rändern, abgerundet; Haus-Icon oben */}
+      {/* Sidebar – nur die inneren Cards sichtbar, kein Schatten/Hintergrund */}
       <div
-        className="admin-sidebar-wrap fixed z-40 flex rounded-2xl overflow-hidden shadow-lg"
+        className="admin-sidebar-wrap fixed z-40 flex"
         style={{ left: APP_PADDING, top: APP_PADDING, bottom: APP_PADDING, width: SIDEBAR_WIDTH }}
-        onMouseLeave={() => { if (!flyoutHoveredRef.current) setSidebarFlyout(null); }}
+        onMouseEnter={() => {
+          if (flyoutCloseTimeoutRef.current) { clearTimeout(flyoutCloseTimeoutRef.current); flyoutCloseTimeoutRef.current = null; }
+        }}
+        onMouseLeave={() => {
+          if (flyoutCloseTimeoutRef.current) clearTimeout(flyoutCloseTimeoutRef.current);
+          flyoutCloseTimeoutRef.current = setTimeout(() => {
+            if (!flyoutHoveredRef.current) setSidebarFlyout(null);
+            flyoutCloseTimeoutRef.current = null;
+          }, 200);
+        }}
       >
-        <aside className="w-full h-full bg-white border border-neutral-300 flex flex-col shrink-0 rounded-2xl">
-          <nav className="admin-sidebar-nav flex-1 py-2 min-h-0 overflow-y-auto">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 text-neutral-700 hover:scale-105"
-              title="Abmelden"
-            >
-              <LogOut className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] leading-tight text-center font-medium">Logout</span>
-            </button>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-1">CRM</p>
-            <div className="space-y-0.5">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeNav === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveNav(item.id)}
-                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
-                  </button>
-                );
-              })}
+        <aside className="w-full h-full flex flex-col shrink-0 bg-transparent">
+          <nav className="admin-sidebar-nav flex-1 py-2 px-0 min-h-0 overflow-y-auto space-y-1 w-full">
+            {/* 1. Logout + Start – komplett weiß */}
+            <div className="w-full rounded-xl border border-neutral-300 bg-white px-2 py-4">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 text-neutral-700 hover:scale-105"
+                title="Abmelden"
+              >
+                <LogOut className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] leading-tight text-center font-medium">Logout</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveNav('start')}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${activeNav === 'start' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'}`}
+                title="Startseite"
+              >
+                <Home className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] leading-tight text-center font-medium">Start</span>
+              </button>
             </div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Kunden</p>
-            <button
-              ref={kundenBtnRef}
-              type="button"
-              onClick={() => setActiveNav('kunden')}
-              onMouseEnter={() => {
-                const el = kundenBtnRef.current;
-                if (el) {
-                  const rect = el.getBoundingClientRect();
-                  setFlyoutTop(rect.top);
-                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
-                }
-                setSidebarFlyout('kunden');
-              }}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                isKundenActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-              }`}
-            >
-              <Building2 className="w-5 h-5 shrink-0" />
-              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
-                Kunden
-                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
-              </span>
-            </button>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Akquise</p>
-            <div className="space-y-0.5">
-              {smartViewItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeNav === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveNav(item.id)}
-                    className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                      isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
-                  </button>
-                );
-              })}
+            {/* 2. CRM – angenehmes Hellgrau */}
+            <div className="w-full rounded-xl border border-neutral-300 bg-neutral-100 px-2 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">CRM</p>
+              <div className="space-y-0.5">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeNav === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveNav(item.id)}
+                      className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                        isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-1">Kunden</p>
+              <button
+                ref={kundenBtnRef}
+                type="button"
+                onClick={() => setActiveNav('kunden')}
+                onMouseEnter={() => {
+                  const el = kundenBtnRef.current;
+                  if (el) {
+                    const rect = el.getBoundingClientRect();
+                    setFlyoutPosition({ buttonBottom: rect.bottom });
+                  }
+                  setSidebarFlyout('kunden');
+                }}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                  isKundenActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                }`}
+              >
+                <Building2 className="w-5 h-5 shrink-0" />
+                <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
+                  Kunden
+                  <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
+                </span>
+              </button>
             </div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Leadmagnet</p>
-            <button
-              ref={quellenBtnRef}
-              type="button"
-              onClick={() => setActiveNav(scraperSubItems[0]?.id ?? 'scraper-gelbeseiten')}
-              onMouseEnter={() => {
-                const el = quellenBtnRef.current;
-                if (el) {
-                  const rect = el.getBoundingClientRect();
-                  setFlyoutTop(rect.top);
-                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
-                }
-                setSidebarFlyout('quellen');
-              }}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                isScraperActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-              }`}
-            >
-              <Magnet className="w-5 h-5 shrink-0" />
-              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
-                Leadmagnet
-                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
-              </span>
-            </button>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Termine</p>
-            <button
-              type="button"
-              onClick={() => setActiveNav('kalender')}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                activeNav === 'kalender' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-              }`}
-            >
-              <Calendar className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] leading-tight text-center font-medium">Kalender</span>
-            </button>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-3">Tools</p>
-            <button
-              ref={toolsBtnRef}
-              type="button"
-              onClick={() => setActiveNav(toolsSubItems[0]?.id ?? 'produkt-tool')}
-              onMouseEnter={() => {
-                const el = toolsBtnRef.current;
-                if (el) {
-                  const rect = el.getBoundingClientRect();
-                  setFlyoutTop(rect.top);
-                  setFlyoutOpenUp(rect.top + FLYOUT_ESTIMATED_HEIGHT > window.innerHeight);
-                }
-                setSidebarFlyout('tools');
-              }}
-              className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
-                isToolsActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
-              }`}
-            >
-              <Wrench className="w-5 h-5 shrink-0" />
-              <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
-                Tools
-                <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
-              </span>
-            </button>
+            {/* 3. Akquise – transparentes Orange */}
+            <div className="w-full rounded-xl border border-neutral-300 bg-[#cb530a]/10 px-2 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">Akquise</p>
+              <div className="space-y-0.5">
+                {smartViewItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeNav === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveNav(item.id)}
+                      className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                        isActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-1">Termine</p>
+              <button
+                type="button"
+                onClick={() => setActiveNav('kalender')}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                  activeNav === 'kalender' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                }`}
+              >
+                <Calendar className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] leading-tight text-center font-medium">Kalender</span>
+              </button>
+            </div>
+            {/* 4. Tools & Einstellungen – dunkleres Hellgrau */}
+            <div className="w-full rounded-xl border border-neutral-300 bg-neutral-200 px-2 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">Tools</p>
+              <button
+                ref={toolsBtnRef}
+                type="button"
+                onClick={() => setActiveNav(toolsSubItems[0]?.id ?? 'produkt-tool')}
+                onMouseEnter={() => {
+                  const el = toolsBtnRef.current;
+                  if (el) {
+                    const rect = el.getBoundingClientRect();
+                    setFlyoutPosition({ buttonBottom: rect.bottom });
+                  }
+                  setSidebarFlyout('tools');
+                }}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                  isToolsActive ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                }`}
+              >
+                <Wrench className="w-5 h-5 shrink-0" />
+                <span className="flex items-center gap-0.5 text-[10px] leading-tight font-medium">
+                  Tools
+                  <ChevronRight className="w-3 h-3 shrink-0 text-neutral-500 opacity-70" aria-hidden />
+                </span>
+              </button>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 mt-1">Einstellungen</p>
+              <button
+                type="button"
+                onClick={() => setActiveNav('team')}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${
+                  activeNav === 'team' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'
+                }`}
+              >
+                <Users className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] leading-tight text-center font-medium">Team</span>
+              </button>
+            </div>
           </nav>
         </aside>
 
-        {/* Flyout nur neben dem Menüpunkt, abgerundet, nicht über volle Höhe */}
+        {/* Flyout im gleichen Styling wie die zugehörige Card (Kunden = CRM, Tools = Tools-Card) */}
         {sidebarFlyout && (
           <div
-            className="fixed w-52 bg-white border border-neutral-300 rounded-lg shadow-xl flex flex-col py-2.5 z-50"
-            style={flyoutOpenUp ? { left: APP_PADDING + SIDEBAR_WIDTH + 4, bottom: window.innerHeight - flyoutTop } : { left: APP_PADDING + SIDEBAR_WIDTH + 4, top: flyoutTop }}
-            onMouseEnter={() => { flyoutHoveredRef.current = true; }}
+            className={`fixed w-52 border border-neutral-300 rounded-xl flex flex-col py-2.5 z-50 shadow-md ${sidebarFlyout === 'kunden' ? 'bg-neutral-100' : 'bg-neutral-200'}`}
+            style={{ left: APP_PADDING + SIDEBAR_WIDTH + 4, bottom: window.innerHeight - flyoutPosition.buttonBottom }}
+            onMouseEnter={() => {
+              if (flyoutCloseTimeoutRef.current) { clearTimeout(flyoutCloseTimeoutRef.current); flyoutCloseTimeoutRef.current = null; }
+              flyoutHoveredRef.current = true;
+            }}
             onMouseLeave={() => { flyoutHoveredRef.current = false; setSidebarFlyout(null); }}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 px-3 pb-1.5">
-              {sidebarFlyout === 'quellen' ? 'Leadmagnet' : sidebarFlyout === 'kunden' ? 'Kunden' : 'Tools'}
+            <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5 px-2">
+              {sidebarFlyout === 'kunden' ? 'Kunden' : 'Tools'}
             </p>
-            <div className="space-y-0.5">
-              {sidebarFlyout === 'quellen'
-                ? scraperSubItems.map((sub) => {
+            <div className="space-y-0.5 px-1">
+              {sidebarFlyout === 'kunden'
+                ? kundenSubItems.map((sub) => {
                     const isSubActive = activeNav === sub.id;
                     return (
                       <button
                         key={sub.id}
                         type="button"
                         onClick={() => setActiveNav(sub.id)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
-                          isSubActive
-                            ? sub.id === 'scraper-gelbeseiten'
-                              ? 'bg-amber-100 text-amber-800 font-medium'
-                              : 'bg-emerald-100 text-emerald-800 font-medium'
-                            : 'text-neutral-700 hover:bg-neutral-200'
+                        className={`w-full flex items-center gap-2 px-2 py-2 text-[10px] leading-tight font-medium text-left rounded-md transition-colors ${
+                          isSubActive ? 'bg-[#cb530a]/20 text-[#a84308]' : 'text-neutral-700 hover:bg-neutral-200/80'
                         }`}
                       >
                         {sub.label}
                       </button>
                     );
                   })
-                : sidebarFlyout === 'kunden'
-                  ? kundenSubItems.map((sub) => {
-                      const isSubActive = activeNav === sub.id;
-                      return (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => setActiveNav(sub.id)}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
-                            isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
-                          }`}
-                        >
-                          {sub.label}
-                        </button>
-                      );
-                    })
-                  : toolsSubItems.map((sub) => {
-                      const isSubActive = activeNav === sub.id;
-                      return (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => setActiveNav(sub.id)}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-r-md transition-colors ${
-                            isSubActive ? 'bg-[#cb530a]/20 text-[#a84308] font-medium' : 'text-neutral-700 hover:bg-neutral-200'
-                          }`}
-                        >
-                          {sub.label}
-                        </button>
-                      );
-                    })}
+                : toolsSubItems.map((sub) => {
+                    const isSubActive = activeNav === sub.id;
+                    const isGetYellow = sub.id === 'scraper-gelbeseiten';
+                    const isGetGreen = sub.id === 'scraper-11880';
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => setActiveNav(sub.id)}
+                        className={`w-full flex items-center gap-2 px-2 py-2 text-[10px] leading-tight font-medium text-left rounded-md transition-colors ${
+                          isSubActive
+                            ? isGetYellow
+                              ? 'bg-amber-100 text-amber-800'
+                              : isGetGreen
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-[#cb530a]/20 text-[#a84308]'
+                            : 'text-neutral-700 hover:bg-neutral-300/80'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    );
+                  })}
             </div>
           </div>
         )}
@@ -1601,11 +1689,566 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Content: Kalender, Bewertungs-Funnel, Scraper-Seiten oder CRM-Views */}
-        {activeNav === 'kalender' ? (
+        {/* Content: Startseite (nach Login), dann Team, Kalender, Digitale Produkte, … */}
+        {activeNav === 'start' ? (
+          <div className="min-h-[calc(100vh-4rem)]">
+            {/* Hero – wie Digitale Produkte */}
+            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
+              <section className="relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] px-6 py-14 sm:py-16 md:py-20 text-center">
+                <div className="absolute inset-0 z-0">
+                  <Image src="/images/Handwerker%20(2).png" alt="" fill className="object-cover object-center" priority unoptimized />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
+                </div>
+                <div className="absolute inset-0 z-[1] opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')]" />
+                <div className="relative z-10">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-md">Willkommen im CRM</h1>
+                  <p className="text-lg sm:text-xl text-white/95 max-w-2xl mx-auto drop-shadow-sm">Alles im Blick – Kontakte, Termine, Produkte und Team an einem Ort.</p>
+                </div>
+              </section>
+            </div>
+            <div className="p-6">
+              {/* Persönliche Begrüßung */}
+              <div className="text-center mb-10 mt-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                  Willkommen, {currentUser?.display_name && currentUser.display_name !== 'Administrator' ? currentUser.display_name : currentUser?.username || 'Sie'}!
+                </h2>
+                <p className="text-muted-foreground">Wähle einen Bereich, um loszulegen – oder nutze das Menü links für die Navigation.</p>
+              </div>
+              {/* Karten = Menüpunkte */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {startPageCards.map((card) => {
+                  const Icon = card.Icon;
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => setActiveNav(card.id)}
+                      className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+                    >
+                      <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
+                        <Image src={card.image} alt={card.label} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <span className="text-white text-base font-semibold drop-shadow-md">{card.label}</span>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <div className="flex items-center mb-3">
+                          <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
+                            <Icon className="w-6 h-6 text-[#cb530a]" />
+                          </span>
+                          <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">{card.label}</h3>
+                        </div>
+                        <p className="text-muted-foreground leading-relaxed text-sm">{card.description}</p>
+                        <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Öffnen →</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : isRubrik(activeNav) ? (
+          <div className="min-h-[calc(100vh-4rem)]">
+            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
+              <section className="relative min-h-[180px] sm:min-h-[200px] px-6 py-10 sm:py-12 text-center">
+                <div className="absolute inset-0 z-0">
+                  <Image src="/images/Handwerker%20(2).png" alt="" fill className="object-cover object-center" unoptimized />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
+                </div>
+                <div className="relative z-10">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">{rubrikConfig[activeNav].title}</h1>
+                  <p className="text-white/95 mt-1">Wähle einen Unterpunkt</p>
+                </div>
+              </section>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rubrikConfig[activeNav].subCards.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setActiveNav(sub.id)}
+                    className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden p-6 hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300 flex items-center gap-4"
+                  >
+                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center shrink-0">
+                      <ChevronRight className="w-6 h-6 text-[#cb530a]" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold text-foreground group-hover:text-[#cb530a] transition-colors">{sub.label}</h3>
+                      <span className="text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform inline-block mt-1">Öffnen →</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : activeNav === 'digital-products' ? (
+          <div className="min-h-[calc(100vh-4rem)]">
+            {dpMigrationRequired && (
+              <div className="p-6 pb-0">
+                <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">Migration fehlt. Bitte <code className="text-xs bg-amber-100 dark:bg-amber-900/50 px-1 rounded">supabase/migrations/003_digital_products.sql</code> im Supabase SQL Editor ausführen.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Hero – wie Main Page: Hintergrundbild + Overlay, abgerundet wie Rest der App */}
+            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
+              <section className="relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] px-6 py-14 sm:py-16 md:py-20 text-center">
+                {/* Hintergrundbild */}
+                <div className="absolute inset-0 z-0">
+                  <Image
+                    src="/images/Handwerker%20(2).png"
+                    alt=""
+                    fill
+                    className="object-cover object-center"
+                    priority
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
+                </div>
+                {/* Dezentes Punktmuster */}
+                <div className="absolute inset-0 z-[1] opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')]" />
+                <div className="relative z-10">
+                  <p className="text-sm font-semibold uppercase tracking-widest text-white/95 mb-2">Premium-Feature</p>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-md">Digitale Produkte</h1>
+                  <p className="text-lg sm:text-xl text-white/95 max-w-2xl mx-auto drop-shadow-sm">Kurse, Downloads & Mitgliederbereiche – verkaufen, schützen und automatisch ausliefern. Alles aus einer Hand.</p>
+                </div>
+              </section>
+            </div>
+
+            <div className="p-6">
+            {/* Zentrierte Headline – Hype */}
+            <div className="text-center mb-12 mt-4">
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">Was möchtest du erstellen?</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Wähle eine Kategorie, lege in wenigen Schritten die Grundlagen fest und passe danach alle Details an – professionell und ohne Aufwand.</p>
+            </div>
+
+            {/* Cards wie Main Page – großes Bild, Klick = Produkt anlegen */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              <button
+                type="button"
+                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
+                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+              >
+                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
+                  <Image src="/images/Handwerker.png" alt="Online-Kurs" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <span className="text-white text-base font-semibold drop-shadow-md">Online-Kurs</span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center mb-3">
+                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
+                      <GraduationCap className="w-6 h-6 text-[#cb530a]" />
+                    </span>
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Online-Kurs</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed text-sm">Verwandle dein Fachwissen in einen Kurs mit Videos, Lektionen und Dateien – alles in einem geschützten Bereich.</p>
+                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'download', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
+                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+              >
+                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
+                  <Image src="/images/Dienstleistungen/Raport.jpeg" alt="Download-Datei" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <span className="text-white text-base font-semibold drop-shadow-md">Download-Datei</span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center mb-3">
+                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
+                      <Download className="w-6 h-6 text-[#cb530a]" />
+                    </span>
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Download-Datei</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed text-sm">E-Books, Vorlagen oder andere Dateien: Lade eine Datei hoch und verkaufe den Download-Link über eine Bezahlseite.</p>
+                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'membership', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
+                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+              >
+                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
+                  <Image src="/images/Team/office1.jpeg" alt="Mitgliederbereich" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <span className="text-white text-base font-semibold drop-shadow-md">Mitgliederbereich</span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center mb-3">
+                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
+                      <KeyRound className="w-6 h-6 text-[#cb530a]" />
+                    </span>
+                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Mitgliederbereich</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed text-sm">Erstelle einen geschützten Bereich und biete zahlenden Mitgliedern exklusive Inhalte mit optionalem Ablaufdatum.</p>
+                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
+                </div>
+              </button>
+            </div>
+
+            {/* Liste aller Produkte */}
+            <h3 className="text-xl font-semibold text-foreground mb-4">Deine digitalen Produkte</h3>
+            <Card className="rounded-xl border border-border/80 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Titel</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead>Preis</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right w-[180px]">Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dpProducts.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.title}</TableCell>
+                      <TableCell>
+                        <span className="text-xs px-2 py-0.5 rounded bg-muted">{p.type === 'course' ? 'Kurs' : p.type === 'download' ? 'Download' : 'Mitgliederbereich'}</span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{p.slug}</TableCell>
+                      <TableCell>{p.price_cents === 0 ? 'Kostenlos' : `${(p.price_cents / 100).toFixed(2)} €`}</TableCell>
+                      <TableCell>{p.is_published ? <span className="text-green-600 text-xs">Veröffentlicht</span> : <span className="text-muted-foreground text-xs">Entwurf</span>}</TableCell>
+                      <TableCell className="text-right">
+                        <Button type="button" variant="outline" size="sm" className="mr-1" onClick={async () => {
+                          const r = await fetch(`/api/admin/digital-products/${p.id}`, { credentials: 'include' });
+                          const j = await r.json();
+                          if (j.data) {
+                            setDpEditProduct(j.data);
+                            setDpProductForm({ type: j.data.type, title: j.data.title, slug: j.data.slug, description: j.data.description || '', price_cents: j.data.price_cents ?? 0, image_url: j.data.image_url || '', is_published: j.data.is_published ?? false, sort_order: j.data.sort_order ?? 0 });
+                            setDpProductDialogOpen(true);
+                          }
+                        }}>Bearbeiten</Button>
+                        <Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDpDeleteId(p.id)}>Löschen</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {dpProducts.length === 0 && !dpMigrationRequired && (
+                <div className="p-8 text-center text-muted-foreground text-sm">Noch keine digitalen Produkte. Wähle oben eine Kategorie, um ein neues Produkt anzulegen.</div>
+              )}
+            </Card>
+
+            {/* Dialog: Digitales Produkt anlegen / bearbeiten */}
+            <Dialog open={dpProductDialogOpen} onOpenChange={(open) => { if (!open) { setDpProductDialogOpen(false); setDpEditProduct(null); } }}>
+              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{dpEditProduct ? 'Produkt bearbeiten' : 'Produkt anlegen'}</DialogTitle>
+                  <DialogDescription>Kurs (Lektionen/Dateien), Download oder Mitgliederbereich. Slug für URLs (z. B. mein-kurs).</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3 py-2">
+                  <div>
+                    <Label className="text-xs">Typ *</Label>
+                    <select value={dpProductForm.type} onChange={(e) => setDpProductForm(f => ({ ...f, type: e.target.value as 'course' | 'download' | 'membership' }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="course">Kurs</option>
+                      <option value="download">Download</option>
+                      <option value="membership">Mitgliederbereich</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Titel *</Label>
+                    <Input value={dpProductForm.title} onChange={(e) => { const t = e.target.value; setDpProductForm(f => ({ ...f, title: t, slug: dpEditProduct ? f.slug : (f.slug || t).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })); }} placeholder="z. B. SEO Grundlagen" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Slug * (URL-freundlich)</Label>
+                    <Input value={dpProductForm.slug} onChange={(e) => setDpProductForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }))} placeholder="seo-grundlagen" className="mt-1 h-9" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Beschreibung</Label>
+                    <Textarea value={dpProductForm.description} onChange={(e) => setDpProductForm(f => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 text-sm" placeholder="Kurzbeschreibung" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Preis (Cent)</Label>
+                      <Input type="number" min={0} value={dpProductForm.price_cents} onChange={(e) => setDpProductForm(f => ({ ...f, price_cents: Number(e.target.value) || 0 }))} placeholder="0 = kostenlos" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Sortierung</Label>
+                      <Input type="number" value={dpProductForm.sort_order} onChange={(e) => setDpProductForm(f => ({ ...f, sort_order: Number(e.target.value) || 0 }))} className="mt-1 h-9" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Bild-URL</Label>
+                    <Input value={dpProductForm.image_url} onChange={(e) => setDpProductForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" className="mt-1 h-9" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="dp-published" checked={dpProductForm.is_published} onChange={(e) => setDpProductForm(f => ({ ...f, is_published: e.target.checked }))} className="rounded border-input" />
+                    <Label htmlFor="dp-published" className="text-xs cursor-pointer">Veröffentlicht (sichtbar für Kunden)</Label>
+                  </div>
+                  {dpEditProduct && (
+                    <>
+                      <hr className="my-2" />
+                      <p className="text-xs font-medium text-muted-foreground">Dateien / Lektionen</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {(dpEditProduct.files ?? []).map((file) => (
+                          <div key={file.id} className="flex items-center justify-between gap-2 text-sm py-1 border-b border-border/50">
+                            <span className="truncate">{file.title}</span>
+                            <span className="text-xs text-muted-foreground">{file.file_type}</span>
+                            <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={async () => {
+                              if (!confirm('Datei entfernen?')) return;
+                              await fetch(`/api/admin/digital-products/files/${file.id}`, { method: 'DELETE', credentials: 'include' });
+                              const r = await fetch(`/api/admin/digital-products/${dpEditProduct.id}`, { credentials: 'include' });
+                              const j = await r.json();
+                              if (j.data) setDpEditProduct(j.data);
+                            }}><Trash2 className="w-3 h-3" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 pt-2">
+                        <Input value={dpFileForm.title} onChange={(e) => setDpFileForm(f => ({ ...f, title: e.target.value }))} placeholder="Titel der Datei/Lektion" className="h-9" />
+                        <select value={dpFileForm.file_type} onChange={(e) => setDpFileForm(f => ({ ...f, file_type: e.target.value as 'file' | 'video_url' | 'lesson' }))} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                          <option value="file">Datei (Link/URL)</option>
+                          <option value="video_url">Video-URL</option>
+                          <option value="lesson">Lektion (Text/Inhalt)</option>
+                        </select>
+                        <Input value={dpFileForm.file_url} onChange={(e) => setDpFileForm(f => ({ ...f, file_url: e.target.value }))} placeholder="URL oder Pfad" className="h-9" />
+                        <Button type="button" variant="outline" size="sm" onClick={async () => {
+                          if (!dpFileForm.title.trim()) return;
+                          await fetch(`/api/admin/digital-products/${dpEditProduct.id}/files`, {
+                            method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: dpFileForm.title.trim(), file_type: dpFileForm.file_type, file_url: dpFileForm.file_url.trim() || null }),
+                          });
+                          setDpFileForm({ title: '', file_type: 'file', file_url: '' });
+                          const r = await fetch(`/api/admin/digital-products/${dpEditProduct.id}`, { credentials: 'include' });
+                          const j = await r.json();
+                          if (j.data) setDpEditProduct(j.data);
+                        }}>Datei hinzufügen</Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setDpProductDialogOpen(false); setDpEditProduct(null); }}>Abbrechen</Button>
+                  <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={async () => {
+                    if (!dpProductForm.title.trim() || !dpProductForm.slug.trim()) return;
+                    if (dpEditProduct) {
+                      const res = await fetch('/api/admin/digital-products/' + dpEditProduct.id, {
+                        method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dpProductForm),
+                      });
+                      const j = await res.json();
+                      if (j.data) { setDpProducts(prev => prev.map(x => x.id === j.data.id ? j.data : x)); setDpProductDialogOpen(false); setDpEditProduct(null); }
+                    } else {
+                      const res = await fetch('/api/admin/digital-products', {
+                        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dpProductForm),
+                      });
+                      const j = await res.json();
+                      if (j.data) { setDpProducts(prev => [...prev, j.data]); setDpProductDialogOpen(false); setDpEditProduct(null); }
+                    }
+                  }}>{dpEditProduct ? 'Speichern' : 'Anlegen'}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={dpDeleteId != null} onOpenChange={(open) => { if (!open) setDpDeleteId(null); }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Produkt löschen?</DialogTitle>
+                  <DialogDescription>Das digitale Produkt und alle zugehörigen Dateien werden gelöscht.</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDpDeleteId(null)}>Abbrechen</Button>
+                  <Button variant="destructive" onClick={async () => {
+                    if (dpDeleteId == null) return;
+                    await fetch(`/api/admin/digital-products/${dpDeleteId}`, { method: 'DELETE', credentials: 'include' });
+                    setDpProducts(prev => prev.filter(p => p.id !== dpDeleteId));
+                    setDpDeleteId(null);
+                  }}>Löschen</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            </div>
+          </div>
+        ) : activeNav === 'team' ? (
+          <div className="p-6 min-h-[calc(100vh-4rem)]">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Team</h2>
+            <p className="text-sm text-muted-foreground mb-6">Benutzer Ihres Mandanten anlegen und verwalten. Neue Teammitglieder können sich mit Benutzername und Passwort anmelden.</p>
+            {!canManageUsers ? (
+              <Card className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 max-w-md">
+                <CardContent className="p-6">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">Nur Administratoren können Benutzer anlegen und verwalten. Sie haben keine entsprechende Berechtigung.</p>
+                </CardContent>
+              </Card>
+            ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="rounded-xl border border-border/80">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Benutzer</CardTitle>
+                    <CardDescription>Alle Benutzer in Ihrem Team</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {teamLoading ? (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Lade …</p>
+                    ) : teamError ? (
+                      <p className="text-sm text-destructive">{teamError}</p>
+                    ) : teamUsers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Noch keine Benutzer. Legen Sie unten einen an.</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Benutzername</TableHead>
+                            <TableHead>Anzeigename</TableHead>
+                            <TableHead>Rolle</TableHead>
+                            <TableHead>Abteilung</TableHead>
+                            <TableHead>Letzter Login</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {teamUsers.map((u) => (
+                            <TableRow key={u.id}>
+                              <TableCell className="font-medium">{u.username}</TableCell>
+                              <TableCell>{u.display_name || '–'}</TableCell>
+                              <TableCell>{u.role || '–'}</TableCell>
+                              <TableCell>{u.department_label || '–'}</TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {u.last_login_at ? new Date(u.last_login_at).toLocaleString('de-DE') : '–'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              <div>
+                <Card className="rounded-xl border border-border/80">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Benutzer anlegen</CardTitle>
+                    <CardDescription>Neues Teammitglied mit Benutzername und Passwort</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {newUserMessage && (
+                      <p className={`text-sm mb-3 ${newUserMessage.type === 'success' ? 'text-green-600' : 'text-destructive'}`}>
+                        {newUserMessage.text}
+                      </p>
+                    )}
+                    <form
+                      className="space-y-3"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setNewUserMessage(null);
+                        setNewUserSubmitting(true);
+                        try {
+                          const res = await fetch('/api/admin/users', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                              username: newUserForm.username.trim(),
+                              password: newUserForm.password,
+                              display_name: newUserForm.display_name.trim() || undefined,
+                              role: newUserForm.role,
+                              department_key: newUserForm.department_key.trim() || undefined,
+                            }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok) {
+                            setNewUserMessage({ type: 'success', text: data.message ?? 'Benutzer angelegt.' });
+                            setNewUserForm({ username: '', password: '', display_name: '', role: 'mitarbeiter', department_key: '' });
+                            setTeamUsers((prev) => [...prev, { ...data.data, role: data.data?.role ?? newUserForm.role, department_label: data.data?.department_label ?? null }]);
+                          } else {
+                            setNewUserMessage({ type: 'error', text: data.error ?? 'Fehler beim Anlegen.' });
+                          }
+                        } catch {
+                          setNewUserMessage({ type: 'error', text: 'Fehler beim Anlegen.' });
+                        } finally {
+                          setNewUserSubmitting(false);
+                        }
+                      }}
+                    >
+                      <div className="space-y-2">
+                        <Label htmlFor="team-username">Benutzername *</Label>
+                        <Input
+                          id="team-username"
+                          value={newUserForm.username}
+                          onChange={(e) => setNewUserForm((f) => ({ ...f, username: e.target.value }))}
+                          placeholder="z.B. max.mueller"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="team-password">Passwort * (min. 8 Zeichen)</Label>
+                        <Input
+                          id="team-password"
+                          type="password"
+                          value={newUserForm.password}
+                          onChange={(e) => setNewUserForm((f) => ({ ...f, password: e.target.value }))}
+                          placeholder="••••••••"
+                          minLength={8}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="team-display">Anzeigename</Label>
+                        <Input
+                          id="team-display"
+                          value={newUserForm.display_name}
+                          onChange={(e) => setNewUserForm((f) => ({ ...f, display_name: e.target.value }))}
+                          placeholder="Max Müller"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="team-role">Rolle</Label>
+                        <select
+                          id="team-role"
+                          value={newUserForm.role}
+                          onChange={(e) => setNewUserForm((f) => ({ ...f, role: e.target.value }))}
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="admin">Admin (Vollzugriff)</option>
+                          <option value="mitarbeiter">Mitarbeiter</option>
+                          <option value="mitarbeiter_limited">Mitarbeiter (eingeschränkt)</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="team-department">Abteilung (optional)</Label>
+                        <select
+                          id="team-department"
+                          value={newUserForm.department_key}
+                          onChange={(e) => setNewUserForm((f) => ({ ...f, department_key: e.target.value || '' }))}
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="">– Keine –</option>
+                          {departments.map((d) => (
+                            <option key={d.key} value={d.key}>{d.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <Button type="submit" className="w-full bg-[#cb530a] hover:bg-[#a84308]" disabled={newUserSubmitting}>
+                        {newUserSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Benutzer anlegen
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            )}
+          </div>
+        ) : activeNav === 'kalender' ? (
           <div className="p-6 min-h-[calc(100vh-4rem)]">
             <h2 className="text-xl font-semibold text-foreground mb-1">Kalender</h2>
-            <p className="text-sm text-muted-foreground mb-6">Termine anlegen, Kalender einsehen, kommende Termine – für Sven und Pascal.</p>
+            <p className="text-sm text-muted-foreground mb-6">Termine anlegen, Kalender einsehen, kommende Termine – nach Person filtern.</p>
             {calendarMigrationRequired && (
               <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
                 <CardContent className="p-4">
@@ -1617,12 +2260,13 @@ export default function AdminPage() {
               <div className="flex items-center gap-2">
                 <select
                   value={calendarFilterSalesRep}
-                  onChange={(e) => setCalendarFilterSalesRep(e.target.value as 'alle' | 'sven' | 'pascal')}
+                  onChange={(e) => setCalendarFilterSalesRep(e.target.value)}
                   className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  <option value="alle">Alle Vertriebler</option>
-                  <option value="sven">Sven</option>
-                  <option value="pascal">Pascal</option>
+                  <option value="alle">Alle</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.username}>{m.display_name}{m.department_label ? ` (${m.department_label})` : ''}</option>
+                  ))}
                 </select>
                 <span className="text-sm text-muted-foreground">
                   {calendarMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
@@ -1635,7 +2279,7 @@ export default function AdminPage() {
                 </Button>
                 <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setCalendarMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}>Heute</Button>
               </div>
-              <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={() => { setCalendarFromContact(null); setCalendarEditEvent(null); setCalendarForm({ title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: 'sven', notes: '', contact_id: null, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarDialogOpen(true); }}>
+              <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={() => { setCalendarFromContact(null); setCalendarEditEvent(null); setCalendarForm({ title: '', startDate: '', startTime: '09:00', endDate: '', endTime: '09:30', sales_rep: currentUser?.username || teamMembers[0]?.username || '', notes: '', contact_id: null, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarDialogOpen(true); }}>
                 <Calendar className="w-4 h-4 mr-2" />
                 Termin hinzufügen
               </Button>
@@ -1729,7 +2373,7 @@ export default function AdminPage() {
                               >
                                 <span className="font-medium block">{ev.title}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {new Date(ev.start_at).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · {ev.sales_rep === 'sven' ? 'Sven' : 'Pascal'}
+                                  {new Date(ev.start_at).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(ev.start_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · {teamMembers.find(m => m.username === ev.sales_rep)?.display_name || ev.sales_rep}
                                 </span>
                               </button>
                             </li>
@@ -2237,11 +2881,10 @@ export default function AdminPage() {
             </div>
           </div>
         ) : activeNav === 'scraper-gelbeseiten' ? (
-          /* ——— Gelbe Zauberer: märchenhaft & humorvoll ——— */
           <div className="min-h-[calc(100vh-4rem)] p-6 md:p-8 bg-white rounded-xl border border-neutral-200">
-            <h2 className="text-2xl font-bold mb-2 text-foreground">Gelbe Zauberer</h2>
+            <h2 className="text-2xl font-bold mb-2 text-foreground">getYELLOW</h2>
             <p className="text-sm mb-6 max-w-2xl text-muted-foreground">
-                  Im goldenen Buch der Handwerker stehen die schönsten Kontakte. Verratet uns Zauberwort und Ort – dann sagen wir dem Buch Bescheid. Es blättert sich von selbst, sammelt Einträge und füllt eure Liste wie von Geisterhand. Ihr könnt zwischendurch auch die 11880 Zauberer besuchen; wenn hier alles fertig ist, erscheint eine Botschaft.
+              Lead-Suche über Gelbe Seiten: Keyword und Ort eingeben, Ergebnisse werden gesammelt und können in die Kontaktliste übernommen werden.
             </p>
 
             <div className="mb-6">
@@ -2288,10 +2931,10 @@ export default function AdminPage() {
                     <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                       <p className="text-sm font-medium text-gray-800 flex items-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                        {scrapePhaseGS === 'anzeigen_sammeln' ? 'Das goldene Buch blättert…' : `${foundCountGS} Einträge gefunden`}
+                        {scrapePhaseGS === 'anzeigen_sammeln' ? 'Suche läuft…' : `${foundCountGS} Einträge gefunden`}
                       </p>
                       {scrapePhaseGS !== 'anzeigen_sammeln' && (
-                        <p className="text-xs text-gray-600 mt-1">Die Kontakte erscheinen wie von Zauberhand. Ihr könnt zwischendurch auch die 11880 Zauberer besuchen.</p>
+                        <p className="text-xs text-gray-600 mt-1">Ergebnisse werden geladen. Weitere Tools (z. B. getGREEN) können parallel genutzt werden.</p>
                       )}
                     </div>
                   )}
@@ -2349,12 +2992,12 @@ export default function AdminPage() {
                                   setScrapingGS(false);
                                   const current = streamingLeadsRef.current;
                                   if (current.length > 0) await fetchExistingAndSetSelection(current, 'gelbeseiten');
-                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: ev.count ?? current.length });
-                                  if ((ev.count ?? 0) === 0) setScrapeErrorGS('Das goldene Buch hatte leider nichts Passendes.');
+                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'getYELLOW', count: ev.count ?? current.length });
+                                  if ((ev.count ?? 0) === 0) setScrapeErrorGS('Keine Treffer für die gewählte Suche.');
                                 } else if (ev.phase === 'error') {
                                   setScrapingGS(false);
-                                  setScrapeErrorGS(ev.error ?? 'Der Zauber ist leider fehlgeschlagen.');
-                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: 0, error: ev.error });
+                                  setScrapeErrorGS(ev.error ?? 'Suche fehlgeschlagen.');
+                                  setScraperDoneNotification({ source: 'gelbeseiten', label: 'getYELLOW', count: 0, error: ev.error });
                                 }
                               } catch (_) {}
                             }
@@ -2375,7 +3018,7 @@ export default function AdminPage() {
                         } catch (e) {
                           setScrapingGS(false);
                           setScrapeErrorGS(e instanceof Error ? e.message : 'Der Zauber ist leider fehlgeschlagen.');
-                          setScraperDoneNotification({ source: 'gelbeseiten', label: 'Gelbe Zauberer', count: 0, error: e instanceof Error ? e.message : undefined });
+                          setScraperDoneNotification({ source: 'gelbeseiten', label: 'getYELLOW', count: 0, error: e instanceof Error ? e.message : undefined });
                         }
                       }}
                       disabled={!scrapeKeyword.trim() || !scrapeLocation.trim() || scrapingGS}
@@ -2507,7 +3150,7 @@ export default function AdminPage() {
                             alert('Bitte mindestens einen Lead auswählen.');
                             return;
                           }
-                          downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', 'Gelbe Zauberer');
+                          downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', 'getYELLOW');
                         }}
                         disabled={scrapedLeads.filter((_, i) => selectedScrapedLeads[i] !== false).length === 0}
                         className="px-4 py-2 bg-white border-2 border-[#1a1a1a] text-[#1a1a1a] font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -2523,11 +3166,10 @@ export default function AdminPage() {
                 )}
           </div>
         ) : activeNav === 'scraper-11880' ? (
-          /* ——— 11880 Zauberer: märchenhaft & humorvoll ——— */
           <div className="min-h-[calc(100vh-4rem)] p-6 md:p-8 bg-white rounded-xl border border-neutral-200">
-            <h2 className="text-2xl font-bold mb-2 text-foreground">11880 Zauberer</h2>
+            <h2 className="text-2xl font-bold mb-2 text-foreground">getGREEN</h2>
             <p className="text-sm mb-6 max-w-2xl text-muted-foreground">
-              Die Zauberer von 11880 flüstern Branche und Ort – und schon suchen sie in ihrem Reich nach den passenden Kontakten. Das passiert im Hintergrund; ihr könnt inzwischen bei den Gelben Zauberern vorbeischauen. Wenn alle Kontakte herbeigezaubert sind, erscheint eine Botschaft. Bei vielen Treffern (z. B. 170+) brauchen die Zauberer ein paar Minuten – das ist ganz normal.
+              Lead-Suche über 11880: Branche und Ort eingeben. Die Suche läuft im Hintergrund; bei vielen Treffern kann es einige Minuten dauern. Ergebnisse können in die Kontaktliste übernommen werden.
             </p>
 
             <div className="mb-6">
@@ -2559,9 +3201,9 @@ export default function AdminPage() {
                     <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                       <p className="text-sm font-medium text-gray-800 flex items-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                        Die Zauberer sind am Werk…
+                        Suche läuft…
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">Die Kontakte erscheinen nach und nach. Ihr könnt zwischendurch auch die Gelben Zauberer besuchen – bei Abschluss erscheint eine Botschaft.</p>
+                      <p className="text-xs text-gray-600 mt-1">Ergebnisse werden geladen. Bei Abschluss erscheint eine Meldung.</p>
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3">
@@ -2579,21 +3221,21 @@ export default function AdminPage() {
                               if (result.leads.length > 0) {
                                 await fetchExistingAndSetSelection(result.leads, '11880');
                               }
-                              setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: result.leads.length });
+                              setScraperDoneNotification({ source: '11880', label: 'getGREEN', count: result.leads.length });
                               if (result.leads.length === 0 && result.error) {
                                 setScrapeError11880(result.error);
                               }
                             } else {
-                              setScrapeError11880(result.error ?? 'Die Zauberer melden: etwas ist schiefgelaufen.');
-                              setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: 0, error: result.error });
+                              setScrapeError11880(result.error ?? 'Suche fehlgeschlagen.');
+                              setScraperDoneNotification({ source: '11880', label: 'getGREEN', count: 0, error: result.error });
                             }
                           } finally {
                             setScraping11880(false);
                           }
                         }).catch((e) => {
                           setScraping11880(false);
-                          setScrapeError11880(e?.message ?? 'Der Zauber ist leider fehlgeschlagen.');
-                          setScraperDoneNotification({ source: '11880', label: '11880 Zauberer', count: 0, error: e?.message });
+                          setScrapeError11880(e?.message ?? 'Suche fehlgeschlagen.');
+                          setScraperDoneNotification({ source: '11880', label: 'getGREEN', count: 0, error: e?.message });
                         });
                       }}
                       disabled={!scrapeKeyword.trim() || !scrapeLocation.trim() || scraping11880}
@@ -2602,10 +3244,10 @@ export default function AdminPage() {
                       {scraping11880 ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Zaubern läuft…
+                          Suche läuft…
                         </>
                       ) : (
-                        'Kontakte herbeizaubern'
+                        'Suchen'
                       )}
                     </button>
                     {scrapeKeyword.trim() && scrapeLocation.trim() && (
@@ -2733,7 +3375,7 @@ export default function AdminPage() {
                         alert('Bitte mindestens einen Lead auswählen.');
                         return;
                       }
-                      downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', '11880 Zauberer');
+                      downloadCsvForHubspot(selected, scrapeKeyword.trim() || 'Suchbegriff', 'getGREEN');
                     }}
                     disabled={scrapedLeads.filter((_, i) => selectedScrapedLeads[i] !== false).length === 0}
                     className="px-4 py-2 bg-white text-[#004d28] font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -3036,7 +3678,7 @@ export default function AdminPage() {
                             onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, contact })}
                             onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
                             onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
-                            onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
+                            onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); const defRep = currentUser?.username || teamMembers[0]?.username || ''; setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: defRep, notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
                             getProfileUrl={getProfileUrl}
                             getProfileLabel={getProfileLabel}
                             getWebsiteFromNotes={getWebsiteFromNotes}
@@ -3045,6 +3687,7 @@ export default function AdminPage() {
                             getStatusLabel={getStatusLabel}
                             getSourceLabel={getSourceLabel}
                             getSourceBorderClass={getSourceBorderClass}
+                            teamMembers={teamMembers}
                         />
                         ))}
                       </div>
@@ -3092,7 +3735,7 @@ export default function AdminPage() {
                               className={`relative select-none pr-0 overflow-visible ${idx === 0 ? 'rounded-tl-lg' : ''} ${idx === TABLE_COLUMN_KEYS.length - 1 ? 'rounded-tr-lg' : ''}`}
                             >
                               <span className="block truncate pr-2">
-                                {key === 'vertriebler' ? 'Vertriebler' : key === 'firmaName' ? 'Firma / Name' : key === 'telefon' ? 'Telefon' : key === 'info' ? 'Info' : key === 'ort' ? 'Ort' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
+                                {key === 'vertriebler' ? 'Zugewiesen' : key === 'firmaName' ? 'Firma / Name' : key === 'telefon' ? 'Telefon' : key === 'info' ? 'Info' : key === 'ort' ? 'Ort' : key === 'sales' ? 'Mögliche Sales' : 'Status'}
                               </span>
                               {RESIZABLE_TABLE_COLUMNS.includes(key) && (
                                 <div
@@ -3135,7 +3778,7 @@ export default function AdminPage() {
                                   className="h-7 w-full min-w-0 text-xs justify-start"
                                   onClick={() => setAssignDialogContact(contact)}
                                 >
-                                  {contact.assigned_to === 'sven' ? 'Sven' : contact.assigned_to === 'pascal' ? 'Pascal' : '—'}
+                                  {contact.assigned_to ? (teamMembers.find(m => m.username === contact.assigned_to)?.display_name || contact.assigned_to) : '—'}
                                 </Button>
                               </TableCell>
                               <TableCell style={{ width: getTableColWidth('firmaName'), maxWidth: getTableColWidth('firmaName'), minWidth: 0 }} className="font-medium overflow-hidden min-w-0">
@@ -3202,7 +3845,7 @@ export default function AdminPage() {
                                   <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => setProductPickerContact(contact)} title="Produkte / Mögliche Sales">
                                     Produkte
                                   </Button>
-                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }} title="Termin mit diesem Lead">
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); const defRep = currentUser?.username || teamMembers[0]?.username || ''; setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: defRep, notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }} title="Termin mit diesem Lead">
                                     <Calendar className="w-3.5 h-3.5 mr-0.5 inline" />
                                     Termin
                                   </Button>
@@ -3233,7 +3876,7 @@ export default function AdminPage() {
                     onNotesClick={() => { setSelectedContact(contact); setNotes(contact.notes || ''); }}
                     onAssignedChange={(assignedTo) => updateAssignedTo(contact.id, assignedTo)}
                     onProductsClick={() => setProductPickerContact(contact)}
-                    onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: salesRep || 'sven', notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
+                    onCalendarClick={() => { const c = contact; const today = new Date().toISOString().slice(0, 10); const defRep = currentUser?.username || teamMembers[0]?.username || ''; setCalendarFromContact(c); setCalendarForm({ title: c.company || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Lead', startDate: today, startTime: '09:00', endDate: today, endTime: '09:30', sales_rep: defRep, notes: '', contact_id: c.id, recommendedProductIds: [], website_state: '', google_state: '', social_media_state: '' }); setCalendarEditEvent(null); setCalendarDialogOpen(true); }}
                     opportunitySum={opportunitySums[contact.id]}
                     getProfileUrl={getProfileUrl}
                     getProfileLabel={getProfileLabel}
@@ -3244,6 +3887,7 @@ export default function AdminPage() {
                     getSourceLabel={getSourceLabel}
                     getSourceBorderClass={getSourceBorderClass}
                     fullWidth
+                    teamMembers={teamMembers}
                   />
                 ))
               )}
@@ -3387,9 +4031,9 @@ export default function AdminPage() {
       <Dialog open={!!scraperDoneNotification} onOpenChange={(open) => { if (!open) setScraperDoneNotification(null); }}>
         <DialogContent className="sm:max-w-sm border-2 border-[#cb530a]">
           <DialogHeader>
-            <DialogTitle>{scraperDoneNotification?.label}: Zauber erledigt</DialogTitle>
+            <DialogTitle>{scraperDoneNotification?.label}: Suche abgeschlossen</DialogTitle>
             <DialogDescription>
-              {scraperDoneNotification?.error ?? `${scraperDoneNotification?.count ?? 0} Kontakte herbeigezaubert. Die Liste wurde aktualisiert.`}
+              {scraperDoneNotification?.error ?? `${scraperDoneNotification?.count ?? 0} Kontakt(e) übernommen. Die Liste wurde aktualisiert.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -3407,7 +4051,7 @@ export default function AdminPage() {
               Aktivitätsverlauf
             </DialogTitle>
             <DialogDescription>
-              Letzte Aktionen im CRM (Status, Notizen, Vertriebler-Zuweisung)
+              Letzte Aktionen im CRM (Status, Notizen, Zuweisung)
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto -mx-6 px-6">
@@ -3422,7 +4066,7 @@ export default function AdminPage() {
                   const contactName = sub && typeof sub === 'object' && !Array.isArray(sub)
                     ? ((sub.company || '').trim() || [sub.first_name, sub.last_name].filter(Boolean).join(' ').trim() || `Kontakt #${entry.contact_id}`)
                     : `Kontakt #${entry.contact_id}`;
-                  const who = entry.sales_rep === 'sven' ? 'Sven' : entry.sales_rep === 'pascal' ? 'Pascal' : entry.sales_rep;
+                  const who = teamMembers.find(m => m.username === entry.sales_rep)?.display_name || entry.sales_rep;
                   let actionText = '';
                   if (entry.action === 'status_change') {
                     const newLabel = getStatusLabel(entry.new_value ?? '');
@@ -3430,8 +4074,8 @@ export default function AdminPage() {
                   } else if (entry.action === 'notes_edit') {
                     actionText = 'Notizen bearbeitet';
                   } else if (entry.action === 'assigned') {
-                    const to = entry.new_value === 'sven' ? 'Sven' : entry.new_value === 'pascal' ? 'Pascal' : '—';
-                    actionText = `Vertriebler: ${to}`;
+                    const to = entry.new_value ? (teamMembers.find(m => m.username === entry.new_value)?.display_name || entry.new_value) : '—';
+                    actionText = `Zugewiesen an: ${to}`;
                   } else {
                     actionText = entry.action;
                   }
@@ -3459,7 +4103,7 @@ export default function AdminPage() {
           <DialogHeader>
             <DialogTitle>{calendarEditEvent ? 'Termin bearbeiten' : calendarFromContact ? 'Termin mit Lead' : 'Termin anlegen'}</DialogTitle>
             <DialogDescription>
-              {calendarFromContact ? `Lead: ${calendarFromContact.company || `${calendarFromContact.first_name || ''} ${calendarFromContact.last_name || ''}`.trim() || 'Kontakt'}` : 'Vertriebler, Titel, Start und Ende.'}
+              {calendarFromContact ? `Lead: ${calendarFromContact.company || `${calendarFromContact.first_name || ''} ${calendarFromContact.last_name || ''}`.trim() || 'Kontakt'}` : 'Person, Titel, Start und Ende.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
@@ -3473,10 +4117,11 @@ export default function AdminPage() {
               <Input value={calendarForm.title} onChange={(e) => setCalendarForm(f => ({ ...f, title: e.target.value }))} placeholder="z. B. Kundenanruf" className="mt-1 h-9" />
             </div>
             <div>
-              <Label className="text-xs">Vertriebler</Label>
-              <select value={calendarForm.sales_rep} onChange={(e) => setCalendarForm(f => ({ ...f, sales_rep: e.target.value as 'sven' | 'pascal' }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                <option value="sven">Sven</option>
-                <option value="pascal">Pascal</option>
+              <Label className="text-xs">Person</Label>
+              <select value={calendarForm.sales_rep} onChange={(e) => setCalendarForm(f => ({ ...f, sales_rep: e.target.value }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.username}>{m.display_name}{m.department_label ? ` (${m.department_label})` : ''}</option>
+                ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -3611,25 +4256,24 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Vertriebler zuweisen – Dialog (Tabelle) */}
+      {/* Zuweisen – Dialog (Tabelle) */}
       <Dialog open={!!assignDialogContact} onOpenChange={(open) => { if (!open) setAssignDialogContact(null); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Vertriebler zuweisen</DialogTitle>
+            <DialogTitle>Zuweisen an</DialogTitle>
             <DialogDescription>
               {assignDialogContact && (assignDialogContact.company || `${assignDialogContact.first_name} ${assignDialogContact.last_name}`.trim() || '—')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5 py-2">
             <Button variant="outline" size="sm" className="justify-start" onClick={() => { if (assignDialogContact) { updateAssignedTo(assignDialogContact.id, null); setAssignDialogContact(null); } }}>
-              —
+              — Keine Zuweisung
             </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => { if (assignDialogContact) { updateAssignedTo(assignDialogContact.id, 'sven'); setAssignDialogContact(null); } }}>
-              Sven
-            </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => { if (assignDialogContact) { updateAssignedTo(assignDialogContact.id, 'pascal'); setAssignDialogContact(null); } }}>
-              Pascal
-            </Button>
+            {teamMembers.map((m) => (
+              <Button key={m.id} variant="outline" size="sm" className="justify-start" onClick={() => { if (assignDialogContact) { updateAssignedTo(assignDialogContact.id, m.username); setAssignDialogContact(null); } }}>
+                {m.display_name}{m.department_label ? ` (${m.department_label})` : ''}
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
@@ -3660,17 +4304,17 @@ export default function AdminPage() {
                 <div className="rounded-lg border border-border/60 bg-muted/30 max-h-40 overflow-y-auto p-2 space-y-1.5 text-xs">
                   {contactActivity.map((entry) => (
                     <div key={entry.id} className="flex flex-wrap gap-1.5 items-baseline">
-                      <span className="font-medium">{entry.sales_rep === 'sven' ? 'Sven' : 'Pascal'}</span>
+                      <span className="font-medium">{teamMembers.find(m => m.username === entry.sales_rep)?.display_name || entry.sales_rep}</span>
                       <span className="text-muted-foreground">
                         {entry.action === 'status_change' && 'Status geändert'}
                         {entry.action === 'notes_edit' && 'Notizen bearbeitet'}
-                        {entry.action === 'assigned' && 'Vertriebler zugewiesen'}
+                        {entry.action === 'assigned' && 'Zugewiesen'}
                       </span>
                       {entry.new_value != null && entry.action === 'status_change' && (
                         <span>→ {getStatusLabel(entry.new_value)}</span>
                       )}
                       {entry.new_value != null && entry.action === 'assigned' && (
-                        <span>→ {entry.new_value === 'sven' ? 'Sven' : entry.new_value === 'pascal' ? 'Pascal' : '—'}</span>
+                        <span>→ {entry.new_value ? (teamMembers.find(m => m.username === entry.new_value)?.display_name || entry.new_value) : '—'}</span>
                       )}
                       <span className="text-muted-foreground ml-auto">
                         {new Date(entry.created_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
@@ -3812,6 +4456,7 @@ function ContactCard({
   onStatusClick,
   onCalendarClick,
   potentialBadges = [],
+  teamMembers = [],
 }: {
   contact: ContactSubmission;
   leadStatuses: readonly { value: string; label: string }[];
@@ -3833,6 +4478,7 @@ function ContactCard({
   onStatusClick?: () => void;
   onCalendarClick?: () => void;
   potentialBadges?: { key: string; label: string; title: string; className: string }[];
+  teamMembers?: TeamMember[];
 }) {
   const profileUrl = getProfileUrl(contact);
   const profileLabel = getProfileLabel(contact);
@@ -3894,20 +4540,22 @@ function ContactCard({
                   size="sm"
                   className="shrink-0 h-7 text-xs"
                   onClick={() => setAssignDialogOpen(true)}
-                  title="Vertriebler"
+                  title="Zuweisen"
                 >
-                  Vertriebler: {contact.assigned_to === 'sven' ? 'Sven' : contact.assigned_to === 'pascal' ? 'Pascal' : '—'}
+                  Zugewiesen an: {contact.assigned_to ? (teamMembers.find(m => m.username === contact.assigned_to)?.display_name || contact.assigned_to) : '—'}
                 </Button>
                 <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
                   <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
-                      <DialogTitle>Vertriebler zuweisen</DialogTitle>
+                      <DialogTitle>Zuweisen an</DialogTitle>
                       <DialogDescription>Kontakt: {displayName}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-1.5 py-2">
                       <Button variant="outline" size="sm" className="justify-start" onClick={() => { onAssignedChange(null); setAssignDialogOpen(false); }}>—</Button>
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => { onAssignedChange('sven'); setAssignDialogOpen(false); }}>Sven</Button>
-                      <Button variant="outline" size="sm" className="justify-start" onClick={() => { onAssignedChange('pascal'); setAssignDialogOpen(false); }}>Pascal</Button>
+                      <Button variant="outline" size="sm" className="justify-start" onClick={() => { onAssignedChange(null); setAssignDialogOpen(false); }}>— Keine Zuweisung</Button>
+                      {teamMembers.map((m) => (
+                        <Button key={m.id} variant="outline" size="sm" className="justify-start" onClick={() => { onAssignedChange(m.username); setAssignDialogOpen(false); }}>{m.display_name}{m.department_label ? ` (${m.department_label})` : ''}</Button>
+                      ))}
                     </div>
                   </DialogContent>
                 </Dialog>

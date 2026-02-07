@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase-admin';
 import { normalizeGermanPhone } from '../../../../lib/normalize-phone';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin-auth';
 import type { ScrapedLeadInsert } from '@/types/scraper-lead';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookie = request.cookies.get('admin_session')?.value;
-    if (!isAdminAuthenticated(cookie)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -41,6 +39,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await supabaseAdmin
       .from('contact_submissions')
       .select('phone, email, company, city')
+      .eq('tenant_id', session.tid)
       .in('source', ['gelbe_seiten', '11880', 'google_places']);
     const existingKeys = new Set<string>();
     existing?.forEach((r) => {
@@ -71,6 +70,7 @@ export async function POST(request: NextRequest) {
       if (c) existingKeys.add(companyKey);
 
       rows.push({
+        tenant_id: session.tid,
         first_name: lead.firma.slice(0, 100),
         last_name: '',
         email: (lead.email && lead.email.trim()) || null,

@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
-
-function checkAdminAuth(request: NextRequest): boolean {
-  const cookie = request.cookies.get('admin_session')?.value;
-  return isAdminAuthenticated(cookie);
-}
+import { getAdminSession } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
@@ -20,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from('products')
       .select('*')
+      .eq('tenant_id', session.tid)
       .order('sort_order', { ascending: true })
       .order('id', { ascending: true });
 
@@ -44,9 +39,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
     }
@@ -71,6 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const insertPayload: Record<string, unknown> = {
+      tenant_id: session.tid,
       name,
       description: description ?? null,
       price_display,
@@ -101,9 +96,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
     }
@@ -133,6 +127,7 @@ export async function PATCH(request: NextRequest) {
       .from('products')
       .update(updates)
       .eq('id', id)
+      .eq('tenant_id', session.tid)
       .select('*')
       .single();
 
@@ -146,9 +141,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = getAdminSession(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase nicht konfiguriert' }, { status: 500 });
     }
@@ -159,7 +153,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'id erforderlich' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin.from('products').delete().eq('id', id);
+    const { error } = await supabaseAdmin.from('products').delete().eq('id', id).eq('tenant_id', session.tid);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true }, { status: 200 });

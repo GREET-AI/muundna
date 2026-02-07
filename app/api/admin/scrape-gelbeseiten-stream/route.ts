@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server';
 import type { Browser } from 'playwright';
 import { buildGelbeSeitenSearchUrl } from '@/lib/scraper-sources';
 import { extractLeadsFromHtml, parseGelbeSeitenProfilePage } from '@/lib/scrape-gelbeseiten-parse';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin-auth';
 import { launchScraperBrowser } from '@/lib/playwright-browser';
 import type { ScrapedLeadInsert } from '@/types/scraper-lead';
 
@@ -24,8 +24,7 @@ function sse(data: object): string {
 }
 
 export async function POST(request: NextRequest) {
-  const cookie = request.cookies.get('admin_session')?.value;
-  if (!isAdminAuthenticated(cookie)) {
+  if (!getAdminSession(request)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
