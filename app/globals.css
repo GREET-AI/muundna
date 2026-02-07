@@ -102,6 +102,27 @@ html {
   animation: crm-gradient-drift 20s ease infinite;
 }
 
+/* Hero-Banner: schräger Streifen läuft bis zum Ende und wieder zurück (Start + alle Sektionen) */
+@keyframes hero-gradient-drift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.hero-gradient-animate {
+  background: linear-gradient(
+    135deg,
+    #cb530a 0%,
+    #d45f12 20%,
+    #e06b20 40%,
+    #f5c9a8 50%,
+    #e06b20 60%,
+    #d45f12 80%,
+    #cb530a 100%
+  );
+  background-size: 200% 200%;
+  animation: hero-gradient-drift 8s ease-in-out infinite;
+}
+
 /* Scrollbar ausblenden, Scrollen bleibt möglich (z. B. Pipeline-Spalten) */
 .scrollbar-hide {
   -ms-overflow-style: none;

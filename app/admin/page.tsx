@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
   Mail, Phone, MapPin, Calendar, FileText, CheckCircle2, Clock, XCircle, 
@@ -24,6 +25,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
+import { TextGenerateEffect } from '@/app/components/ui/TextGenerateEffect';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import { scrapeGelbeSeiten } from '@/app/actions/scrape-gelbeseiten';
 import { scrape11880 } from '@/app/actions/scrape-11880';
@@ -549,6 +551,12 @@ export default function AdminPage() {
       .catch(() => setHistoryEntries([]))
       .finally(() => setHistoryLoading(false));
   }, [historyDialogOpen, isAuthenticated]);
+
+  /** Beim Wechsel der Seite nach oben scrollen */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    window.scrollTo(0, 0);
+  }, [activeNav, isAuthenticated]);
 
   /** Spalten-Resize: Mausbewegung/Release global abfangen */
   useEffect(() => {
@@ -1238,6 +1246,35 @@ export default function AdminPage() {
   };
   const isRubrik = (nav: string): nav is keyof typeof rubrikConfig => nav in rubrikConfig;
 
+  /** Einstiegsseiten von der Startseite (Cards): gleiches Layout wie Start – Hero, Headline, animierter Text, dann Inhalt */
+  const sectionEntryConfig: Record<string, { headline: string; introWords: string }> = {
+    'rubrik-contacts': {
+      headline: 'Jetzt bist du im Kontaktbereich.',
+      introWords: 'Hier verwaltest du alle Kontakte, Leads und Ansprechpartner. Wähle unten einen Unterpunkt: Alle Kontakte durchsuchen, nur deine zugewiesenen anzeigen oder Abschlüsse im Blick behalten.',
+    },
+    'rubrik-kunden': {
+      headline: 'Jetzt bist du im Kundenbereich.',
+      introWords: 'Bestehende Kunden und Partner – Status, Projekte und Übersicht. Wähle unten, ob du alle Kunden siehst oder direkt zu Kundenprojekten wechselst.',
+    },
+    'rubrik-leads': {
+      headline: 'Jetzt bist du im Akquise- & Lead-Bereich.',
+      introWords: 'Leads bearbeiten, Heute anrufen, Hot Leads, 3 Tage+, Neue Leads oder Follow-up – alle Akquise-Listen im Überblick. Wähle unten eine Liste.',
+    },
+    'kalender': {
+      headline: 'Jetzt bist du im Kalender.',
+      introWords: 'Termine anlegen, Kalender einsehen und anstehende Termine verwalten. Nach Person filtern und direkt neue Termine hinzufügen.',
+    },
+    'rubrik-tools': {
+      headline: 'Jetzt bist du im Tool-Bereich.',
+      introWords: 'Produkt-Tool, Digitale Produkte, Bewertungs-Funnel, Angebotserstellung, getYELLOW und getGREEN – wähle unten das gewünschte Tool.',
+    },
+    'team': {
+      headline: 'Jetzt bist du in den Team-Einstellungen.',
+      introWords: 'Benutzer und Berechtigungen verwalten – Teammitglieder anlegen, Abteilungen zuweisen. Neue Benutzer können sich mit Benutzername und Passwort anmelden.',
+    },
+  };
+  const isSectionEntry = (nav: string): nav is keyof typeof sectionEntryConfig => nav in sectionEntryConfig;
+
   // Logik für verschiedene Views; bei Pagination liefert die API bereits die gefilterte Seite → contacts direkt nutzen
   const getViewData = () => {
     const myContacts = currentUser?.username ? filteredContacts.filter(c => c.assigned_to === currentUser.username) : [];
@@ -1405,7 +1442,7 @@ export default function AdminPage() {
   const headerTop = APP_PADDING + HEADER_HEIGHT + GAP;
 
   return (
-    <div className="min-h-screen admin-crm-bg p-2">
+    <div className="min-h-screen admin-crm-bg px-2">
       {/* Top-Bar: nur so breit wie Content, abgerundet, mit Abstand – Haus-Icon ist in der Sidebar */}
       <header
         className="fixed z-50 flex items-center justify-between px-4 h-10 bg-white border border-neutral-300 rounded-xl shadow-sm text-neutral-800"
@@ -1694,7 +1731,7 @@ export default function AdminPage() {
 
       {/* Main Content – gleiche Breite wie Top-Bar, unter der Top-Bar */}
       <div
-        className="flex-1 min-w-0 overflow-x-hidden flex flex-col pr-2"
+        className="flex-1 min-w-0 overflow-x-hidden flex flex-col pr-2 pb-2 bg-white min-h-screen"
         style={{ marginLeft: contentLeft, paddingTop: headerTop }}
       >
         {migrationRequired && (
@@ -1714,31 +1751,35 @@ export default function AdminPage() {
 
         {/* Content: Startseite (nach Login), dann Team, Kalender, Digitale Produkte, … */}
         {activeNav === 'start' ? (
-          <div className="min-h-[calc(100vh-4rem)]">
-            {/* Hero – wie Digitale Produkte */}
-            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
-              <section className="relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] px-6 py-14 sm:py-16 md:py-20 text-center">
-                <div className="absolute inset-0 z-0">
-                  <Image src="/images/Handwerker%20(2).png" alt="" fill className="object-cover object-center" priority unoptimized />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
-                </div>
-                <div className="absolute inset-0 z-[1] opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')]" />
-                <div className="relative z-10">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-md">Willkommen im CRM</h1>
-                  <p className="text-lg sm:text-xl text-white/95 max-w-2xl mx-auto drop-shadow-sm">Alles im Blick – Kontakte, Termine, Produkte und Team an einem Ort.</p>
-                </div>
+          <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+            {/* Hero-Banner (ohne Bild, nur Verlauf) */}
+            <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">
+              <section className="relative min-h-[120px] sm:min-h-[140px] hero-gradient-animate flex items-center justify-center">
+                <Image src="/logotransparent.png" alt="" width={180} height={72} className="object-contain h-14 sm:h-16 w-auto drop-shadow-md" />
               </section>
             </div>
-            <div className="p-6">
-              {/* Persönliche Begrüßung */}
-              <div className="text-center mb-10 mt-4">
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                  Willkommen, {currentUser?.display_name && currentUser.display_name !== 'Administrator' ? currentUser.display_name : currentUser?.username || 'Sie'}!
-                </h2>
-                <p className="text-muted-foreground">Wähle einen Bereich, um loszulegen – oder nutze das Menü links für die Navigation.</p>
+            <div className="p-4 lg:p-6 flex flex-col">
+              {/* Headline, Fließtext, 100px Abstand bis zu den Cards */}
+              <div className="text-center mt-2 max-w-[86rem] mx-auto mb-[100px]">
+                <motion.h2
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-[40px] tracking-wide"
+                >
+                  Herzlich willkommen, {currentUser?.display_name && currentUser.display_name !== 'Administrator' ? currentUser.display_name : currentUser?.username || 'Sie'}!
+                </motion.h2>
+                <TextGenerateEffect
+                  words="Hier beginnt Ihr Tag im CRM. Alles Wichtige an einem Ort: Kontakte pflegen, Kunden und Projekte im Blick behalten, Leads und Akquise voranbringen – und mit den Tools alles im Griff. Wählen Sie unten einen Bereich oder nutzen Sie das Menü links. Wir wünschen Ihnen einen produktiven und erfolgreichen Tag."
+                  className="text-lg sm:text-xl text-foreground leading-snug max-w-[67rem] mx-auto tracking-wide"
+                  duration={0.15}
+                  cinematic
+                  as="p"
+                />
               </div>
-              {/* Karten = Menüpunkte */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Karten quadratisch, mehr Abstand dazwischen */}
+              <div className="max-w-[67rem] mx-auto flex items-center justify-center pb-8">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full max-w-[50rem] lg:max-w-[58rem]">
                 {startPageCards.map((card) => {
                   const Icon = card.Icon;
                   return (
@@ -1746,63 +1787,77 @@ export default function AdminPage() {
                       key={card.id}
                       type="button"
                       onClick={() => setActiveNav(card.id)}
-                      className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+                      className="group text-left bg-white rounded-xl shadow border border-neutral-200 overflow-hidden hover:shadow-md hover:border-[#cb530a]/40 transition-all duration-300 aspect-square flex flex-col w-full"
                     >
-                      <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
-                        <Image src={card.image} alt={card.label} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
+                      <div className="relative flex-1 min-h-0 overflow-hidden bg-neutral-100">
+                        <Image src={card.image} alt={card.label} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 50vw, 25vw" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <span className="text-white text-base font-semibold drop-shadow-md">{card.label}</span>
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <span className="text-white text-sm font-semibold drop-shadow-md">{card.label}</span>
                         </div>
                       </div>
-                      <div className="p-6">
-                        <div className="flex items-center mb-3">
-                          <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
-                            <Icon className="w-6 h-6 text-[#cb530a]" />
+                      <div className="p-3 flex-shrink-0 border-t border-neutral-100">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-8 h-8 rounded-lg bg-[#cb530a]/15 flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-[#cb530a]" />
                           </span>
-                          <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">{card.label}</h3>
+                          <h3 className="text-sm font-bold text-foreground group-hover:text-[#cb530a] transition-colors truncate tracking-wide">{card.label}</h3>
                         </div>
-                        <p className="text-muted-foreground leading-relaxed text-sm">{card.description}</p>
-                        <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Öffnen →</span>
+                        <p className="text-muted-foreground leading-snug text-xs line-clamp-2 tracking-wide">{card.description}</p>
+                        <span className="inline-flex items-center mt-2 text-[#cb530a] font-semibold text-xs group-hover:translate-x-1 transition-transform">Öffnen →</span>
                       </div>
                     </button>
                   );
                 })}
+                </div>
               </div>
             </div>
           </div>
-        ) : isRubrik(activeNav) ? (
-          <div className="min-h-[calc(100vh-4rem)]">
-            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
-              <section className="relative min-h-[180px] sm:min-h-[200px] px-6 py-10 sm:py-12 text-center">
-                <div className="absolute inset-0 z-0">
-                  <Image src="/images/Handwerker%20(2).png" alt="" fill className="object-cover object-center" unoptimized />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
-                </div>
-                <div className="relative z-10">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">{rubrikConfig[activeNav].title}</h1>
-                  <p className="text-white/95 mt-1">Wähle einen Unterpunkt</p>
-                </div>
+        ) : isRubrik(activeNav) && isSectionEntry(activeNav) ? (
+          <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+            {/* Hero wie Startseite (ohne Bild) */}
+            <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">
+              <section className="relative min-h-[120px] sm:min-h-[140px] hero-gradient-animate flex items-center justify-center">
+                <Image src="/logotransparent.png" alt="" width={180} height={72} className="object-contain h-14 sm:h-16 w-auto drop-shadow-md" />
               </section>
             </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rubrikConfig[activeNav].subCards.map((sub) => (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    onClick={() => setActiveNav(sub.id)}
-                    className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden p-6 hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300 flex items-center gap-4"
-                  >
-                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center shrink-0">
-                      <ChevronRight className="w-6 h-6 text-[#cb530a]" />
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-foreground group-hover:text-[#cb530a] transition-colors">{sub.label}</h3>
-                      <span className="text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform inline-block mt-1">Öffnen →</span>
-                    </div>
-                  </button>
-                ))}
+            <div className="p-4 lg:p-6 flex flex-col">
+              <div className="text-center mt-2 max-w-[86rem] mx-auto mb-[100px]">
+                <motion.h2
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-[40px] tracking-wide"
+                >
+                  {sectionEntryConfig[activeNav].headline}
+                </motion.h2>
+                <TextGenerateEffect
+                  words={sectionEntryConfig[activeNav].introWords}
+                  className="text-lg sm:text-xl text-foreground leading-snug max-w-[67rem] mx-auto tracking-wide"
+                  duration={0.15}
+                  cinematic
+                  as="p"
+                />
+              </div>
+              <div className="max-w-[67rem] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {rubrikConfig[activeNav].subCards.map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setActiveNav(sub.id)}
+                      className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden p-6 hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300 flex items-center gap-4"
+                    >
+                      <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center shrink-0">
+                        <ChevronRight className="w-6 h-6 text-[#cb530a]" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-foreground group-hover:text-[#cb530a] transition-colors">{sub.label}</h3>
+                        <span className="text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform inline-block mt-1">Öffnen →</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -2100,9 +2155,31 @@ export default function AdminPage() {
             </div>
           </div>
         ) : activeNav === 'team' ? (
-          <div className="p-6 min-h-[calc(100vh-4rem)]">
-            <h2 className="text-xl font-semibold text-foreground mb-1">Team</h2>
-            <p className="text-sm text-muted-foreground mb-6">Benutzer Ihres Mandanten anlegen und verwalten. Neue Teammitglieder können sich mit Benutzername und Passwort anmelden.</p>
+          <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+            <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">
+              <section className="relative min-h-[120px] sm:min-h-[140px] hero-gradient-animate flex items-center justify-center">
+                <Image src="/logotransparent.png" alt="" width={180} height={72} className="object-contain h-14 sm:h-16 w-auto drop-shadow-md" />
+              </section>
+            </div>
+            <div className="p-4 lg:p-6 flex flex-col">
+              <div className="text-center mt-2 max-w-[86rem] mx-auto mb-[100px]">
+                <motion.h2
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-[40px] tracking-wide"
+                >
+                  {sectionEntryConfig.team.headline}
+                </motion.h2>
+                <TextGenerateEffect
+                  words={sectionEntryConfig.team.introWords}
+                  className="text-lg sm:text-xl text-foreground leading-snug max-w-[67rem] mx-auto tracking-wide"
+                  duration={0.15}
+                  cinematic
+                  as="p"
+                />
+              </div>
+              <div className="max-w-[67rem] mx-auto">
             {!canManageUsers ? (
               <Card className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 max-w-md">
                 <CardContent className="p-6">
@@ -2267,11 +2344,35 @@ export default function AdminPage() {
               </div>
             </div>
             )}
+              </div>
+            </div>
           </div>
         ) : activeNav === 'kalender' ? (
-          <div className="p-6 min-h-[calc(100vh-4rem)]">
-            <h2 className="text-xl font-semibold text-foreground mb-1">Kalender</h2>
-            <p className="text-sm text-muted-foreground mb-6">Termine anlegen, Kalender einsehen, kommende Termine – nach Person filtern.</p>
+          <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+            <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">
+              <section className="relative min-h-[120px] sm:min-h-[140px] hero-gradient-animate flex items-center justify-center">
+                <Image src="/logotransparent.png" alt="" width={180} height={72} className="object-contain h-14 sm:h-16 w-auto drop-shadow-md" />
+              </section>
+            </div>
+            <div className="p-4 lg:p-6 flex flex-col">
+              <div className="text-center mt-2 max-w-[86rem] mx-auto mb-[100px]">
+                <motion.h2
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-[40px] tracking-wide"
+                >
+                  {sectionEntryConfig.kalender.headline}
+                </motion.h2>
+                <TextGenerateEffect
+                  words={sectionEntryConfig.kalender.introWords}
+                  className="text-lg sm:text-xl text-foreground leading-snug max-w-[67rem] mx-auto tracking-wide"
+                  duration={0.15}
+                  cinematic
+                  as="p"
+                />
+              </div>
+              <div className="max-w-[67rem] mx-auto">
             {calendarMigrationRequired && (
               <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
                 <CardContent className="p-4">
@@ -2409,6 +2510,8 @@ export default function AdminPage() {
               </div>
             </div>
 
+              </div>
+            </div>
           </div>
         ) : activeNav === 'bewertungs-funnel' ? (
           <div className="p-6 min-h-[calc(100vh-4rem)]">
