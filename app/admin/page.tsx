@@ -10,7 +10,7 @@ import {
   MessageSquare, TrendingUp, BarChart3, User,
   Contact, Euro, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
   Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History,
-  Flame, AtSign, UserCircle, LogOut, BookOpen, Trash2, GraduationCap, Download, KeyRound
+  Flame, AtSign, UserCircle, LogOut, BookOpen, Trash2, GraduationCap, Download, KeyRound, Package, Plus
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 import { TextGenerateEffect } from '@/app/components/ui/TextGenerateEffect';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
+import { LandingPageBuilder } from '@/app/components/LandingPageBuilder';
 import { scrapeGelbeSeiten } from '@/app/actions/scrape-gelbeseiten';
 import { scrape11880 } from '@/app/actions/scrape-11880';
 import { buildGelbeSeitenSearchUrl, build11880SearchUrl } from '@/lib/scraper-sources';
@@ -231,17 +232,24 @@ export default function AdminPage() {
     name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: 0, for_package: '',
   });
   /** Digitale Produkte (Ablefy-Modul): Kurse, Downloads, Mitglieder */
-  type DpProduct = { id: string; tenant_id: string; type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string | null; price_cents: number; image_url: string | null; is_published: boolean; sort_order: number; created_at: string; updated_at: string };
+  type DpProduct = { id: string; tenant_id: string; type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string | null; price_cents: number; image_url: string | null; is_published: boolean; sort_order: number; created_at: string; updated_at: string; landing_page_sections?: import('@/types/landing-section').LandingSection[] | null };
   type DpProductFile = { id: string; product_id: string; title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string | null; sort_order: number };
   const [dpProducts, setDpProducts] = useState<DpProduct[]>([]);
   const [dpMigrationRequired, setDpMigrationRequired] = useState(false);
   const [dpProductDialogOpen, setDpProductDialogOpen] = useState(false);
   const [dpEditProduct, setDpEditProduct] = useState<(DpProduct & { files?: DpProductFile[] }) | null>(null);
+  const [dpLandingBuilderOpen, setDpLandingBuilderOpen] = useState(false);
   const [dpDeleteId, setDpDeleteId] = useState<string | null>(null);
   const [dpProductForm, setDpProductForm] = useState<{ type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string; price_cents: number; image_url: string; is_published: boolean; sort_order: number }>({
     type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: 0,
   });
   const [dpFileForm, setDpFileForm] = useState<{ title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string }>({ title: '', file_type: 'file', file_url: '' });
+  const [dpProductSubmitting, setDpProductSubmitting] = useState(false);
+  /** Digitale Produkte: Sub-Nav (nur in dieser Rubrik) – Produkte vs. Zugänge (freigeschaltete Kunden) */
+  type DpEnrollment = { id: string; product_id: string; customer_email: string; access_until: string | null; created_at: string; product_title: string };
+  const [dpSubNav, setDpSubNav] = useState<'produkte' | 'zugange'>('produkte');
+  const [dpEnrollments, setDpEnrollments] = useState<DpEnrollment[]>([]);
+  const [dpEnrollmentForm, setDpEnrollmentForm] = useState({ product_id: '', customer_email: '', access_until: '' });
   /** Kalender: Termine, angezeigter Monat, Filter Vertriebler */
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -440,6 +448,15 @@ export default function AdminPage() {
       })
       .catch(() => setDpProducts([]));
   }, [isAuthenticated, activeNav, canAccessDigitalProducts]);
+
+  /** Zugänge (Enrollments) laden – nur wenn Sub-Nav „Zugänge“ und Bereich Digitale Produkte */
+  useEffect(() => {
+    if (!isAuthenticated || activeNav !== 'digital-products' || dpSubNav !== 'zugange' || !canAccessDigitalProducts) return;
+    fetch('/api/admin/digital-products/enrollments', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((res) => setDpEnrollments(res.data ?? []))
+      .catch(() => setDpEnrollments([]));
+  }, [isAuthenticated, activeNav, dpSubNav, canAccessDigitalProducts]);
 
 
   /** Opportunity-Summen für sichtbare Kontakte (muss vor jedem early return stehen, gleiche Hook-Reihenfolge) */
@@ -1869,6 +1886,58 @@ export default function AdminPage() {
           </div>
         ) : activeNav === 'digital-products' ? (
           <div className="min-h-[calc(100vh-4rem)]">
+            {/* Floating Dock nur im Segment Digitale Produkte – Styling wie Main-Page-Dock (Pill, Orange, Gradient-Rand) */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[45] sm:bottom-8"
+            >
+              <div
+                className="rounded-full p-[2px] shadow-xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.4), #cb530a, #a84308, rgba(255,255,255,0.3))',
+                  backgroundSize: '200% 200%',
+                  animation: 'dock-border-pulse 4s ease-in-out infinite',
+                }}
+              >
+                <div className="flex h-11 items-center gap-0.5 rounded-full bg-[#d45d0f] px-1 py-1.5 sm:h-12 sm:gap-1 sm:px-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setDpSubNav('produkte')}
+                    className={`flex items-center gap-1.5 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${dpSubNav === 'produkte' ? 'bg-[#a84308]' : 'hover:bg-white/20'}`}
+                    title="Produkte"
+                  >
+                    <Package className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Produkte</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDpSubNav('zugange')}
+                    className={`flex items-center gap-1.5 rounded-full p-2.5 text-sm font-medium text-white transition-colors sm:px-3 sm:py-2 ${dpSubNav === 'zugange' ? 'bg-[#a84308]' : 'hover:bg-white/20'}`}
+                    title="Zugänge"
+                  >
+                    <KeyRound className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Zugänge</span>
+                  </button>
+                  <div className="w-px h-5 bg-white/30 mx-0.5" aria-hidden />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDpEditProduct(null);
+                      setDpProductForm({ type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 });
+                      setDpProductDialogOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-full p-2.5 text-sm font-medium text-white bg-[#a84308] hover:bg-[#8f3a07] transition-colors sm:px-3 sm:py-2"
+                    title="Produkt erstellen"
+                  >
+                    <Plus className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Produkt erstellen</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+
             {dpMigrationRequired && (
               <div className="p-6 pb-0">
                 <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30">
@@ -1879,109 +1948,206 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Hero – wie Main Page: Hintergrundbild + Overlay, abgerundet wie Rest der App */}
-            <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-2xl overflow-hidden shadow-xl">
-              <section className="relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] px-6 py-14 sm:py-16 md:py-20 text-center">
-                {/* Hintergrundbild */}
-                <div className="absolute inset-0 z-0">
-                  <Image
-                    src="/images/Handwerker%20(2).png"
-                    alt=""
-                    fill
-                    className="object-cover object-center"
-                    priority
-                    unoptimized
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/85 via-[#a84308]/80 to-[#8a3606]/90" />
-                </div>
-                {/* Dezentes Punktmuster */}
-                <div className="absolute inset-0 z-[1] opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')]" />
-                <div className="relative z-10">
-                  <p className="text-sm font-semibold uppercase tracking-widest text-white/95 mb-2">Premium-Feature</p>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-md">Digitale Produkte</h1>
-                  <p className="text-lg sm:text-xl text-white/95 max-w-2xl mx-auto drop-shadow-sm">Kurse, Downloads & Mitgliederbereiche – verkaufen, schützen und automatisch ausliefern. Alles aus einer Hand.</p>
-                </div>
+            {/* Hero wie Startseite: kleiner Banner mit animiertem Gradient, ohne Hintergrundtext – nur Logo */}
+            <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">
+              <section className="relative min-h-[120px] sm:min-h-[140px] hero-gradient-animate flex items-center justify-center">
+                <Image src="/logotransparent.png" alt="" width={180} height={72} className="object-contain h-14 sm:h-16 w-auto drop-shadow-md" />
               </section>
             </div>
 
-            <div className="p-6">
-            {/* Zentrierte Headline – Hype */}
-            <div className="text-center mb-12 mt-4">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">Was möchtest du erstellen?</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Wähle eine Kategorie, lege in wenigen Schritten die Grundlagen fest und passe danach alle Details an – professionell und ohne Aufwand.</p>
+            {/* Sub-Navigation nur in Digitale Produkte: Produkte | Zugänge (freigeschaltete Kunden) */}
+            <div className="p-4 lg:p-6 pt-4 pb-0">
+              <div className="flex gap-1 p-1 rounded-xl bg-neutral-100 border border-neutral-200 max-w-xs">
+                <button
+                  type="button"
+                  onClick={() => setDpSubNav('produkte')}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${dpSubNav === 'produkte' ? 'bg-white text-[#cb530a] shadow border border-neutral-200' : 'text-neutral-600 hover:text-foreground'}`}
+                >
+                  Produkte
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDpSubNav('zugange')}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${dpSubNav === 'zugange' ? 'bg-white text-[#cb530a] shadow border border-neutral-200' : 'text-neutral-600 hover:text-foreground'}`}
+                >
+                  Zugänge
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {dpSubNav === 'produkte' ? 'Kurse, Downloads und Mitgliederbereiche anlegen.' : 'Kunden gezielt für ein Produkt freischalten – nur diese haben Zugang zum Mitgliederbereich.'}
+              </p>
             </div>
 
-            {/* Cards wie Main Page – großes Bild, Klick = Produkt anlegen */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-              <button
-                type="button"
-                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
-                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
+            <div className="p-4 lg:p-6 pb-24">
+            {dpSubNav === 'zugange' ? (
+              /* Zugänge: Nur freigeschaltete Kunden (Mitgliederbereich exklusiv für Digitale Produkte) */
+              <div className="max-w-3xl">
+                <h2 className="text-xl font-semibold text-foreground mb-1">Zugänge verwalten</h2>
+                <p className="text-sm text-muted-foreground mb-6">Nur hier freigeschaltete E-Mail-Adressen haben Zugang zum jeweiligen Produkt (Kurs/Download/Mitgliederbereich). Nicht jeder CRM-Kunde erhält automatisch Zugang.</p>
+                <Card className="rounded-xl border border-border/80 mb-6">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Zugang gewähren</CardTitle>
+                    <CardDescription>E-Mail und Produkt wählen – optional Ablaufdatum</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-xs">Produkt</Label>
+                        <select
+                          value={dpEnrollmentForm.product_id}
+                          onChange={(e) => setDpEnrollmentForm(f => ({ ...f, product_id: e.target.value }))}
+                          className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="">— wählen —</option>
+                          {dpProducts.map((p) => (
+                            <option key={p.id} value={p.id}>{p.title}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">E-Mail des Kunden</Label>
+                        <Input
+                          type="email"
+                          value={dpEnrollmentForm.customer_email}
+                          onChange={(e) => setDpEnrollmentForm(f => ({ ...f, customer_email: e.target.value }))}
+                          placeholder="kunde@beispiel.de"
+                          className="mt-1 h-9"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs">Zugang bis (optional)</Label>
+                        <Input
+                          type="date"
+                          value={dpEnrollmentForm.access_until}
+                          onChange={(e) => setDpEnrollmentForm(f => ({ ...f, access_until: e.target.value }))}
+                          className="mt-1 h-9 max-w-xs"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      className="mt-3 bg-[#cb530a] hover:bg-[#a84308]"
+                      onClick={async () => {
+                        if (!dpEnrollmentForm.product_id || !dpEnrollmentForm.customer_email.trim()) return;
+                        const res = await fetch('/api/admin/digital-products/enrollments', {
+                          method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            product_id: dpEnrollmentForm.product_id,
+                            customer_email: dpEnrollmentForm.customer_email.trim(),
+                            access_until: dpEnrollmentForm.access_until || null,
+                          }),
+                        });
+                        const j = await res.json();
+                        if (j.data) { setDpEnrollments(prev => [{ ...j.data, product_title: dpProducts.find(p => p.id === j.data.product_id)?.title ?? '—' }, ...prev]); setDpEnrollmentForm({ product_id: dpEnrollmentForm.product_id, customer_email: '', access_until: '' }); }
+                        else if (j.error) alert(j.error);
+                      }}
+                    >
+                      Zugang gewähren
+                    </Button>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-xl border border-border/80">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Freigeschaltete Zugänge</CardTitle>
+                    <CardDescription>Alle E-Mail-Adressen mit Zugang zu einem digitalen Produkt</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {dpEnrollments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4">Noch keine Zugänge. Oben einen Kunden freischalten.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>E-Mail</TableHead>
+                              <TableHead>Produkt</TableHead>
+                              <TableHead>Zugang bis</TableHead>
+                              <TableHead className="w-20"></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {dpEnrollments.map((e) => (
+                              <TableRow key={e.id}>
+                                <TableCell className="font-medium">{e.customer_email}</TableCell>
+                                <TableCell>{e.product_title}</TableCell>
+                                <TableCell className="text-muted-foreground">{e.access_until ? new Date(e.access_until).toLocaleDateString('de-DE') : '—'}</TableCell>
+                                <TableCell>
+                                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={async () => {
+                                    if (!confirm('Zugang entziehen?')) return;
+                                    await fetch(`/api/admin/digital-products/enrollments/${e.id}`, { method: 'DELETE', credentials: 'include' });
+                                    setDpEnrollments(prev => prev.filter(x => x.id !== e.id));
+                                  }}><Trash2 className="w-3 h-3" /></Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <>
+            {/* Headline + Fließtext wie Startseite, 100px Abstand bis zu den Cards */}
+            <div className="text-center mt-2 max-w-[86rem] mx-auto mb-[100px]">
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-[40px] tracking-wide"
               >
-                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
-                  <Image src="/images/Handwerker.png" alt="Online-Kurs" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <span className="text-white text-base font-semibold drop-shadow-md">Online-Kurs</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center mb-3">
-                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
-                      <GraduationCap className="w-6 h-6 text-[#cb530a]" />
-                    </span>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Online-Kurs</h3>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed text-sm">Verwandle dein Fachwissen in einen Kurs mit Videos, Lektionen und Dateien – alles in einem geschützten Bereich.</p>
-                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'download', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
-                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
-              >
-                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
-                  <Image src="/images/Dienstleistungen/Raport.jpeg" alt="Download-Datei" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <span className="text-white text-base font-semibold drop-shadow-md">Download-Datei</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center mb-3">
-                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
-                      <Download className="w-6 h-6 text-[#cb530a]" />
-                    </span>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Download-Datei</h3>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed text-sm">E-Books, Vorlagen oder andere Dateien: Lade eine Datei hoch und verkaufe den Download-Link über eine Bezahlseite.</p>
-                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDpEditProduct(null); setDpProductForm({ type: 'membership', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 }); setDpProductDialogOpen(true); }}
-                className="group text-left bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden h-full hover:shadow-xl hover:border-[#cb530a]/40 transition-all duration-300"
-              >
-                <div className="relative h-52 sm:h-56 overflow-hidden bg-neutral-100">
-                  <Image src="/images/Team/office1.jpeg" alt="Mitgliederbereich" fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, 33vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <span className="text-white text-base font-semibold drop-shadow-md">Mitgliederbereich</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center mb-3">
-                    <span className="w-12 h-12 rounded-lg bg-[#cb530a]/15 flex items-center justify-center mr-3 shrink-0">
-                      <KeyRound className="w-6 h-6 text-[#cb530a]" />
-                    </span>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-[#cb530a] transition-colors">Mitgliederbereich</h3>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed text-sm">Erstelle einen geschützten Bereich und biete zahlenden Mitgliedern exklusive Inhalte mit optionalem Ablaufdatum.</p>
-                  <span className="inline-flex items-center mt-3 text-[#cb530a] font-semibold text-sm group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
-                </div>
-              </button>
+                Was möchtest du erstellen?
+              </motion.h2>
+              <TextGenerateEffect
+                words="Wähle eine Kategorie, lege in wenigen Schritten die Grundlagen fest und passe danach alle Details an – professionell und ohne Aufwand. Kurse, Downloads und Mitgliederbereiche aus einer Hand."
+                className="text-lg sm:text-xl text-foreground leading-snug max-w-[67rem] mx-auto tracking-wide"
+                duration={0.15}
+                cinematic
+                as="p"
+              />
+            </div>
+
+            {/* Karten quadratisch wie Startseite, gleicher Abstand */}
+            <div className="max-w-[67rem] mx-auto flex items-center justify-center pb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full max-w-[50rem] lg:max-w-[58rem]">
+              {[
+                { id: 'course', label: 'Online-Kurs', description: 'Videos, Lektionen und Dateien – alles in einem geschützten Bereich.', image: '/images/Handwerker.png', Icon: GraduationCap },
+                { id: 'download', label: 'Download-Datei', description: 'E-Books, Vorlagen oder Dateien – Download-Link über eine Bezahlseite.', image: '/images/Dienstleistungen/Raport.jpeg', Icon: Download },
+                { id: 'membership', label: 'Mitgliederbereich', description: 'Geschützter Bereich mit exklusiven Inhalten und optionalem Ablaufdatum.', image: '/images/Team/office1.jpeg', Icon: KeyRound },
+              ].map((card) => {
+                const Icon = card.Icon;
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => {
+                      setDpEditProduct(null);
+                      setDpProductForm({ type: card.id as 'course' | 'download' | 'membership', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: dpProducts.length * 10 });
+                      setDpProductDialogOpen(true);
+                    }}
+                    className="group text-left bg-white rounded-xl shadow border border-neutral-200 overflow-hidden hover:shadow-md hover:border-[#cb530a]/40 transition-all duration-300 aspect-square flex flex-col w-full"
+                  >
+                    <div className="relative flex-1 min-h-0 overflow-hidden bg-neutral-100">
+                      <Image src={card.image} alt={card.label} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 50vw, 25vw" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <span className="text-white text-sm font-semibold drop-shadow-md">{card.label}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 flex-shrink-0 border-t border-neutral-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-8 h-8 rounded-lg bg-[#cb530a]/15 flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-[#cb530a]" />
+                        </span>
+                        <h3 className="text-sm font-bold text-foreground group-hover:text-[#cb530a] transition-colors truncate tracking-wide">{card.label}</h3>
+                      </div>
+                      <p className="text-muted-foreground leading-snug text-xs line-clamp-2 tracking-wide">{card.description}</p>
+                      <span className="inline-flex items-center mt-2 text-[#cb530a] font-semibold text-xs group-hover:translate-x-1 transition-transform">Jetzt anlegen →</span>
+                    </div>
+                  </button>
+                );
+              })}
+              </div>
             </div>
 
             {/* Liste aller Produkte */}
@@ -2059,8 +2225,21 @@ export default function AdminPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs">Preis (Cent)</Label>
-                      <Input type="number" min={0} value={dpProductForm.price_cents} onChange={(e) => setDpProductForm(f => ({ ...f, price_cents: Number(e.target.value) || 0 }))} placeholder="0 = kostenlos" className="mt-1 h-9" />
+                      <Label className="text-xs">Preis (€ brutto) *</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={dpProductForm.price_cents === 0 ? '' : (dpProductForm.price_cents / 100).toFixed(2)}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(',', '.');
+                          const euro = raw === '' ? 0 : Math.max(0, parseFloat(raw) || 0);
+                          setDpProductForm(f => ({ ...f, price_cents: Math.round(euro * 100) }));
+                        }}
+                        placeholder="0 = kostenlos, z. B. 800"
+                        className="mt-1 h-9"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">z. B. 800 = 800,00 € brutto (MwSt. bei Abrechnung)</p>
                     </div>
                     <div>
                       <Label className="text-xs">Sortierung</Label>
@@ -2068,8 +2247,43 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Bild-URL</Label>
-                    <Input value={dpProductForm.image_url} onChange={(e) => setDpProductForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" className="mt-1 h-9" />
+                    <Label className="text-xs">Produktbild</Label>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      {dpProductForm.image_url ? (
+                        <>
+                          <img src={dpProductForm.image_url} alt="" className="h-16 w-24 rounded border object-cover" />
+                          <div className="flex flex-col gap-1">
+                            <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => setDpProductForm(f => ({ ...f, image_url: '' }))}>Bild entfernen</Button>
+                            <span className="text-[10px] text-muted-foreground">oder neues wählen</span>
+                          </div>
+                        </>
+                      ) : null}
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            try {
+                              const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                              const j = await res.json();
+                              if (j.url) setDpProductForm(f => ({ ...f, image_url: j.url }));
+                              else if (j.error) alert(j.error);
+                            } catch (err) {
+                              alert('Upload fehlgeschlagen.');
+                            }
+                            e.target.value = '';
+                          }}
+                        />
+                        <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 h-9 text-xs font-medium hover:bg-muted/50">
+                          {dpProductForm.image_url ? 'Anderes Bild hochladen' : 'Bild hochladen'}
+                        </span>
+                      </label>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <input type="checkbox" id="dp-published" checked={dpProductForm.is_published} onChange={(e) => setDpProductForm(f => ({ ...f, is_published: e.target.checked }))} className="rounded border-input" />
@@ -2117,29 +2331,74 @@ export default function AdminPage() {
                     </>
                   )}
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => { setDpProductDialogOpen(false); setDpEditProduct(null); }}>Abbrechen</Button>
-                  <Button className="bg-[#cb530a] hover:bg-[#a84308]" onClick={async () => {
-                    if (!dpProductForm.title.trim() || !dpProductForm.slug.trim()) return;
-                    if (dpEditProduct) {
-                      const res = await fetch('/api/admin/digital-products/' + dpEditProduct.id, {
-                        method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dpProductForm),
-                      });
-                      const j = await res.json();
-                      if (j.data) { setDpProducts(prev => prev.map(x => x.id === j.data.id ? j.data : x)); setDpProductDialogOpen(false); setDpEditProduct(null); }
-                    } else {
-                      const res = await fetch('/api/admin/digital-products', {
-                        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dpProductForm),
-                      });
-                      const j = await res.json();
-                      if (j.data) { setDpProducts(prev => [...prev, j.data]); setDpProductDialogOpen(false); setDpEditProduct(null); }
-                    }
-                  }}>{dpEditProduct ? 'Speichern' : 'Anlegen'}</Button>
+                <DialogFooter className="flex-wrap gap-2">
+                  {dpEditProduct && (
+                    <Button type="button" variant="outline" className="mr-auto" onClick={() => setDpLandingBuilderOpen(true)}>
+                      Landingpage gestalten
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => { setDpProductDialogOpen(false); setDpEditProduct(null); }} disabled={dpProductSubmitting}>Abbrechen</Button>
+                  <Button
+                    className="bg-[#cb530a] hover:bg-[#a84308]"
+                    disabled={dpProductSubmitting}
+                    onClick={async () => {
+                      if (!dpProductForm.title.trim() || !dpProductForm.slug.trim()) {
+                        alert('Bitte Titel und Slug ausfüllen.');
+                        return;
+                      }
+                      setDpProductSubmitting(true);
+                      try {
+                        if (dpEditProduct) {
+                          const res = await fetch('/api/admin/digital-products/' + dpEditProduct.id, {
+                            method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(dpProductForm),
+                          });
+                          const j = await res.json();
+                          if (j.data) {
+                            setDpProducts(prev => prev.map(x => x.id === j.data.id ? j.data : x));
+                            setDpProductDialogOpen(false);
+                            setDpEditProduct(null);
+                          } else {
+                            alert(j.error || 'Fehler beim Speichern.');
+                          }
+                        } else {
+                          const res = await fetch('/api/admin/digital-products', {
+                            method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(dpProductForm),
+                          });
+                          const j = await res.json();
+                          if (j.data) {
+                            setDpProducts(prev => [...prev, j.data]);
+                            setDpProductDialogOpen(false);
+                            setDpEditProduct(null);
+                          } else {
+                            alert(j.error || 'Fehler beim Anlegen.');
+                          }
+                        }
+                      } catch (err) {
+                        alert('Netzwerkfehler. Bitte erneut versuchen.');
+                      } finally {
+                        setDpProductSubmitting(false);
+                      }
+                    }}
+                  >
+                    {dpProductSubmitting ? (dpEditProduct ? 'Speichern…' : 'Wird angelegt…') : (dpEditProduct ? 'Speichern' : 'Anlegen')}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {dpEditProduct && (
+              <LandingPageBuilder
+                open={dpLandingBuilderOpen}
+                onOpenChange={setDpLandingBuilderOpen}
+                productId={dpEditProduct.id}
+                productSlug={dpEditProduct.slug}
+                productTitle={dpEditProduct.title}
+                initialSections={dpEditProduct.landing_page_sections ?? null}
+                onSaved={(sections) => setDpEditProduct(prev => prev ? { ...prev, landing_page_sections: sections } : null)}
+              />
+            )}
 
             <Dialog open={dpDeleteId != null} onOpenChange={(open) => { if (!open) setDpDeleteId(null); }}>
               <DialogContent>
@@ -2158,6 +2417,8 @@ export default function AdminPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </>
+            )}
             </div>
           </div>
         ) : activeNav === 'team' ? (

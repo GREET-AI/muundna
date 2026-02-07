@@ -77,13 +77,14 @@ export async function PATCH(
     const body = await request.json();
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     const optional = [
-      'type', 'title', 'slug', 'description', 'price_cents', 'image_url', 'is_published', 'sort_order',
+      'type', 'title', 'slug', 'description', 'price_cents', 'image_url', 'is_published', 'sort_order', 'landing_page_sections',
     ] as const;
     for (const key of optional) {
       if (body[key] !== undefined) {
         if (key === 'price_cents' || key === 'sort_order') updates[key] = Number(body[key]);
         else if (key === 'is_published') updates[key] = Boolean(body[key]);
         else if (key === 'slug') updates[key] = String(body[key]).trim().toLowerCase().replace(/\s+/g, '-');
+        else if (key === 'landing_page_sections') updates[key] = Array.isArray(body[key]) ? body[key] : null;
         else updates[key] = body[key];
       }
     }
