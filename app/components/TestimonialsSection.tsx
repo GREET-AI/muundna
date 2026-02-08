@@ -17,7 +17,6 @@ const SUBTITLE = 'Echte Erfahrungen von Handwerksbetrieben und Bauunternehmen';
 const TESTIMONIALS = [
   { quote: 'Seit 2 Jahren betreuen uns Muckenfuss & Nagel. Die Kundenkommunikation hat sich deutlich verbessert und wir können uns voll auf unser Handwerk konzentrieren.', name: 'Ugnius Reich', title: 'Ofenbau Reich, Menzingen' },
   { quote: 'Die komplette Übernahme der Büroarbeit ermöglicht es uns, uns auf große Projekte zu konzentrieren. Professionell, zuverlässig und immer erreichbar.', name: 'Jürgen Brand', title: 'Bauunternehmung Brand, Bretten' },
-  { quote: 'Durch die professionelle Betreuung können wir uns auf unsere Malerarbeiten konzentrieren. Terminorganisation und Büroservice laufen zuverlässig.', name: 'Pascal Bleschner', title: 'Malermeister, Stutensee' },
   { quote: 'Effiziente Terminorganisation und Dokumentation. Wir sind sehr zufrieden mit der Zusammenarbeit.', name: 'Christoph Boxtaler', title: 'Schweißerfachbetrieb' },
   { quote: 'Zuverlässiger Telefonservice und Büroarbeit im Hintergrund – so können wir uns aufs Zimmern konzentrieren.', name: 'Falk Welker', title: 'Zimmermann, Kürnbach' },
 ];
