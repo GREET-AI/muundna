@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getRoute } from '../utils/routes';
@@ -27,8 +28,12 @@ export interface JetonStyleHeroSectionProps {
   buttonSecondaryColor?: string;
   /** Farbe Überschrift */
   headlineColor?: string;
-  /** Schriftgröße: small | medium | large */
+  /** Schriftgröße: small | medium | large (Legacy) */
   headlineFontSize?: string;
+  /** Schriftgröße in px – responsive (Desktop, Tablet, Mobil) */
+  headlineFontSizeDesktop?: number;
+  headlineFontSizeTablet?: number;
+  headlineFontSizeMobile?: number;
   /** Schriftart: default | serif | sans */
   headlineFontFamily?: string;
   /** Parallax/ImmoSparplan-Style: grüner Gradient, Go Expert schwarz mit Shimmer */
@@ -66,6 +71,9 @@ export function JetonStyleHeroSection({
   buttonSecondaryColor,
   headlineColor,
   headlineFontSize,
+  headlineFontSizeDesktop,
+  headlineFontSizeTablet,
+  headlineFontSizeMobile,
   headlineFontFamily,
   variant = 'default',
 }: JetonStyleHeroSectionProps = {}) {
@@ -82,15 +90,30 @@ export function JetonStyleHeroSection({
   const titleColor = (headlineColor && headlineColor.trim()) ? headlineColor.trim() : (isParallax ? '#000000' : HEADLINE_COLOR_DEFAULT);
   const size = headlineFontSize === 'small' ? 'small' : headlineFontSize === 'large' ? 'large' : 'medium';
   const fontFamily = headlineFontFamily === 'serif' ? 'var(--font-serif, Georgia, serif)' : headlineFontFamily === 'sans' ? 'var(--font-sans, system-ui, sans-serif)' : 'inherit';
+  const useResponsivePx = typeof headlineFontSizeDesktop === 'number' || typeof headlineFontSizeTablet === 'number' || typeof headlineFontSizeMobile === 'number';
+  const desktopPx = typeof headlineFontSizeDesktop === 'number' ? headlineFontSizeDesktop : 48;
+  const tabletPx = typeof headlineFontSizeTablet === 'number' ? headlineFontSizeTablet : 32;
+  const mobilePx = typeof headlineFontSizeMobile === 'number' ? headlineFontSizeMobile : 20;
 
   const overlayStyle = isParallax
     ? { background: `linear-gradient(to bottom right, #C4D32A, #9BCB6B, #60A917)` }
     : { background: `linear-gradient(to bottom right, ${overlay}80, ${overlay}66, rgba(0,0,0,0.6))` };
   const titleSizeClass = size === 'small' ? 'text-[2rem] md:text-[2.5rem] lg:text-[3rem] xl:text-[3.5rem] 2xl:text-[4rem]' : size === 'large' ? 'text-[3rem] md:text-[4rem] lg:text-[5rem] xl:text-[5.5rem] 2xl:text-[6.5rem]' : 'text-[2.5rem] md:text-[3rem] lg:text-[4rem] xl:text-[4.5rem] 2xl:text-[5.5rem]';
   const titleSizeClassLine2 = size === 'small' ? 'text-[1.1em] md:text-[2.5rem] lg:text-[3rem]' : size === 'large' ? 'text-[1.3em] md:text-[4rem] lg:text-[5rem]' : 'text-[1.2em] md:text-[3.25rem] lg:text-[4.25rem] xl:text-[4.75rem] 2xl:text-[5.75rem]';
+  const headlineId = useId().replace(/:/g, '');
 
   return (
     <section className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden md:min-h-screen">
+      {useResponsivePx && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          .hero-headline-${headlineId} { font-size: ${mobilePx}px !important; }
+          @media (min-width: 768px) { .hero-headline-${headlineId} { font-size: ${tabletPx}px !important; } }
+          @media (min-width: 1024px) { .hero-headline-${headlineId} { font-size: ${desktopPx}px !important; } }
+          .hero-headline-line2-${headlineId} { font-size: ${Math.round(mobilePx * 0.85)}px !important; }
+          @media (min-width: 768px) { .hero-headline-line2-${headlineId} { font-size: ${Math.round(tabletPx * 0.85)}px !important; } }
+          @media (min-width: 1024px) { .hero-headline-line2-${headlineId} { font-size: ${Math.round(desktopPx * 0.85)}px !important; } }
+        ` }} />
+      )}
       <div className="absolute inset-0 z-0">
         {isParallax ? (
           <>
@@ -155,24 +178,24 @@ export function JetonStyleHeroSection({
       <div className="relative z-10 flex flex-1 flex-col items-start justify-end px-4 pb-12 pt-2 sm:px-5 sm:pb-16 sm:pt-4 md:px-8 md:pb-20 md:-translate-y-8 lg:px-12 lg:pb-28 lg:-translate-y-12 xl:px-16 xl:pb-32 xl:-translate-y-[75px]">
         <div className="w-full max-w-full min-w-0">
           <h1
-            className={`text-left drop-shadow-lg leading-[1.15] sm:leading-[1.2] md:leading-tight ${isParallax && line3 ? 'font-medium' : 'font-bold'} ${titleSizeClass}`}
+            className={`text-left drop-shadow-lg leading-[1.15] sm:leading-[1.2] md:leading-tight ${isParallax && line3 ? 'font-medium' : 'font-bold'} ${useResponsivePx ? `hero-headline-${headlineId}` : titleSizeClass}`}
             style={{ color: titleColor, fontFamily }}
           >
             {isParallax && line3 ? (
               <>
-                <span className="block font-medium sm:hidden" style={{ fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' }}>{line1}</span>
-                <span className="block font-medium -mt-0.5 sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line2}</span>
-                <span className="block font-bold sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line3}</span>
-                <span className={`hidden sm:block font-medium ${titleSizeClass}`}>{line1}</span>
-                <span className={`hidden sm:block font-medium -mt-0.5 ${titleSizeClassLine2}`}>{line2}</span>
-                <span className={`hidden sm:block font-bold -mt-0.5 ${titleSizeClassLine2}`}>{line3}</span>
+                <span className={`block font-medium sm:hidden ${useResponsivePx ? `hero-headline-${headlineId}` : ''}`} style={!useResponsivePx ? { fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' } : undefined}>{line1}</span>
+                <span className={`block font-medium -mt-0.5 sm:hidden ${useResponsivePx ? `hero-headline-line2-${headlineId}` : ''}`} style={!useResponsivePx ? { fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' } : undefined}>{line2}</span>
+                <span className={`block font-bold sm:hidden ${useResponsivePx ? `hero-headline-line2-${headlineId}` : ''}`} style={!useResponsivePx ? { fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' } : undefined}>{line3}</span>
+                <span className={`hidden sm:block font-medium ${useResponsivePx ? `hero-headline-${headlineId}` : titleSizeClass}`}>{line1}</span>
+                <span className={`hidden sm:block font-medium -mt-0.5 ${useResponsivePx ? `hero-headline-line2-${headlineId}` : titleSizeClassLine2}`}>{line2}</span>
+                <span className={`hidden sm:block font-bold -mt-0.5 ${useResponsivePx ? `hero-headline-line2-${headlineId}` : titleSizeClassLine2}`}>{line3}</span>
               </>
             ) : (
               <>
-                <span className="block sm:hidden" style={{ fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' }}>{line1}</span>
-                <span className="block -mt-0.5 sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line2}</span>
-                <span className={`hidden sm:block ${titleSizeClass}`}>{line1}</span>
-                <span className={`hidden sm:block -mt-0.5 ${titleSizeClassLine2}`}>{line2}</span>
+                <span className={`block sm:hidden ${useResponsivePx ? `hero-headline-${headlineId}` : ''}`} style={!useResponsivePx ? { fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' } : undefined}>{line1}</span>
+                <span className={`block -mt-0.5 sm:hidden ${useResponsivePx ? `hero-headline-line2-${headlineId}` : ''}`} style={!useResponsivePx ? { fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' } : undefined}>{line2}</span>
+                <span className={`hidden sm:block ${useResponsivePx ? `hero-headline-${headlineId}` : titleSizeClass}`}>{line1}</span>
+                <span className={`hidden sm:block -mt-0.5 ${useResponsivePx ? `hero-headline-line2-${headlineId}` : titleSizeClassLine2}`}>{line2}</span>
               </>
             )}
           </h1>

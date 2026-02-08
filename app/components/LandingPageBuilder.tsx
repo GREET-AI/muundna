@@ -21,6 +21,17 @@ import {
   ShieldCheck,
   ListOrdered,
   PanelBottom,
+  Heading1,
+  Heading2,
+  Palette,
+  ImageIcon,
+  Image as ImageLucide,
+  AlignLeft,
+  MousePointerClick,
+  Copyright,
+  Highlighter,
+  FileEdit,
+  Plus,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -32,12 +43,38 @@ import {
   DialogDescription,
 } from '@/app/components/ui/dialog';
 import type { LandingSection, LandingSectionType, LandingTemplate, TestimonialItem } from '@/types/landing-section';
-import { LANDING_ELEMENT_DEFINITIONS, SECTION_PREVIEW_IMAGES, SECTION_PREVIEW_IMAGES_PARALLAX, SECTION_EDITABLE_PROPS, SECTION_TYPES_BY_TEMPLATE, type EditablePropDef } from '@/types/landing-section';
-import Image from 'next/image';
+import { LANDING_ELEMENT_DEFINITIONS, SECTION_PREVIEW_IMAGES, SECTION_PREVIEW_IMAGES_PARALLAX, SECTION_TYPES_BY_TEMPLATE, getSectionLabel, getEditablePropsForSection, getDefaultPropsForSection, getElementKindsForProps, getPropsByKind, ELEMENT_KIND_LABELS, type EditablePropDef, type ElementKindId } from '@/types/landing-section';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { BarChart3 } from 'lucide-react';
+
+/** Icons pro Element-Kategorie (Toolbar beim Bearbeiten einer Sektion). */
+const ELEMENT_KIND_ICONS: Record<ElementKindId, typeof LayoutTemplate> = {
+  headline: Heading1,
+  headline_style: Palette,
+  logo: ImageIcon,
+  background: ImageLucide,
+  section_title: Heading2,
+  section_subtitle: AlignLeft,
+  marquee: Layers,
+  cta: MousePointerClick,
+  testimonials: MessageSquare,
+  testimonials_slider_images: ImageLucide,
+  copyright: Copyright,
+  highlight: Highlighter,
+  other: FileEdit,
+};
+
+/** Claim Parallax: Nur 2 Headlines + CTA, dann pro Card eigene Felder */
+const CLAIM_PARALLAX_HEADLINE_KEYS = ['claimHeadlineLine1', 'claimHeadlineLine2', 'ctaText'] as const;
+const CLAIM_PARALLAX_CARD_KEYS: readonly (readonly string[])[] = [
+  ['card1ImageUrl', 'cardLabel1', 'card1TrustText', 'card1ButtonText', 'card1TextColor', 'card1TextSize', 'card1Icon', 'card1IconColor'],
+  ['cardLabel2', 'card2Line1', 'card2Line2', 'card2StatusText', 'card2TextColor', 'card2TextSize', 'card2Icon', 'card2IconColor'],
+  ['card3ImageUrl', 'card3OverlayText', 'card3TextColor', 'card3TextSize'],
+  ['cardLabel4', 'card4NumberText', 'card4ContextText', 'card4ButtonText', 'card4TextColor', 'card4TextSize', 'card4Icon', 'card4IconColor'],
+];
+const CLAIM_PARALLAX_CARD_LABELS = ['Card 1 (Beratung)', 'Card 2 (Planung)', 'Card 3 (Bau)', 'Card 4 (Wert)'] as const;
 
 const ELEMENT_ICONS: Record<LandingSectionType, typeof LayoutTemplate> = {
   website_jeton_hero: Sparkles,
@@ -64,16 +101,17 @@ function getSectionPreviewSrc(type: LandingSectionType, template: LandingTemplat
   return (template === 'parallax' && SECTION_PREVIEW_IMAGES_PARALLAX[type]) ? SECTION_PREVIEW_IMAGES_PARALLAX[type] : SECTION_PREVIEW_IMAGES[type];
 }
 
-/** Vorschaubild pro Sektion: Screenshot aus public/landing-previews oder Platzhalter (Footer) */
+/** Vorschaubild pro Sektion: natives <img> damit jede URL 1:1 geladen wird (kein Next/Image-Cache). */
 function ElementPreviewThumb({ type, template }: { type: LandingSectionType; template: LandingTemplate }) {
   const base = 'rounded border border-neutral-200 overflow-hidden bg-white shrink-0';
   const src = getSectionPreviewSrc(type, template);
-  const label = LANDING_ELEMENT_DEFINITIONS[type].label;
+  const label = getSectionLabel(type, template);
   if (src) {
     return (
       <div className={`${base} w-full aspect-[2/1] flex flex-col`}>
-        <div className="flex-1 min-h-0 relative">
-          <Image src={src} alt="" fill className="object-cover object-top" sizes="140px" />
+        <div className="flex-1 min-h-0 relative overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img key={src} src={src} alt="" className="w-full h-full object-cover object-top block" />
         </div>
         <div className="px-1.5 py-1 border-t border-neutral-100 bg-white/95">
           <span className="text-[8px] text-[#cb530a] font-medium truncate block">{label}</span>
@@ -93,7 +131,7 @@ function SectionRowPreview({ type, template, fullHeight = false }: { type: Landi
   const src = getSectionPreviewSrc(type, template);
   const isMarquee = type === 'website_marquee';
   if (!src) {
-    const label = LANDING_ELEMENT_DEFINITIONS[type]?.label ?? type;
+    const label = getSectionLabel(type, template);
     return (
       <div className={`w-full bg-neutral-100 flex items-center justify-center text-neutral-500 text-sm ${fullHeight && !isMarquee ? 'min-h-[240px]' : fullHeight && isMarquee ? 'h-8 min-h-[32px]' : 'max-h-36'}`}>
         {label}
@@ -168,6 +206,9 @@ export function LandingPageBuilder({
   const [saving, setSaving] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [selectedSectionIndex, setSelectedSectionIndex] = useState<number | null>(null);
+  const [selectedElementKind, setSelectedElementKind] = useState<ElementKindId | null>(null);
+  const [selectedClaimParallaxCard, setSelectedClaimParallaxCard] = useState<number | null>(null);
+  const [selectedTestimonialIndex, setSelectedTestimonialIndex] = useState<number | null>(null);
   const optionsPanelRef = useRef<HTMLDivElement>(null);
   const pipelineListRef = useRef<HTMLDivElement>(null);
 
@@ -179,9 +220,17 @@ export function LandingPageBuilder({
       if (optionsPanelRef.current?.contains(target)) return;
       if ((e.target as HTMLElement).closest?.('[data-section-block]')) return;
       setSelectedSectionIndex(null);
+      setSelectedElementKind(null);
     };
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [selectedSectionIndex]);
+
+  /** Beim Wechsel der Sektion: Element-Kategorie, Claim-Card und Testimonial zurücksetzen */
+  useEffect(() => {
+    setSelectedElementKind(null);
+    setSelectedClaimParallaxCard(null);
+    setSelectedTestimonialIndex(null);
   }, [selectedSectionIndex]);
   type PixelRow = { id: string; provider: string; pixel_id: string | null; name: string | null };
   const [pixels, setPixels] = useState<PixelRow[]>([]);
@@ -387,7 +436,7 @@ export function LandingPageBuilder({
                           <span className="w-6 h-6 rounded-md bg-[#cb530a]/15 flex items-center justify-center shrink-0">
                             <Icon className="w-3 h-3 text-[#cb530a]" />
                           </span>
-                          <span className="font-medium text-sm">{def.label}</span>
+                          <span className="font-medium text-sm">{getSectionLabel(type, template)}</span>
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-snug">{def.description}</p>
                       </div>
@@ -436,8 +485,7 @@ export function LandingPageBuilder({
                 </div>
               ) : (
                 sections.map((sec, index) => {
-                  const def = LANDING_ELEMENT_DEFINITIONS[sec.type];
-                  const editableProps = SECTION_EDITABLE_PROPS[sec.type];
+                  const editableProps = getEditablePropsForSection(sec.type as LandingSectionType, template);
                   const isSelected = selectedSectionIndex === index;
                   return (
                     <div
@@ -494,10 +542,10 @@ export function LandingPageBuilder({
                       {isSelected && editableProps && editableProps.length > 0 && (
                         <div
                           ref={optionsPanelRef}
-                          className="border-t border-neutral-200 bg-white p-3 space-y-2"
+                          className="border-t border-neutral-200 bg-white p-3 space-y-3"
                           onMouseDown={(e) => e.stopPropagation()}
                         >
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between">
                             <p className="text-xs font-semibold text-[#cb530a]">Inhalt bearbeiten</p>
                             <Button
                               type="button"
@@ -510,7 +558,156 @@ export function LandingPageBuilder({
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
-                          {editableProps.map((field: EditablePropDef) => {
+                          {/* Claim Parallax: Headline (2 Zeilen) + 4 Card-Buttons, dann Card-Felder */}
+                          {sec.type === 'website_claim_parallax' ? (
+                            <>
+                              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Headline (2 Zeilen) &amp; CTA</p>
+                              <div className="space-y-2">
+                                {editableProps.filter((f) => (CLAIM_PARALLAX_HEADLINE_KEYS as readonly string[]).includes(f.key)).map((field: EditablePropDef) => {
+                                  const rawValue = sec.props[field.key];
+                                  const value = (rawValue as string) ?? '';
+                                  return (
+                                    <div key={field.key}>
+                                      <Label className="text-[10px]">{field.label}</Label>
+                                      {field.type === 'textarea' ? (
+                                        <Textarea value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} rows={2} className="mt-0.5 text-xs h-16" />
+                                      ) : (
+                                        <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 text-xs" />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider pt-2 border-t border-neutral-100">Card wählen</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {[0, 1, 2, 3].map((cardIdx) => (
+                                  <button
+                                    key={cardIdx}
+                                    type="button"
+                                    onClick={() => setSelectedClaimParallaxCard(selectedClaimParallaxCard === cardIdx ? null : cardIdx)}
+                                    className={`shrink-0 px-2.5 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${selectedClaimParallaxCard === cardIdx ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 hover:border-[#cb530a]/50'}`}
+                                  >
+                                    {CLAIM_PARALLAX_CARD_LABELS[cardIdx]}
+                                  </button>
+                                ))}
+                              </div>
+                              {selectedClaimParallaxCard !== null && (() => {
+                                const cardKeys = CLAIM_PARALLAX_CARD_KEYS[selectedClaimParallaxCard] as readonly string[];
+                                const cardFields = editableProps.filter((f) => cardKeys.includes(f.key));
+                                return (
+                                  <div className="space-y-2 pt-2 border-t border-neutral-100">
+                                    {cardFields.map((field: EditablePropDef) => {
+                                      const rawValue = sec.props[field.key];
+                                      const value = (rawValue as string) ?? '';
+                                      if (field.type === 'textarea') {
+                                        return (
+                                          <div key={field.key}>
+                                            <Label className="text-[10px]">{field.label}</Label>
+                                            <Textarea value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} rows={2} className="mt-0.5 text-xs h-16" />
+                                          </div>
+                                        );
+                                      }
+                                      if (field.type === 'color') {
+                                        return (
+                                          <div key={field.key} className="flex items-center gap-2">
+                                            <Label className="text-[10px] w-28 shrink-0">{field.label}</Label>
+                                            <input type="color" value={value || '#000000'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
+                                            <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="flex-1 h-8 text-xs font-mono" placeholder="#000000" />
+                                          </div>
+                                        );
+                                      }
+                                      if (field.type === 'image') {
+                                        return (
+                                          <div key={field.key}>
+                                            <Label className="text-[10px]">{field.label}</Label>
+                                            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                                              {value ? (
+                                                <div className="flex items-center gap-2">
+                                                  <img src={value} alt="" className="h-14 w-20 rounded border object-cover" />
+                                                  <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => updateSectionProp(index, field.key, '')}>Entfernen</Button>
+                                                </div>
+                                              ) : null}
+                                              <label className="cursor-pointer">
+                                                <input
+                                                  type="file"
+                                                  accept="image/*"
+                                                  className="sr-only"
+                                                  onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const fd = new FormData();
+                                                    fd.append('file', file);
+                                                    try {
+                                                      const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                                                      const j = await res.json();
+                                                      if (j.url) updateSectionProp(index, field.key, j.url);
+                                                      else if (j.error) alert(j.error);
+                                                    } catch { alert('Upload fehlgeschlagen.'); }
+                                                    e.target.value = '';
+                                                  }}
+                                                />
+                                                <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2 py-1.5 h-8 text-[10px] font-medium hover:bg-muted/50">
+                                                  {value ? 'Anderes Bild' : 'Bild hochladen'}
+                                                </span>
+                                              </label>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                      return (
+                                        <div key={field.key}>
+                                          <Label className="text-[10px]">{field.label}</Label>
+                                          <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 text-xs" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
+                            </>
+                          ) : (
+                            <>
+                          {/* Icon-Toolbar: nur Kategorien, die in dieser Sektion vorkommen */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {getElementKindsForProps(editableProps).map((kind) => {
+                              const Icon = ELEMENT_KIND_ICONS[kind];
+                              const isActive = selectedElementKind === kind;
+                              return (
+                                <button
+                                  key={kind}
+                                  type="button"
+                                  onClick={() => { setSelectedElementKind(isActive ? null : kind); if (kind !== 'testimonials') setSelectedTestimonialIndex(null); }}
+                                  title={ELEMENT_KIND_LABELS[kind]}
+                                  className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:border-[#cb530a]/40'}`}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {/* Sub-Panel: Felder nur für die gewählte Kategorie */}
+                          {selectedElementKind ? (
+                            <div className="space-y-2 pt-1 border-t border-neutral-100">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{ELEMENT_KIND_LABELS[selectedElementKind]}</p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[10px]"
+                                  onClick={() => {
+                                    const def = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                                    setSections((prev) => {
+                                      const next = [...prev];
+                                      next[index] = { ...next[index], props: { ...def } };
+                                      return next;
+                                    });
+                                  }}
+                                >
+                                  Auf Standard zurücksetzen
+                                </Button>
+                              </div>
+                              {getPropsByKind(editableProps, selectedElementKind).map((field: EditablePropDef) => {
                             const rawValue = sec.props[field.key];
                             const value = (field.key === 'customQuotes' && Array.isArray(rawValue))
                               ? (rawValue as string[]).join('\n')
@@ -543,6 +740,42 @@ export function LandingPageBuilder({
                                   <Label className="text-[10px] w-28 shrink-0">{field.label}</Label>
                                   <input type="color" value={value || '#cb530a'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
                                   <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="flex-1 h-8 text-xs font-mono" placeholder="#cb530a" />
+                                </div>
+                              );
+                            }
+                            if (field.type === 'image_array') {
+                              const urls = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as string[];
+                              const setUrls = (next: string[]) => updateSectionProp(index, field.key, next);
+                              return (
+                                <div key={field.key}>
+                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <div className="mt-0.5 flex flex-wrap gap-2">
+                                    {urls.map((url, i) => (
+                                      <div key={i} className="flex flex-col items-center gap-1">
+                                        <img src={url} alt="" className="h-14 w-20 rounded border object-cover" />
+                                        <div className="flex gap-1">
+                                          <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setUrls(urls.filter((_, j) => j !== i))}>Entfernen</Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <label className="cursor-pointer flex flex-col items-center justify-center h-14 w-20 rounded border border-dashed border-neutral-300 bg-neutral-50 hover:bg-neutral-100">
+                                      <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const fd = new FormData();
+                                        fd.append('file', file);
+                                        try {
+                                          const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                                          const j = await res.json();
+                                          if (j.url) setUrls([...urls, j.url]);
+                                          else if (j.error) alert(j.error);
+                                        } catch { alert('Upload fehlgeschlagen.'); }
+                                        e.target.value = '';
+                                      }} />
+                                      <Plus className="w-5 h-5 text-neutral-400" />
+                                      <span className="text-[10px] text-neutral-500">Bild</span>
+                                    </label>
+                                  </div>
                                 </div>
                               );
                             }
@@ -584,6 +817,15 @@ export function LandingPageBuilder({
                                 </div>
                               );
                             }
+                            if (field.type === 'fontsize_responsive') {
+                              const num = typeof rawValue === 'number' || (typeof rawValue === 'string' && /^\d+$/.test(rawValue as string)) ? Number(rawValue) : (field.key === 'headlineFontSizeDesktop' ? 48 : field.key === 'headlineFontSizeTablet' ? 32 : 20);
+                              return (
+                                <div key={field.key}>
+                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Input type="number" min={8} max={120} value={num} onChange={(e) => updateSectionProp(index, field.key, e.target.value === '' ? undefined : Number(e.target.value))} className="mt-0.5 h-8 text-xs" placeholder="px" />
+                                </div>
+                              );
+                            }
                             if (field.type === 'fontsize') {
                               return (
                                 <div key={field.key}>
@@ -611,49 +853,68 @@ export function LandingPageBuilder({
                             if (field.type === 'testimonials') {
                               const items = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as TestimonialItem[];
                               const setItems = (next: TestimonialItem[]) => updateSectionProp(index, field.key, next);
+                              const sel = selectedTestimonialIndex;
+                              const editingIndex = sel !== null && sel >= 0 && sel < items.length ? sel : null;
                               return (
                                 <div key={field.key} className="space-y-2">
                                   <Label className="text-[10px]">{field.label}</Label>
-                                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                  <div className="flex flex-wrap items-center gap-1.5">
                                     {items.map((item, i) => (
-                                      <div key={i} className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
-                                        <div className="flex justify-between items-center">
-                                          <span className="text-[10px] font-medium">Stimme {i + 1}</span>
-                                          <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0 text-red-600" onClick={() => setItems(items.filter((_, j) => j !== i))}>×</Button>
-                                        </div>
-                                        <Textarea value={item.quote || ''} onChange={(e) => { const n = [...items]; n[i] = { ...n[i] || {}, quote: e.target.value }; setItems(n); }} placeholder="Testimonial-Text" rows={2} className="text-xs h-12" />
-                                        <div className="flex gap-1">
-                                          <Input value={item.name || ''} onChange={(e) => { const n = [...items]; n[i] = { ...n[i] || {}, name: e.target.value }; setItems(n); }} placeholder="Name" className="h-7 text-xs flex-1" />
-                                          <Input value={item.title || ''} onChange={(e) => { const n = [...items]; n[i] = { ...n[i] || {}, title: e.target.value }; setItems(n); }} placeholder="Branche" className="h-7 text-xs flex-1" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          {item.imageUrl ? (
-                                            <div className="flex items-center gap-1">
-                                              <img src={item.imageUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
-                                              <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => { const n = [...items]; n[i] = { ...n[i] || {}, imageUrl: '' }; setItems(n); }}>Entfernen</Button>
-                                            </div>
-                                          ) : (
-                                            <label className="cursor-pointer">
-                                              <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-                                                const fd = new FormData();
-                                                fd.append('file', file);
-                                                try {
-                                                  const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
-                                                  const j = await res.json();
-                                                  if (j.url) { const n = [...items]; n[i] = { ...n[i] || {}, imageUrl: j.url }; setItems(n); }
-                                                } catch { alert('Upload fehlgeschlagen.'); }
-                                                e.target.value = '';
-                                              }} />
-                                              <span className="inline-flex h-7 items-center rounded border px-2 text-[10px]">Bild wählen</span>
-                                            </label>
-                                          )}
-                                        </div>
-                                      </div>
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSelectedTestimonialIndex(editingIndex === i ? null : i)}
+                                        className={`shrink-0 px-2.5 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${editingIndex === i ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 hover:border-[#cb530a]/50'}`}
+                                      >
+                                        Stimme {i + 1}
+                                      </button>
                                     ))}
-                                    <Button type="button" variant="outline" size="sm" className="h-7 w-full text-[10px]" onClick={() => setItems([...items, { quote: '', name: '', title: '' }])}>+ Stimme hinzufügen</Button>
+                                    <button
+                                      type="button"
+                                      onClick={() => { setItems([...items, { quote: '', name: '', title: '' }]); setSelectedTestimonialIndex(items.length); }}
+                                      className="shrink-0 w-8 h-8 rounded-md border border-dashed border-neutral-300 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 hover:border-[#cb530a]/40"
+                                      title="Neue Stimme"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
                                   </div>
+                                  {editingIndex !== null && (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-medium">Stimme {editingIndex + 1} bearbeiten</span>
+                                        <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0 text-red-600" onClick={() => { setItems(items.filter((_, j) => j !== editingIndex)); setSelectedTestimonialIndex(null); }}>× Löschen</Button>
+                                      </div>
+                                      <Textarea value={items[editingIndex]?.quote || ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, quote: e.target.value }; setItems(n); }} placeholder="Testimonial-Text" rows={2} className="text-xs h-12" />
+                                      <div className="flex gap-1">
+                                        <Input value={items[editingIndex]?.name || ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, name: e.target.value }; setItems(n); }} placeholder="Name" className="h-7 text-xs flex-1" />
+                                        <Input value={items[editingIndex]?.title || ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, title: e.target.value }; setItems(n); }} placeholder="Branche" className="h-7 text-xs flex-1" />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {items[editingIndex]?.imageUrl ? (
+                                          <div className="flex items-center gap-1">
+                                            <img src={items[editingIndex].imageUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                                            <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, imageUrl: '' }; setItems(n); }}>Entfernen</Button>
+                                          </div>
+                                        ) : (
+                                          <label className="cursor-pointer">
+                                            <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (!file) return;
+                                              const fd = new FormData();
+                                              fd.append('file', file);
+                                              try {
+                                                const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                                                const j = await res.json();
+                                                if (j.url) { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, imageUrl: j.url }; setItems(n); }
+                                              } catch { alert('Upload fehlgeschlagen.'); }
+                                              e.target.value = '';
+                                            }} />
+                                            <span className="inline-flex h-7 items-center rounded border px-2 text-[10px]">Bild wählen</span>
+                                          </label>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             }
@@ -665,10 +926,9 @@ export function LandingPageBuilder({
                                     <option value="">— Keine (externer Link) —</option>
                                     {sections.map((s) => {
                                       if (s.id === sec.id) return null;
-                                      const def = LANDING_ELEMENT_DEFINITIONS[s.type as LandingSectionType];
                                       return (
                                         <option key={s.id} value={`#section-${s.id}`}>
-                                          {def?.label ?? s.type}
+                                          {getSectionLabel(s.type as LandingSectionType, template)}
                                         </option>
                                       );
                                     })}
@@ -683,6 +943,12 @@ export function LandingPageBuilder({
                               </div>
                             );
                           })}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">Element oben anklicken (z. B. Überschrift, Logo) zum Bearbeiten.</p>
+                          )}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

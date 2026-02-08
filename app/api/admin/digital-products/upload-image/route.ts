@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
-import { getAuthUser, canAccessFeature } from '@/lib/auth';
+import { getAuthUser, canAccessDigitalProducts } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const FEATURE_KEY = 'digital_products';
-const PERMISSION_KEY = 'digital_products.*';
 const BUCKET = 'dp-product-images';
 
 async function requireDigitalProductsAccess(request: NextRequest) {
@@ -12,7 +10,7 @@ async function requireDigitalProductsAccess(request: NextRequest) {
   if (!session) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const user = await getAuthUser(session.uid, session.tid);
   if (!user) return { error: NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 401 }) };
-  if (!canAccessFeature(user, FEATURE_KEY, PERMISSION_KEY)) {
+  if (!canAccessDigitalProducts(user)) {
     return { error: NextResponse.json({ error: 'Kein Zugriff auf Digitale Produkte' }, { status: 403 }) };
   }
   return { session, user };

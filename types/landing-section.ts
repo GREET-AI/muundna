@@ -48,8 +48,8 @@ export const LANDING_ELEMENT_DEFINITIONS: Record<
   website_jeton_hero: {
     label: 'Hero',
     description: 'Vollbreiter Hero: Bild, Headline, Login-Button. Parallax: 3 Zeilen (Zeile 1+2 font-medium, Zeile 3 font-bold).',
-    defaultProps: { headline: 'Deine Immobilien.', headlineLine2: 'Unsere Expertise.', logoUrl: '', secondaryCtaHref: '' },
-    parallaxDefaultProps: { headline: 'Mit vermieteten', headlineLine2: 'Immobilien in die', headlineLine3: 'finanzielle Freiheit.', logoUrl: '', secondaryCtaHref: '' },
+    defaultProps: { headline: 'Deine Immobilien.', headlineLine2: 'Unsere Expertise.', logoUrl: '', secondaryCtaHref: '', headlineFontSizeDesktop: 48, headlineFontSizeTablet: 32, headlineFontSizeMobile: 20 },
+    parallaxDefaultProps: { headline: 'Mit vermieteten', headlineLine2: 'Immobilien in die', headlineLine3: 'finanzielle Freiheit.', logoUrl: '', headlineFontSizeDesktop: 48, headlineFontSizeTablet: 32, headlineFontSizeMobile: 20 },
   },
   website_marquee: {
     label: 'Laufendes Banner',
@@ -65,7 +65,7 @@ export const LANDING_ELEMENT_DEFINITIONS: Record<
   website_testimonials: {
     label: 'Das sagen unsere Kunden',
     description: 'Kundenstimmen-Slider (Inhalt auf Coaching umschreiben)',
-    defaultProps: {},
+    defaultProps: { backgroundSliderImages: ['/images/trust/13.png', '/images/trust/14.png', '/images/trust/15.png'] },
   },
   website_quiz_cta: {
     label: 'Quiz-Opt-in + Quiz',
@@ -113,6 +113,7 @@ export const LANDING_ELEMENT_DEFINITIONS: Record<
     description: 'Kundenstimmen mit Bild-Slider-Hintergrund, endlos laufende Karten',
     defaultProps: {
       sectionTitle: 'Bereits mehr als 230 Kunden freuen sich über den Kauf ihrer Immobilie',
+      backgroundSliderImages: ['/images/slider1/3.png', '/images/slider1/4.png', '/images/slider1/5.png', '/images/slider1/6.png', '/images/slider1/7.png'],
       testimonials: [
         { quote: 'Es war großartig, den gesamten Prozess – von der Objektauswahl bis zur finanziellen Absicherung – strukturiert zu erleben.', name: 'Hanna M', title: 'Architektin' },
         { quote: 'Die Beratung hat mir geholfen, Immobilieninvestments zu verstehen und ein passives Einkommen für die Zukunft aufzubauen.', name: 'Stefan S', title: 'IT-Berater' },
@@ -133,8 +134,43 @@ export const LANDING_ELEMENT_DEFINITIONS: Record<
   },
   website_claim_parallax: {
     label: 'Claim Parallax',
-    description: 'Scroll-Animation: fliegende farbige Cards',
-    defaultProps: {},
+    description: 'Scroll-Animation: 4 Card-Typen (Beratung Trust+CTA, Planung zwei Zeilen+Status, Bau Bild+Overlay, Wert Zahl+CTA)',
+    defaultProps: {
+      claimHeadlineLine1: 'Ihre Immobilie.',
+      claimHeadlineLine2: 'Ihr Vermögen.',
+      ctaText: 'Jetzt unverbindlich beraten lassen – Ihr Traumhaus beginnt hier.',
+      cardLabel1: 'Individuelle Beratung',
+      cardLabel2: 'Planung',
+      cardLabel3: 'Bau',
+      cardLabel4: 'Ihre Immobilie',
+      card1TrustText: 'Unverbindlich & transparent',
+      card1ButtonText: 'Jetzt Gespräch buchen',
+      card2Line1: 'Strategie',
+      card2Line2: 'Objektauswahl',
+      card2StatusText: 'Strukturiert',
+      card3ImageUrl: '/images/parallax-cards/wohnhaus1.png',
+      card3OverlayText: 'Ihr Traumhaus',
+      card4NumberText: '875.000€',
+      card4ContextText: 'Garantierter Zugang zu exklusivsten Wohnobjekten',
+      card4ButtonText: 'Expert werden',
+      card1ImageUrl: '/images/trust/14.png',
+      card1TextColor: '#000000',
+      card2TextColor: '#000000',
+      card3TextColor: '#000000',
+      card4TextColor: '#000000',
+      card1TextSize: 16,
+      card2TextSize: 16,
+      card3TextSize: 16,
+      card4TextSize: 16,
+      card1Icon: 'message-circle',
+      card2Icon: 'clipboard-list',
+      card3Icon: 'home',
+      card4Icon: 'trending-up',
+      card1IconColor: '#000000',
+      card2IconColor: '#000000',
+      card3IconColor: '#ffffff',
+      card4IconColor: '#000000',
+    },
   },
   website_words_parallax: {
     label: 'Wörter Parallax',
@@ -183,9 +219,72 @@ export const SECTION_TYPES_BY_TEMPLATE: Record<LandingTemplate, readonly Landing
   ],
 };
 
+/**
+ * Eindeutige Anzeigenamen pro Vorlage – gleiche Sektionstypen (z. B. Hero) haben in Vorlage 1 und 2
+ * unterschiedliche Logik und Namen (z. B. Slider Hero mit "Mehr erfahren" vs. Parallax Hero mit Login).
+ */
+export const SECTION_LABELS_BY_TEMPLATE: Record<LandingTemplate, Partial<Record<LandingSectionType, string>>> = {
+  standard: {
+    website_jeton_hero: 'Slider Hero',
+    website_marquee: 'Basic Marquee',
+    website_target_groups: 'Basic Zielgruppen',
+    website_testimonials: 'Basic Testimonials',
+    website_quiz_cta: 'Basic Quiz CTA',
+    website_services: 'Basic Services',
+    website_benefits: 'Basic Benefits',
+    website_pricing: 'Basic Pricing',
+    website_trust: 'Basic Trust',
+    website_process: 'Basic Prozess',
+    website_faq: 'Basic FAQ',
+    website_footer: 'Basic Footer',
+  },
+  parallax: {
+    website_jeton_hero: 'Parallax Hero',
+    website_marquee: 'Parallax Marquee',
+    website_testimonials_infinite: 'Parallax Testimonials',
+    website_quiz_cta: 'Parallax Quiz CTA',
+    website_beratung: 'Parallax Beratung',
+    website_claim_parallax: 'Parallax Claim',
+    website_words_parallax: 'Parallax Wörter',
+    website_stacked_sheets: 'Parallax Gestapelte Blätter',
+    website_images_slider: 'Parallax Bild-Slider',
+    website_footer: 'Parallax Footer',
+  },
+};
+
+/** Anzeigename einer Sektion abhängig von der Vorlage (eindeutig: Basic/Slider vs. Parallax). */
+export function getSectionLabel(type: LandingSectionType, template: LandingTemplate): string {
+  const byTemplate = SECTION_LABELS_BY_TEMPLATE[template]?.[type];
+  if (byTemplate) return byTemplate;
+  return LANDING_ELEMENT_DEFINITIONS[type]?.label ?? type;
+}
+
 /** Pro Sektion: welche Props im Editor bearbeitet werden können (Texte, Links, Bild, Farben, Schrift) */
-export type EditablePropType = 'text' | 'url' | 'textarea' | 'image' | 'color' | 'fontsize' | 'fontfamily' | 'testimonials';
+export type EditablePropType = 'text' | 'url' | 'textarea' | 'image' | 'image_array' | 'color' | 'fontsize' | 'fontsize_responsive' | 'fontfamily' | 'testimonials';
 export type EditablePropDef = { key: string; label: string; type: EditablePropType };
+
+/**
+ * Editierbare Props pro Vorlage – nicht alle Sektionen haben in Basic und Parallax dieselben Felder.
+ * Z. B. Slider Hero: 2 Headlines + "Mehr erfahren"; Parallax Hero: 3 Headlines, kein "Mehr erfahren".
+ */
+export function getEditablePropsForSection(type: LandingSectionType, template: LandingTemplate): EditablePropDef[] {
+  const base = SECTION_EDITABLE_PROPS[type];
+  if (!base) return [];
+
+  if (type === 'website_jeton_hero') {
+    if (template === 'standard') {
+      return base.filter((p) => p.key !== 'headlineLine3'); // Slider Hero: nur 2 Zeilen, dafür secondaryCtaHref
+    }
+    return base.filter((p) => p.key !== 'secondaryCtaHref'); // Parallax Hero: 3 Zeilen, kein Mehr-erfahren-Button
+  }
+
+  if (type === 'website_marquee') {
+    if (template === 'standard') return base.filter((p) => p.key !== 'customQuotes');
+    return base.filter((p) => p.key !== 'text'); // Parallax: nur customQuotes + backgroundColor
+  }
+
+  return base;
+}
 
 /** Einzelne Kundenstimme im Builder */
 export type TestimonialItem = { quote: string; name: string; title: string; imageUrl?: string };
@@ -194,7 +293,9 @@ export const SECTION_EDITABLE_PROPS: Partial<Record<LandingSectionType, Editable
     { key: 'headline', label: 'Überschrift Zeile 1', type: 'text' },
     { key: 'headlineLine2', label: 'Überschrift Zeile 2', type: 'text' },
     { key: 'headlineLine3', label: 'Überschrift Zeile 3', type: 'text' },
-    { key: 'headlineFontSize', label: 'Schriftgröße Überschrift', type: 'fontsize' },
+    { key: 'headlineFontSizeDesktop', label: 'Schriftgröße Desktop (px)', type: 'fontsize_responsive' },
+    { key: 'headlineFontSizeTablet', label: 'Schriftgröße Tablet (px)', type: 'fontsize_responsive' },
+    { key: 'headlineFontSizeMobile', label: 'Schriftgröße Mobil (px)', type: 'fontsize_responsive' },
     { key: 'headlineFontFamily', label: 'Schriftart Überschrift', type: 'fontfamily' },
     { key: 'headlineColor', label: 'Farbe Überschrift', type: 'color' },
     { key: 'secondaryCtaHref', label: 'Mehr erfahren führt zu (Sektion)', type: 'url' },
@@ -215,6 +316,7 @@ export const SECTION_EDITABLE_PROPS: Partial<Record<LandingSectionType, Editable
     { key: 'sectionTitle', label: 'Sektions-Titel', type: 'text' },
     { key: 'sectionSubtitle', label: 'Untertitel', type: 'textarea' },
     { key: 'testimonials', label: 'Kundenstimmen', type: 'testimonials' },
+    { key: 'backgroundSliderImages', label: 'Hintergrund-Slider (Bilder wechseln)', type: 'image_array' },
   ],
   website_quiz_cta: [
     { key: 'title', label: 'Titel', type: 'text' },
@@ -250,12 +352,45 @@ export const SECTION_EDITABLE_PROPS: Partial<Record<LandingSectionType, Editable
   website_testimonials_infinite: [
     { key: 'sectionTitle', label: 'Überschrift', type: 'text' },
     { key: 'testimonials', label: 'Kundenstimmen', type: 'testimonials' },
+    { key: 'backgroundSliderImages', label: 'Hintergrund-Slider (Bilder wechseln)', type: 'image_array' },
   ],
   website_beratung: [
     { key: 'sectionTitle', label: 'Headline-Text', type: 'textarea' },
     { key: 'highlightWords', label: 'Markierte Wörter (kommagetrennt)', type: 'text' },
   ],
-  website_claim_parallax: [],
+  website_claim_parallax: [
+    { key: 'claimHeadlineLine1', label: 'Haupttext Zeile 1', type: 'text' },
+    { key: 'claimHeadlineLine2', label: 'Haupttext Zeile 2', type: 'text' },
+    { key: 'ctaText', label: 'CTA-Text unter den Cards', type: 'textarea' },
+    { key: 'card1ImageUrl', label: 'Card 1 (Beratung) – Bild oben', type: 'image' },
+    { key: 'cardLabel1', label: 'Card 1 – Überschrift', type: 'text' },
+    { key: 'card1TrustText', label: 'Card 1 – Trust-Text', type: 'text' },
+    { key: 'card1ButtonText', label: 'Card 1 – Button-Text', type: 'text' },
+    { key: 'card1TextColor', label: 'Card 1 – Textfarbe', type: 'color' },
+    { key: 'card1TextSize', label: 'Card 1 – Schriftgröße (px)', type: 'text' },
+    { key: 'card1Icon', label: 'Card 1 – Icon (Fallback ohne Bild)', type: 'text' },
+    { key: 'card1IconColor', label: 'Card 1 – Icon-Farbe', type: 'color' },
+    { key: 'cardLabel2', label: 'Card 2 (Planung) – Überschrift', type: 'text' },
+    { key: 'card2Line1', label: 'Card 2 – Zeile 1', type: 'text' },
+    { key: 'card2Line2', label: 'Card 2 – Zeile 2', type: 'text' },
+    { key: 'card2StatusText', label: 'Card 2 – Status-Text', type: 'text' },
+    { key: 'card2TextColor', label: 'Card 2 – Textfarbe', type: 'color' },
+    { key: 'card2TextSize', label: 'Card 2 – Schriftgröße (px)', type: 'text' },
+    { key: 'card2Icon', label: 'Card 2 – Icon', type: 'text' },
+    { key: 'card2IconColor', label: 'Card 2 – Icon-Farbe', type: 'color' },
+    { key: 'card3ImageUrl', label: 'Card 3 (Bau) – Bild-URL', type: 'image' },
+    { key: 'card3OverlayText', label: 'Card 3 – Overlay-Text', type: 'text' },
+    { key: 'card3TextColor', label: 'Card 3 – Textfarbe (Overlay)', type: 'color' },
+    { key: 'card3TextSize', label: 'Card 3 – Schriftgröße (px)', type: 'text' },
+    { key: 'cardLabel4', label: 'Card 4 (Wert) – Überschrift', type: 'text' },
+    { key: 'card4NumberText', label: 'Card 4 – Große Zahl', type: 'text' },
+    { key: 'card4ContextText', label: 'Card 4 – Kontext-Text', type: 'text' },
+    { key: 'card4ButtonText', label: 'Card 4 – Button-Text', type: 'text' },
+    { key: 'card4TextColor', label: 'Card 4 – Textfarbe', type: 'color' },
+    { key: 'card4TextSize', label: 'Card 4 – Schriftgröße (px)', type: 'text' },
+    { key: 'card4Icon', label: 'Card 4 – Icon', type: 'text' },
+    { key: 'card4IconColor', label: 'Card 4 – Icon-Farbe', type: 'color' },
+  ],
   website_words_parallax: [],
   website_stacked_sheets: [],
   website_images_slider: [
@@ -263,6 +398,130 @@ export const SECTION_EDITABLE_PROPS: Partial<Record<LandingSectionType, Editable
     { key: 'ctaText', label: 'Button-Text', type: 'text' },
   ],
 };
+
+/**
+ * Element-Kategorien für die Builder-Toolbar: Jede Kategorie hat ein Icon und ein Label.
+ * Beim Klick auf eine Sektion werden nur die Icons angezeigt, deren Kategorie in der Sektion vorkommt.
+ */
+export type ElementKindId =
+  | 'headline'
+  | 'headline_style'
+  | 'logo'
+  | 'background'
+  | 'section_title'
+  | 'section_subtitle'
+  | 'marquee'
+  | 'cta'
+  | 'testimonials'
+  | 'testimonials_slider_images'
+  | 'copyright'
+  | 'highlight'
+  | 'other';
+
+/** Prop-Key → Element-Kategorie (für Gruppierung in der Icon-Toolbar). */
+export const PROP_TO_ELEMENT_KIND: Record<string, ElementKindId> = {
+  headline: 'headline',
+  headlineLine2: 'headline',
+  headlineLine3: 'headline',
+  headlineFontSize: 'headline_style',
+  headlineFontSizeDesktop: 'headline_style',
+  headlineFontSizeTablet: 'headline_style',
+  headlineFontSizeMobile: 'headline_style',
+  headlineFontFamily: 'headline_style',
+  headlineColor: 'headline_style',
+  logoUrl: 'logo',
+  backgroundImageUrl: 'background',
+  overlayColor: 'background',
+  sectionTitle: 'section_title',
+  sectionSubtitle: 'section_subtitle',
+  text: 'marquee',
+  customQuotes: 'marquee',
+  backgroundColor: 'marquee',
+  buttonText: 'cta',
+  ctaText: 'cta',
+  title: 'cta',
+  subtitle: 'cta',
+  secondaryCtaHref: 'cta',
+  testimonials: 'testimonials',
+  backgroundSliderImages: 'testimonials_slider_images',
+  copyrightText: 'copyright',
+  highlightWords: 'highlight',
+  claimHeadlineLine1: 'headline',
+  claimHeadlineLine2: 'headline',
+  cardLabel1: 'other',
+  cardLabel2: 'other',
+  cardLabel3: 'other',
+  cardLabel4: 'other',
+  card1TextColor: 'headline_style',
+  card2TextColor: 'headline_style',
+  card3TextColor: 'headline_style',
+  card4TextColor: 'headline_style',
+  card1TextSize: 'headline_style',
+  card2TextSize: 'headline_style',
+  card3TextSize: 'headline_style',
+  card4TextSize: 'headline_style',
+  card1Icon: 'other',
+  card2Icon: 'other',
+  card3Icon: 'other',
+  card4Icon: 'other',
+  card1IconColor: 'headline_style',
+  card2IconColor: 'headline_style',
+  card3IconColor: 'headline_style',
+  card4IconColor: 'headline_style',
+  card1TrustText: 'section_subtitle',
+  card1ButtonText: 'cta',
+  card2Line1: 'other',
+  card2Line2: 'other',
+  card2StatusText: 'other',
+  card1ImageUrl: 'background',
+  card3ImageUrl: 'background',
+  card3OverlayText: 'headline',
+  card4NumberText: 'headline',
+  card4ContextText: 'section_subtitle',
+  card4ButtonText: 'cta',
+};
+
+/** Label pro Element-Kategorie (Icon wird im Builder aus lucide gewählt). */
+export const ELEMENT_KIND_LABELS: Record<ElementKindId, string> = {
+  headline: 'H',
+  headline_style: 'Schrift & Farbe',
+  logo: 'Logo',
+  background: 'Hintergrund',
+  section_title: 'Sektions-Titel',
+  section_subtitle: 'Untertitel',
+  marquee: 'Lauftext',
+  cta: 'Button / Link',
+  testimonials: 'Kundenstimmen',
+  testimonials_slider_images: 'Slider-Bilder',
+  copyright: 'Copyright',
+  highlight: 'Hervorhebung',
+  other: 'Sonstiges',
+};
+
+/** Standard-Props für eine Sektion in der gewählten Vorlage (für „Auf Standard zurücksetzen“). */
+export function getDefaultPropsForSection(type: LandingSectionType, template: LandingTemplate): Record<string, unknown> {
+  const def = LANDING_ELEMENT_DEFINITIONS[type];
+  if (!def) return {};
+  const base = { ...def.defaultProps };
+  if (template === 'parallax' && def.parallaxDefaultProps) {
+    Object.assign(base, def.parallaxDefaultProps);
+  }
+  return base;
+}
+
+/** Welche Props zu welcher Kategorie gehören – für eine Sektion die sichtbaren Kategorien ermitteln. */
+export function getElementKindsForProps(editableProps: EditablePropDef[]): ElementKindId[] {
+  const kinds = new Set<ElementKindId>();
+  for (const p of editableProps) {
+    kinds.add(PROP_TO_ELEMENT_KIND[p.key] ?? 'other');
+  }
+  return Array.from(kinds);
+}
+
+/** Props einer Sektion nach Kategorie filtern. */
+export function getPropsByKind(editableProps: EditablePropDef[], kind: ElementKindId): EditablePropDef[] {
+  return editableProps.filter((p) => (PROP_TO_ELEMENT_KIND[p.key] ?? 'other') === kind);
+}
 
 /** Screenshot-Pfade für Sektions-Vorschau (public/landing-previews/) – Standard-Vorlage */
 export const SECTION_PREVIEW_IMAGES: Partial<Record<LandingSectionType, string>> = {
@@ -285,7 +544,7 @@ export const SECTION_PREVIEW_IMAGES: Partial<Record<LandingSectionType, string>>
   website_images_slider: '/landing-previews/section-quiz-cta.png',
 };
 
-/** Parallax-Vorlage: eigene Vorschaubilder (überschreibt SECTION_PREVIEW_IMAGES wenn template=parallax) */
+/** Parallax-Vorlage: eigene Vorschaubilder (Reihenfolge = SECTION_TYPES_BY_TEMPLATE.parallax) */
 export const SECTION_PREVIEW_IMAGES_PARALLAX: Partial<Record<LandingSectionType, string>> = {
   website_jeton_hero: '/landing-previews/parallax-hero.png',
   website_marquee: '/landing-previews/parallax-marquee.png',
@@ -296,4 +555,5 @@ export const SECTION_PREVIEW_IMAGES_PARALLAX: Partial<Record<LandingSectionType,
   website_words_parallax: '/landing-previews/parallax-words.png',
   website_stacked_sheets: '/landing-previews/parallax-stacked-sheets.png',
   website_images_slider: '/landing-previews/parallax-images-slider.png',
+  website_footer: '/landing-previews/section-faq.png',
 };

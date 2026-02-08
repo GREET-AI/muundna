@@ -29,18 +29,21 @@ export type ProductLandingTestimonialsProps = {
   sectionTitle?: string;
   sectionSubtitle?: string;
   testimonials?: TestimonialItem[];
+  /** Hintergrund-Slider (Basic: 3 Bilder). */
+  backgroundSliderImages?: string[];
 };
 
 export default function ProductLandingTestimonials(props: ProductLandingTestimonialsProps = {}) {
-  const { primaryColor, sectionTitle, sectionSubtitle, testimonials: customTestimonials } = props;
+  const { primaryColor, sectionTitle, sectionSubtitle, testimonials: customTestimonials, backgroundSliderImages } = props;
   const testimonials = (Array.isArray(customTestimonials) && customTestimonials.length > 0) ? customTestimonials : FALLBACK_TESTIMONIALS;
   const title = sectionTitle?.trim() || FALLBACK_TITLE;
   const subtitle = sectionSubtitle?.trim() || FALLBACK_SUBTITLE;
+  const sliderImages = (Array.isArray(backgroundSliderImages) && backgroundSliderImages.length > 0) ? backgroundSliderImages : TRUST_SLIDER_IMAGES;
 
   return (
     <section className="relative w-full overflow-hidden min-h-[48rem] md:min-h-[54rem]">
       <div className="absolute inset-0 z-0">
-        <ImagesSlider className="h-full w-full" images={TRUST_SLIDER_IMAGES} overlay overlayClassName="bg-black/70" autoplay direction="up" />
+        <ImagesSlider className="h-full w-full" images={sliderImages} overlay overlayClassName="bg-black/70" autoplay direction="up" />
       </div>
       <div className="relative z-10 flex min-h-[48rem] md:min-h-[54rem] flex-col pt-24 md:pt-32 pb-12 md:pb-16">
         <motion.div initial={{ opacity: 0, y: -80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="z-50 flex flex-col justify-center items-center px-4 pb-8 md:pb-12">

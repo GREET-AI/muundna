@@ -147,7 +147,7 @@ export default function AdminPage() {
   /** Tools-Submenü aufgeklappt */
   const [toolsMenuOpen, setToolsMenuOpen] = useState(true);
   /** Aktueller User aus /me (für Berechtigungen, z. B. Team-Verwaltung) */
-  const [currentUser, setCurrentUser] = useState<{ username?: string; display_name?: string | null; department_label?: string | null; permissions?: string[]; features?: string[] } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ username?: string; display_name?: string | null; department_label?: string | null; role?: string; permissions?: string[]; features?: string[] } | null>(null);
   /** Team-Verwaltung: Liste + Formular */
   const [teamUsers, setTeamUsers] = useState<Array<{ id: string; username: string; display_name: string | null; department_key: string | null; department_label: string | null; is_active: boolean; last_login_at: string | null; created_at: string; role: string | null }>>([]);
   const [teamLoading, setTeamLoading] = useState(false);
@@ -412,7 +412,7 @@ export default function AdminPage() {
   const canManageUsers = currentUser?.permissions?.includes('admin') || currentUser?.permissions?.includes('users.manage');
   const canAccessDigitalProducts = Boolean(
     currentUser?.features?.includes('digital_products') &&
-    (currentUser?.permissions?.includes('admin') || currentUser?.permissions?.includes('digital_products.*'))
+    (currentUser?.role === 'superadmin' || currentUser?.permissions?.includes('digital_products.*'))
   );
   useEffect(() => {
     if (!isAuthenticated || activeNav !== 'team' || !canManageUsers) return;
@@ -2539,7 +2539,7 @@ export default function AdminPage() {
                               username: newUserForm.username.trim(),
                               password: newUserForm.password,
                               display_name: newUserForm.display_name.trim() || undefined,
-                              role: newUserForm.role,
+                              role: currentUser?.role === 'superadmin' ? newUserForm.role : (['mitarbeiter', 'mitarbeiter_limited'].includes(newUserForm.role) ? newUserForm.role : 'mitarbeiter'),
                               department_key: newUserForm.department_key.trim() || undefined,
                             }),
                           });
@@ -2593,11 +2593,16 @@ export default function AdminPage() {
                         <Label htmlFor="team-role">Rolle</Label>
                         <select
                           id="team-role"
-                          value={newUserForm.role}
+                          value={currentUser?.role === 'superadmin' ? newUserForm.role : (['mitarbeiter', 'mitarbeiter_limited'].includes(newUserForm.role) ? newUserForm.role : 'mitarbeiter')}
                           onChange={(e) => setNewUserForm((f) => ({ ...f, role: e.target.value }))}
                           className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                         >
-                          <option value="admin">Admin (Vollzugriff)</option>
+                          {currentUser?.role === 'superadmin' && (
+                            <>
+                              <option value="superadmin">Superadmin (inkl. Digitale Produkte)</option>
+                              <option value="admin">Admin (ohne Digitale Produkte)</option>
+                            </>
+                          )}
                           <option value="mitarbeiter">Mitarbeiter</option>
                           <option value="mitarbeiter_limited">Mitarbeiter (eingeschränkt)</option>
                         </select>

@@ -103,6 +103,15 @@ export async function POST(request: NextRequest) {
     const roleName = (body.role ?? 'mitarbeiter').trim();
     const departmentKey = (body.department_key ?? '').trim() || null;
 
+    // Nur Superadmin darf Superadmins und Admins anlegen; Admin darf nur andere Rollen (mitarbeiter, mitarbeiter_limited)
+    const requesterRole = auth.user.role.name;
+    if (requesterRole !== 'superadmin' && (roleName === 'superadmin' || roleName === 'admin')) {
+      return NextResponse.json(
+        { error: 'Nur Superadmins dürfen Benutzer mit Rolle Superadmin oder Admin anlegen.' },
+        { status: 403 }
+      );
+    }
+
     if (!username || username.length < 2) {
       return NextResponse.json({ error: 'Benutzername erforderlich (mind. 2 Zeichen)' }, { status: 400 });
     }

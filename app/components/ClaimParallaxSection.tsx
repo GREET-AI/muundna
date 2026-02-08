@@ -18,13 +18,16 @@ const LIST_Y = (() => {
   const start = -1.5 * step;
   return [start, start + step, start + 2 * step, start + 3 * step];
 })();
-/** Desktop: kompakte Liste + CTA, gleicher Abstand (LIST_GAP) + 150px vor CTA; gesamter Block nach oben, damit CTA-Text voll sichtbar. */
+/** Desktop: Liste öffnet nach unten; in der Listenphase Cards 20 % größer und Abstand/Padding 20 % mehr. */
+const LIST_PHASE_SCALE = 1.2;
+const LIST_STEP_DESKTOP = (LIST_CARD_SIZE + LIST_GAP) * LIST_PHASE_SCALE;
 const LIST_Y_DESKTOP = (() => {
-  const step = LIST_CARD_SIZE + LIST_GAP;
-  const start = -800;
-  return [start, start + step, start + 2 * step, start + 3 * step];
+  const start = 0;
+  return [start, start + LIST_STEP_DESKTOP, start + 2 * LIST_STEP_DESKTOP, start + 3 * LIST_STEP_DESKTOP];
 })();
-const CTA_Y_DESKTOP = 160;
+const CTA_Y_DESKTOP = LIST_Y_DESKTOP[3] + 150;
+/** In der Listenphase den Block nach oben verschieben, damit CTA im Viewport bleibt. */
+const LIST_PHASE_VIEW_OFFSET = -(CTA_Y_DESKTOP - 180);
 /** Scroll-Progress-Bereiche für Desktop: Fly-in (entspricht animProgress 0.32..0.55) dann Liste. */
 const DESKTOP_FLY_IN_SCROLL = [0.145, 0.289] as const;
 const FLY_IN_OFFSCREEN_MOBILE = 380;
@@ -181,7 +184,7 @@ function ParallaxStepCard({
   const scale = useScrollDrivenPosition
     ? useTransform(scrollYProgress, [0, 1], [1, 1])
     : useListPhase
-      ? useTransform(scrollYProgress, [flyStart, flyEnd, LIST_PHASE_SCROLL[0], LIST_PHASE_SCROLL[1]], noScale ? [1, 1, 1, 1] : [0.85, 1, 1, 1])
+      ? useTransform(scrollYProgress, [flyStart, flyEnd, LIST_PHASE_SCROLL[0], LIST_PHASE_SCROLL[1]], noScale ? [1, 1, 1, 1] : [0.85, 1, 1, LIST_PHASE_SCALE])
       : useTransform(scrollYProgress, [start, end], noScale ? [1, 1] : [0.85, 1]);
   const size = cardSize ?? 250;
   const Icon = (PARALLAX_ICON_MAP[cardConfig.iconKey] ?? PARALLAX_CARD_ICONS[defaultIconIndex]) as React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
@@ -397,6 +400,7 @@ function ClaimParallaxDesktop({
   const headlineY = useTransform(animProgress, [0, 0.24], [220, 0]);
   const ctaOpacity = useTransform(scrollYProgress, [0.48, 0.56, 0.58, 0.66], [0, 1, 1, 1]);
   const ctaY = useTransform(scrollYProgress, [0.52, 0.58, 0.66], [0, 0, CTA_Y_DESKTOP]);
+  const listPhaseViewOffset = useTransform(scrollYProgress, [0, LIST_PHASE_SCROLL[0], LIST_PHASE_SCROLL[1]], [0, 0, LIST_PHASE_VIEW_OFFSET]);
   return (
     <div className="hidden lg:flex absolute inset-0 items-center justify-center overflow-visible [contain:layout] [transform:translateZ(0)]">
       <div className="relative w-full h-full overflow-visible">
@@ -404,37 +408,39 @@ function ClaimParallaxDesktop({
         <motion.div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[1] will-change-transform" style={{ opacity: headlineOpacity, scale: headlineScale, y: headlineY }}>
           <h2 className="font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-center tracking-tight max-w-[min(90vw,64rem)] leading-tight py-2 sm:py-4 bg-clip-text text-transparent bg-gradient-to-b from-emerald-50 to-[#60A917]">{headlineLine1}<br />{headlineLine2}</h2>
         </motion.div>
-        {/* Gleiche 4 Cards: erst waagerecht zentriert, dann Parallax-Phase 2 = senkrecht links */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-visible z-10 pointer-events-none">
-          <div className="relative w-full h-full" aria-hidden>
-            {desktopCards.map((card, i) => (
-              <ParallaxStepCard
-                key={i}
-                number={card.number}
-                initialX={card.initialX}
-                initialY={card.initialY}
-                endOffsetX={card.endOffsetX}
-                endOffsetY={card.endOffsetY}
-                scrollYProgress={scrollYProgress}
-                listOffsetX={LIST_X}
-                listOffsetY={LIST_Y_DESKTOP[i]}
-                bgColor={PARALLAX_CARD_COLORS[i] ?? '#C4D32A'}
-                cardConfig={cardConfigs[i]}
-                defaultIconIndex={i}
-              />
-            ))}
+        <motion.div className="absolute inset-0 flex items-center justify-center overflow-visible z-10 pointer-events-none" style={{ y: listPhaseViewOffset }}>
+          {/* Gleiche 4 Cards: erst waagerecht zentriert, dann Parallax-Phase 2 = senkrecht links */}
+          <div className="absolute inset-0 flex items-center justify-center overflow-visible pointer-events-none">
+            <div className="relative w-full h-full" aria-hidden>
+              {desktopCards.map((card, i) => (
+                <ParallaxStepCard
+                  key={i}
+                  number={card.number}
+                  initialX={card.initialX}
+                  initialY={card.initialY}
+                  endOffsetX={card.endOffsetX}
+                  endOffsetY={card.endOffsetY}
+                  scrollYProgress={scrollYProgress}
+                  listOffsetX={LIST_X}
+                  listOffsetY={LIST_Y_DESKTOP[i]}
+                  bgColor={PARALLAX_CARD_COLORS[i] ?? '#C4D32A'}
+                  cardConfig={cardConfigs[i]}
+                  defaultIconIndex={i}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-        <motion.div
-          className="absolute left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 text-center pointer-events-none z-10"
-          style={{ top: 'calc(50% + 125px)', opacity: ctaOpacity, y: ctaY }}
-        >
-          <TextGenerateEffect
-            words={ctaText}
-            className="text-2xl md:text-3xl lg:text-6xl font-bold text-neutral-800"
-            duration={0.06}
-            as="p"
-          />
+          <motion.div
+            className="absolute left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 text-center pointer-events-none z-10"
+            style={{ top: 'calc(50% + 125px)', opacity: ctaOpacity, y: ctaY }}
+          >
+            <TextGenerateEffect
+              words={ctaText}
+              className="text-2xl md:text-3xl lg:text-6xl font-bold text-neutral-800"
+              duration={0.06}
+              as="p"
+            />
+          </motion.div>
         </motion.div>
       </div>
     </div>
@@ -557,7 +563,7 @@ function buildCardConfig(p: ClaimParallaxSectionProps, i: number): ParallaxCardC
 }
 
 const SECTION_HEIGHT_BASE_MOBILE = 380;
-const SECTION_HEIGHT_BASE_DESKTOP = 340;
+const SECTION_HEIGHT_BASE_DESKTOP = 460;
 
 function useParallaxSectionHeight() {
   const [heightVh, setHeightVh] = useState(SECTION_HEIGHT_BASE_MOBILE);

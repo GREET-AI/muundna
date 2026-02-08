@@ -43,6 +43,14 @@ export function hasFeature(user: AuthUser, featureKey: string): boolean {
   return user.features.includes(featureKey);
 }
 
+/** Zugriff auf „Digitale Produkte“ nur für Rolle superadmin oder Berechtigung digital_products.* (admin sieht das Tool nicht). */
+export function canAccessDigitalProducts(user: AuthUser): boolean {
+  if (!hasFeature(user, 'digital_products')) return false;
+  if (user.role.name === 'superadmin') return true;
+  if (user.permissions.includes('digital_products.*')) return true;
+  return false;
+}
+
 /** Prüft ob User auf Feature zugreifen darf (Berechtigung + Feature-Flag) */
 export function canAccessFeature(user: AuthUser, featureKey: string, permissionKey: string): boolean {
   if (!hasFeature(user, featureKey)) return false;

@@ -30,20 +30,24 @@ interface TestimonialsInfiniteSectionProps {
   primaryColor?: string;
   secondaryColor?: string;
   testimonials?: TestimonialItem[];
+  /** Hintergrund-Slider (Parallax: 5 Bilder). */
+  backgroundSliderImages?: string[];
 }
 
 export default function TestimonialsInfiniteSection({
   sectionTitle = 'Bereits mehr als 230 Kunden freuen sich über den Kauf ihrer Immobilie',
   primaryColor = '#cb530a',
   testimonials: customTestimonials,
+  backgroundSliderImages,
 }: TestimonialsInfiniteSectionProps) {
   const testimonials = (Array.isArray(customTestimonials) && customTestimonials.length > 0) ? customTestimonials : DEFAULT_TESTIMONIALS;
+  const sliderImages = (Array.isArray(backgroundSliderImages) && backgroundSliderImages.length > 0) ? backgroundSliderImages : SLIDER_IMAGES;
   return (
     <section className="relative w-full overflow-hidden min-h-[48rem] md:min-h-[54rem]">
       <div className="absolute inset-0 z-0">
         <ImagesSlider
           className="h-full w-full"
-          images={SLIDER_IMAGES}
+          images={sliderImages}
           overlay
           overlayClassName="bg-black/75"
           autoplay

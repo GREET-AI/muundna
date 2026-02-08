@@ -157,7 +157,51 @@ function ProductLandingSections({
           const p = sec.props || {};
           return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBeratung primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} /></section>;
         }
-        if (sec.type === 'website_claim_parallax') return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingClaimParallax primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_claim_parallax') {
+          const p = sec.props || {};
+          return (
+            <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}>
+              <ProductLandingClaimParallax
+                primaryColor={primary}
+                secondaryColor={secondary}
+                claimHeadlineLine1={p.claimHeadlineLine1 as string | undefined}
+                claimHeadlineLine2={p.claimHeadlineLine2 as string | undefined}
+                ctaText={p.ctaText as string | undefined}
+                cardLabel1={p.cardLabel1 as string | undefined}
+                cardLabel2={p.cardLabel2 as string | undefined}
+                cardLabel3={p.cardLabel3 as string | undefined}
+                cardLabel4={p.cardLabel4 as string | undefined}
+                card1ImageUrl={p.card1ImageUrl as string | undefined}
+                card1TrustText={p.card1TrustText as string | undefined}
+                card1ButtonText={p.card1ButtonText as string | undefined}
+                card2Line1={p.card2Line1 as string | undefined}
+                card2Line2={p.card2Line2 as string | undefined}
+                card2StatusText={p.card2StatusText as string | undefined}
+                card3ImageUrl={p.card3ImageUrl as string | undefined}
+                card3OverlayText={p.card3OverlayText as string | undefined}
+                card4NumberText={p.card4NumberText as string | undefined}
+                card4ContextText={p.card4ContextText as string | undefined}
+                card4ButtonText={p.card4ButtonText as string | undefined}
+                card1TextColor={p.card1TextColor as string | undefined}
+                card2TextColor={p.card2TextColor as string | undefined}
+                card3TextColor={p.card3TextColor as string | undefined}
+                card4TextColor={p.card4TextColor as string | undefined}
+                card1TextSize={p.card1TextSize as number | string | undefined}
+                card2TextSize={p.card2TextSize as number | string | undefined}
+                card3TextSize={p.card3TextSize as number | string | undefined}
+                card4TextSize={p.card4TextSize as number | string | undefined}
+                card1Icon={p.card1Icon as string | undefined}
+                card2Icon={p.card2Icon as string | undefined}
+                card3Icon={p.card3Icon as string | undefined}
+                card4Icon={p.card4Icon as string | undefined}
+                card1IconColor={p.card1IconColor as string | undefined}
+                card2IconColor={p.card2IconColor as string | undefined}
+                card3IconColor={p.card3IconColor as string | undefined}
+                card4IconColor={p.card4IconColor as string | undefined}
+              />
+            </section>
+          );
+        }
         if (sec.type === 'website_words_parallax') return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingWordsParallax primaryColor={primary} secondaryColor={secondary} /></section>;
         if (sec.type === 'website_stacked_sheets') return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingStackedSheets primaryColor={primary} secondaryColor={secondary} /></section>;
         if (sec.type === 'website_images_slider') {
