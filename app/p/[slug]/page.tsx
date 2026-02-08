@@ -6,18 +6,30 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from '@/lib/admin-auth';
-import { JetonStyleHeroSection } from '@/app/components/JetonStyleHeroSection';
-import MarqueeBanner from '@/app/components/MarqueeBanner';
-import TargetGroupsSection from '@/app/components/TargetGroupsSection';
-import TestimonialsSection from '@/app/components/TestimonialsSection';
-import ExpertiseCTABanner from '@/app/components/ExpertiseCTABanner';
-import ServicesOverview from '@/app/components/ServicesOverview';
-import BenefitsSection from '@/app/components/BenefitsSection';
-import PricingSection from '@/app/components/PricingSection';
-import TrustSection from '@/app/components/TrustSection';
-import ProcessSection from '@/app/components/ProcessSection';
-import FAQSection from '@/app/components/FAQSection';
-import Footer from '@/app/components/Footer';
+import {
+  ProductLandingHero,
+  ProductLandingMarquee,
+  MARQUEE_QUOTES_PARALLAX,
+  ProductLandingTargetGroups,
+  ProductLandingTestimonials,
+  ProductLandingQuizCta,
+  ProductLandingServices,
+  ProductLandingBenefits,
+  ProductLandingPricing,
+  ProductLandingTrust,
+  ProductLandingProcess,
+  ProductLandingFaq,
+  ProductLandingFooter,
+  ProductLandingTestimonialsInfinite,
+  ProductLandingBeratung,
+  ProductLandingClaimParallax,
+  ProductLandingWordsParallax,
+  ProductLandingStackedSheets,
+  ProductLandingImagesSlider,
+} from '@/app/components/product-landing';
+import ProductLandingTracker from '@/app/components/ProductLandingTracker';
+import LandingPixelsInjector from '@/app/components/LandingPixelsInjector';
+import { FloatingDockParallax } from '@/app/components/FloatingDock';
 
 const DEFAULT_TENANT_SLUG = process.env.NEXT_PUBLIC_TENANT_SLUG || 'muckenfuss-nagel';
 
@@ -29,7 +41,7 @@ async function getProduct(slug: string, allowDraft = false) {
   if (!tenant) return null;
   let query = supabaseAdmin
     .from('dp_products')
-    .select('id, type, title, slug, description, price_cents, image_url, landing_page_sections, is_published')
+    .select('id, type, title, slug, description, price_cents, image_url, landing_page_sections, is_published, theme_primary_color, theme_secondary_color, landing_template')
     .eq('tenant_id', tenant.id)
     .eq('slug', slug.toLowerCase().trim());
   if (!allowDraft) query = query.eq('is_published', true);
@@ -39,42 +51,126 @@ async function getProduct(slug: string, allowDraft = false) {
 
 type LandingSection = { id: string; type: string; props: Record<string, unknown> };
 
-/** Nur die 12 Website-Sektionen (1:1 wie Startseite) – alle full width */
+const DEFAULT_PRIMARY = '#cb530a';
+const DEFAULT_SECONDARY = '#f0e6e0';
+/** ImmoSparplan-Parallax-Vorlage: Farben wie Original */
+const PARALLAX_PRIMARY = '#C4D32A';
+const PARALLAX_SECONDARY = '#60A917';
+
+/** Nur die 12 Website-Sektionen (1:1 wie Startseite) – alle full width. Theme-Farben aus Produkt. */
 function ProductLandingSections({
   product,
   tenant,
   sections,
+  productSlug,
+  themePrimary,
+  themeSecondary,
+  landingTemplate,
 }: {
   product: { title: string; description: string | null; price_cents: number; image_url: string | null; type: string };
   tenant: { name: string };
   sections: LandingSection[];
+  productSlug: string;
+  themePrimary?: string | null;
+  themeSecondary?: string | null;
+  landingTemplate?: string | null;
 }) {
+  const isParallax = landingTemplate === 'parallax';
+  const primary = isParallax ? PARALLAX_PRIMARY : (themePrimary || DEFAULT_PRIMARY);
+  const secondary = isParallax ? PARALLAX_SECONDARY : (themeSecondary || DEFAULT_SECONDARY);
   return (
     <>
-      {sections.map((sec) => {
+      {sections.map((sec, index) => {
         if (sec.type === 'website_jeton_hero') {
-          const headline = (sec.props?.headline as string) || product.title;
-          const ctaText = (sec.props?.ctaText as string) || 'Jetzt Anfragen';
-          const ctaHref = (sec.props?.ctaHref as string) || '/kontakt';
-          const secondaryCtaText = (sec.props?.secondaryCtaText as string) || 'Mehr erfahren';
-          const secondaryCtaHref = (sec.props?.secondaryCtaHref as string) || '/dienstleistungen';
+          const p = sec.props || {};
+          const headline = (p.headline as string) || (isParallax ? 'Mit vermieteten' : product.title);
+          const headlineLine2 = (p.headlineLine2 as string) || (isParallax ? 'Immobilien in die' : undefined);
+          const headlineLine3 = (p.headlineLine3 as string) || (isParallax ? 'finanzielle Freiheit.' : undefined);
+          const heroBg = (p.backgroundImageUrl as string) || (isParallax ? '/images/slider2/1.png' : undefined);
           return (
-            <section key={sec.id}>
-              <JetonStyleHeroSection headline={headline} ctaText={ctaText} ctaHref={ctaHref} secondaryCtaText={secondaryCtaText} secondaryCtaHref={secondaryCtaHref} />
+            <section key={sec.id} id={`section-${sec.id}`}>
+              <ProductLandingHero
+                variant={isParallax ? 'parallax' : 'default'}
+                headline={headline}
+                headlineLine2={headlineLine2}
+                headlineLine3={headlineLine3}
+                ctaText={isParallax ? 'Go Expert' : undefined}
+                ctaHref={isParallax ? '/experts' : '/login'}
+                secondaryCtaText={isParallax ? 'Log in' : 'Mehr erfahren'}
+                secondaryCtaHref={typeof p.secondaryCtaHref === 'string' ? p.secondaryCtaHref : (isParallax ? '/checkout/basic' : '')}
+                backgroundImageUrl={heroBg}
+                overlayColor={(p.overlayColor as string) || primary}
+                buttonPrimaryColor={primary}
+                buttonSecondaryColor={secondary}
+                headlineColor={p.headlineColor as string | undefined}
+                logoUrl={p.logoUrl as string | undefined}
+                headlineFontSize={p.headlineFontSize as string | undefined}
+                headlineFontFamily={p.headlineFontFamily as string | undefined}
+              />
             </section>
           );
         }
-        if (sec.type === 'website_marquee') return <section key={sec.id}><MarqueeBanner /></section>;
-        if (sec.type === 'website_target_groups') return <section key={sec.id}><TargetGroupsSection /></section>;
-        if (sec.type === 'website_testimonials') return <section key={sec.id}><TestimonialsSection /></section>;
-        if (sec.type === 'website_quiz_cta') return <section key={sec.id}><ExpertiseCTABanner /></section>;
-        if (sec.type === 'website_services') return <section key={sec.id}><ServicesOverview /></section>;
-        if (sec.type === 'website_benefits') return <section key={sec.id}><BenefitsSection /></section>;
-        if (sec.type === 'website_pricing') return <section key={sec.id}><PricingSection /></section>;
-        if (sec.type === 'website_trust') return <section key={sec.id}><TrustSection /></section>;
-        if (sec.type === 'website_process') return <section key={sec.id}><ProcessSection /></section>;
-        if (sec.type === 'website_faq') return <section key={sec.id}><FAQSection /></section>;
-        if (sec.type === 'website_footer') return <section key={sec.id}><Footer /></section>;
+        if (sec.type === 'website_marquee') {
+          const text = sec.props?.text as string | undefined;
+          const customQuotes = sec.props?.customQuotes as string[] | undefined;
+          const backgroundColor = (sec.props?.backgroundColor as string) || undefined;
+          if (isParallax && (!Array.isArray(customQuotes) || customQuotes.length === 0)) {
+            return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customQuotes={MARQUEE_QUOTES_PARALLAX} backgroundColor={backgroundColor || '#000000'} /></section>;
+          }
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customText={text} customQuotes={customQuotes} backgroundColor={backgroundColor || (isParallax ? '#000000' : primary)} /></section>;
+        }
+        if (sec.type === 'website_target_groups') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTargetGroups variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_testimonials') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTestimonials primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} testimonials={p.testimonials as import('@/types/landing-section').TestimonialItem[] | undefined} /></section>;
+        }
+        if (sec.type === 'website_quiz_cta') return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingQuizCta productSlug={productSlug} primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_services') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingServices variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_benefits') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBenefits variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_pricing') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingPricing primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_trust') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTrust primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_process') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingProcess variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_faq') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFaq primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_footer') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFooter primaryColor={primary} secondaryColor={secondary} copyrightText={p.copyrightText as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_testimonials_infinite') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTestimonialsInfinite primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} testimonials={p.testimonials as import('@/types/landing-section').TestimonialItem[] | undefined} /></section>;
+        }
+        if (sec.type === 'website_beratung') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBeratung primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_claim_parallax') return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingClaimParallax primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_words_parallax') return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingWordsParallax primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_stacked_sheets') return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingStackedSheets primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_images_slider') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingImagesSlider primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} ctaText={p.ctaText as string | undefined} ctaHref={(p.ctaHref as string) || '/experts'} /></section>;
+        }
         return null;
       })}
     </>
@@ -112,9 +208,16 @@ export default async function ProductLandingPage({ params, searchParams }: Props
   const showDraftBanner = allowDraft && !(product as { is_published?: boolean }).is_published;
   const firstIsJetonHero = useBuilderLayout && sections[0]?.type === 'website_jeton_hero';
   const hasFooterSection = sections.some((s) => s.type === 'website_footer');
+  const isParallax = (product as { landing_template?: string | null }).landing_template === 'parallax';
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {useBuilderLayout && (product as { is_published?: boolean }).is_published && (
+        <>
+          <ProductLandingTracker productSlug={slug} enabled />
+          <LandingPixelsInjector productSlug={slug} />
+        </>
+      )}
       {showDraftBanner && (
         <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 text-center text-sm text-amber-900">
           Vorschau – dieses Produkt ist noch ein Entwurf und für Besucher nicht sichtbar.
@@ -142,6 +245,10 @@ export default async function ProductLandingPage({ params, searchParams }: Props
             product={product}
             tenant={tenant}
             sections={sections}
+            productSlug={slug}
+            themePrimary={(product as { theme_primary_color?: string | null }).theme_primary_color}
+            themeSecondary={(product as { theme_secondary_color?: string | null }).theme_secondary_color}
+            landingTemplate={(product as { landing_template?: string | null }).landing_template}
           />
         ) : (
           <>
@@ -186,6 +293,7 @@ export default async function ProductLandingPage({ params, searchParams }: Props
         )}
       </main>
 
+      {isParallax && useBuilderLayout && <FloatingDockParallax />}
       {!hasFooterSection && (
         <footer className="border-t border-neutral-200 py-6 mt-12">
           <div className="mx-auto max-w-4xl px-4 text-center text-sm text-neutral-500">

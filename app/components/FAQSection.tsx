@@ -3,43 +3,38 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function FAQSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+const DEFAULT_PRIMARY = '#cb530a';
 
-  const faqs = [
-    {
-      question: 'Warum sollten Sie Ihre Büroarbeit an Muckenfuss & Nagel auslagern?',
-      answer: 'Bei Muckenfuss & Nagel können Sie sich voll auf Ihr Handwerk konzentrieren, während wir alle administrativen Aufgaben übernehmen. Das bedeutet keine monatelange Vertragsbindung, flexible Anpassung nach Bedarf und professionelle Betreuung durch ein Team mit 10+ Jahren Branchenerfahrung. Sie sparen Zeit, steigern Ihre Produktivität und gewinnen neue Kunden durch professionelle Online-Präsenz.'
-    },
-    {
-      question: 'Wie lange sind Sie an den Vertrag gebunden?',
-      answer: 'Alle Pakete sind monatlich kündbar. Es gibt keine langfristigen Bindungen; Sie können jederzeit flexibel anpassen oder kündigen. Das macht uns zur idealen Lösung für wachsende Unternehmen oder saisonale Schwankungen.'
-    },
-    {
-      question: 'Welche Dienstleistungen sind in den Paketen enthalten?',
-      answer: 'Paket 1 (Basis) enthält Telefonie, E-Mail, Kalender & Terminlegung – Google Bewertungen optional für +99 €/Monat. Paket 2 (Professional) erweitert die Telefonie, inkl. Google Bewertungen; Social Media ist modular buchbar (Basic, Growth, Pro). Paket 3 (Enterprise) ist voll modular: Telefonie, E-Mail/Kalender, Google, Social, Reporting frei kombinierbar mit Volumenrabatten. Website/Webdesign ist ein separates Modul (einmalig ab 2.000 € + 99 €/Monat Betreuung). Alle Preise netto, monatlich kündbar nach Probezeit.'
-    },
-    {
-      question: 'Können Sie sich die Dienstleistungen vorher anschauen?',
-      answer: 'Ja, gerne! Wir bieten eine kostenlose, unverbindliche Beratung an. Dabei besprechen wir Ihre individuellen Bedürfnisse und erstellen ein maßgeschneidertes Angebot. Sie können auch einen kostenlosen Probetag nutzen, um unsere Services kennenzulernen.'
-    },
-    {
-      question: 'Wie schnell können Sie starten?',
-      answer: 'Nach der unverbindlichen Beratung und Angebotserstellung können wir in der Regel innerhalb von 1-2 Wochen starten. Bei dringenden Anfragen sind auch schnellere Starttermine möglich. Kontaktieren Sie uns einfach für eine individuelle Abstimmung.'
-    },
-    {
-      question: 'Gibt es eine Zufriedenheitsgarantie?',
-      answer: 'Ja! Wir bieten eine Zufriedenheitsgarantie: Sollte es Ihnen nach einem Monat nicht gefallen, bekommen Sie Ihr Geld zurück. Zusätzlich können Sie einen kostenlosen Probetag nutzen, um unsere Services risikofrei zu testen.'
-    },
-    {
-      question: 'Betreuen Sie auch Unternehmen außerhalb Deutschlands?',
-      answer: 'Ja, wir betreuen Handwerksbetriebe und Bauunternehmen in ganz Deutschland, der Schweiz und Österreich. Unser Standort in Oberderdingen ist ideal gelegen für die Betreuung im gesamten DACH-Raum.'
-    },
-    {
-      question: 'Wie funktioniert die Zusammenarbeit?',
-      answer: 'Nach der Beratung und Angebotserstellung erhalten Sie einen dedizierten Ansprechpartner. Wir richten alle notwendigen Systeme ein (Telefon, E-Mail, Social Media, etc.) und starten mit der Betreuung. Sie erhalten monatliche Berichte und haben jederzeit Einblick in alle Aktivitäten.'
-    }
-  ];
+const DEFAULT_FAQ_TITLE = 'Häufige Fragen';
+const DEFAULT_FAQ_SUBTITLE = 'Rund um unsere Bürodienstleistungen für Handwerksbetriebe und Bauunternehmen';
+
+const WEBSITE_FAQS = [
+  { question: 'Warum sollten Sie Ihre Büroarbeit an Muckenfuss & Nagel auslagern?', answer: 'Bei Muckenfuss & Nagel können Sie sich voll auf Ihr Handwerk konzentrieren, während wir alle administrativen Aufgaben übernehmen. Das bedeutet keine monatelange Vertragsbindung, flexible Anpassung nach Bedarf und professionelle Betreuung durch ein Team mit 10+ Jahren Branchenerfahrung. Sie sparen Zeit, steigern Ihre Produktivität und gewinnen neue Kunden durch professionelle Online-Präsenz.' },
+  { question: 'Wie lange sind Sie an den Vertrag gebunden?', answer: 'Unsere Pakete sind monatlich kündbar – keine langfristigen Bindungen. Sie können die Zusammenarbeit flexibel anpassen.' },
+  { question: 'Welche Dienstleistungen sind in den Paketen enthalten?', answer: 'Je nach Paket: Telefonie (Anrufannahme, Weiterleitung), E-Mail-Betreuung, Kalender & Terminlegung, optional Google Bewertungen, bei Professional erweiterte Telefonie und Social Media modular. Enterprise ist voll modular – alle Komponenten frei kombinierbar. Details im Kennenlerngespräch.' },
+  { question: 'Können Sie sich die Dienstleistungen vorher anschauen?', answer: 'Ja. Vereinbaren Sie ein unverbindliches Erstgespräch. Wir besprechen Ihren Bedarf und zeigen, wie die Zusammenarbeit aussehen kann. Außerdem gilt unsere Zufriedenheitsgarantie.' },
+  { question: 'Wie schnell können Sie starten?', answer: 'Nach dem Kennenlerngespräch und Ihrer Entscheidung starten wir in der Regel zeitnah – keine langen Wartezeiten, wir sind schnell und flexibel.' },
+  { question: 'Gibt es eine Zufriedenheitsgarantie?', answer: 'Ja. Sollte es Ihnen nach einem Monat nicht gefallen, bekommen Sie Ihr Geld zurück. So können Sie risikofrei starten.' },
+  { question: 'Betreuen Sie auch Unternehmen außerhalb Deutschlands?', answer: 'Ja. Wir betreuen Kunden in Deutschland, Schweiz und Österreich – überregionale Betreuung im DACH-Raum.' },
+  { question: 'Wie funktioniert die Zusammenarbeit?', answer: 'In vier Schritten: Erstgespräch (unverbindlich), Bedarfsanalyse, maßgeschneidertes Angebot, Start. Wir übernehmen Ihre Büroarbeit – Sie konzentrieren sich auf Ihr Kerngeschäft.' },
+];
+
+const COACHING_FAQS = [
+  { question: 'Für wen ist das Immobiliencoaching geeignet?', answer: 'Für alle, die systematisch in Immobilien als Kapitalanlage einsteigen oder ihr Portfolio ausbauen wollen – ob Quereinsteiger oder mit Vorerfahrung. Du erhältst Zugang zu exklusiven Strategien, Deal-Flow und einem Netzwerk, plus 1:1-Betreuung und ein klares System von der Auswahl bis zu Kauf und Vermietung.' },
+  { question: 'Was ist im Coaching enthalten?', answer: 'Ein komplettes System: Strategie zur Auswahl der richtigen Immobilien, Zugang zu Deal-Flow und Off-Market-Deals, Methodik für Due Diligence, Kauf und Vermietung, sowie 1:1-Coaching und Zugang zur Community. Die genauen Module und den Umfang besprechen wir im Kennenlerngespräch.' },
+  { question: 'Kann ich das Coaching vorher unverbindlich kennenlernen?', answer: 'Ja. Du kannst ein unverbindliches Kennenlerngespräch vereinbaren. Dort besprechen wir deine Ziele und ob das Coaching zu dir passt. Außerdem gilt unsere Zufriedenheitsgarantie – solltest du nach dem vereinbarten Zeitraum nicht zufrieden sein, bekommst du dein Geld zurück.' },
+  { question: 'Wie schnell kann ich starten?', answer: 'Nach dem Kennenlerngespräch und deiner Entscheidung startest du in der Regel innerhalb kurzer Zeit. Die genaue Dauer und Ablauf hängen vom gewählten Modul und deiner Verfügbarkeit ab.' },
+  { question: 'Gibt es eine Zufriedenheitsgarantie?', answer: 'Ja. Sollte dir das Coaching nach dem vereinbarten Zeitraum nicht gefallen, bekommst du dein Geld zurück. So kannst du risikofrei starten.' },
+  { question: 'Was unterscheidet dieses Coaching von anderen Angeboten?', answer: 'Die Kombination aus exklusiven Strategien, echtem Deal-Flow und Netzwerk, 1:1-Betreuung und einem durchgängigen System – von der richtigen Immobilie bis zu Kauf und Vermietung. Keine graue Theorie, sondern praxisnah und umsetzbar.' },
+  { question: 'Wie funktioniert der Zugang zum Mitgliederbereich?', answer: 'Nach deiner Buchung erhältst du Zugang zum geschützten Mitgliederbereich mit allen Inhalten, dem Netzwerk und der Community. Der Login erfolgt über die Login-Seite mit deinen Zugangsdaten.' },
+];
+
+export default function FAQSection({ primaryColor = DEFAULT_PRIMARY, secondaryColor, sectionTitle, sectionSubtitle }: { primaryColor?: string; secondaryColor?: string; sectionTitle?: string; sectionSubtitle?: string } = {}) {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const isWebsite = sectionTitle === undefined && sectionSubtitle === undefined;
+  const faqs = isWebsite ? WEBSITE_FAQS : COACHING_FAQS;
+  const faqTitle = sectionTitle ?? DEFAULT_FAQ_TITLE;
+  const faqSubtitle = sectionSubtitle ?? (isWebsite ? DEFAULT_FAQ_SUBTITLE : 'Sind bei dir noch Fragen offen?');
 
   return (
     <section className="py-20 bg-white bg-dot-pattern relative">
@@ -47,10 +42,10 @@ export default function FAQSection() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 break-words">
-              Häufige Fragen
+              {faqTitle}
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 break-words">
-              Sind bei Ihnen noch Fragen offen?
+              {faqSubtitle}
             </p>
           </div>
 
@@ -108,11 +103,12 @@ export default function FAQSection() {
 
           <div className="mt-12 text-center">
             <p className="text-gray-600 mb-4">
-              Weitere Fragen? Wir helfen Ihnen gerne weiter.
+              {isWebsite ? 'Weitere Fragen? Wir helfen Ihnen gerne weiter.' : 'Weitere Fragen? Wir helfen dir gerne weiter.'}
             </p>
             <a
               href="mailto:info@muckenfussundnagel.de"
-              className="inline-flex items-center text-[#cb530a] font-semibold hover:underline"
+              className="inline-flex items-center font-semibold hover:underline"
+              style={{ color: primaryColor }}
             >
               Kontakt aufnehmen
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

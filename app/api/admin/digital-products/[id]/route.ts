@@ -78,6 +78,7 @@ export async function PATCH(
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     const optional = [
       'type', 'title', 'slug', 'description', 'price_cents', 'image_url', 'is_published', 'sort_order', 'landing_page_sections',
+      'theme_primary_color', 'theme_secondary_color', 'landing_template',
     ] as const;
     for (const key of optional) {
       if (body[key] !== undefined) {
@@ -85,6 +86,8 @@ export async function PATCH(
         else if (key === 'is_published') updates[key] = Boolean(body[key]);
         else if (key === 'slug') updates[key] = String(body[key]).trim().toLowerCase().replace(/\s+/g, '-');
         else if (key === 'landing_page_sections') updates[key] = Array.isArray(body[key]) ? body[key] : null;
+        else if (key === 'theme_primary_color' || key === 'theme_secondary_color') updates[key] = body[key] === '' || body[key] == null ? null : String(body[key]).trim();
+        else if (key === 'landing_template') updates[key] = body[key] === 'parallax' ? 'parallax' : 'standard';
         else updates[key] = body[key];
       }
     }

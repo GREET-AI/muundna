@@ -1,13 +1,20 @@
 'use client';
 
+/**
+ * NUR FÜR DIE HAUPTSEITE (Handwerker). Fester Text/Link – keine Builder-Props.
+ * Builder/Produkt-Landingpages nutzen app/components/landing-builder/BuilderExpertiseCTABanner.
+ */
 import Link from 'next/link';
 import { getRoute } from '../utils/routes';
 import { Sparkles } from 'lucide-react';
 
+const PRIMARY = '#cb530a';
+const SECONDARY = '#a84308';
+
 export default function ExpertiseCTABanner() {
   return (
-    <section className="py-12 bg-gradient-to-r from-[#cb530a] to-[#a84308]">
-      <div className="container mx-auto px-4">
+    <section style={{ background: `linear-gradient(to right, ${PRIMARY}, ${SECONDARY})` }}>
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 md:p-8 border border-white/20 shadow-lg">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
@@ -26,7 +33,8 @@ export default function ExpertiseCTABanner() {
               </div>
               <Link
                 href={getRoute('Quiz')}
-                className="inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white text-[#cb530a] text-sm sm:text-base font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-colors whitespace-nowrap flex-shrink-0 w-full md:w-auto justify-center"
+                className="inline-flex items-center justify-center px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white text-sm sm:text-base font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-colors whitespace-nowrap flex-shrink-0 w-full md:w-auto justify-center"
+                style={{ color: PRIMARY }}
               >
                 Jetzt starten →
               </Link>

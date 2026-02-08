@@ -4,6 +4,58 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getRoute } from '../utils/routes';
+
+/** Parallax-Vorlage: Schwarze Pille unten mittig, grüner Shimmer-Rand. Items: Immobilien/Produkte, Experts, Community. */
+export type ParallaxDockItem = { title: string; href: string };
+
+const DEFAULT_PARALLAX_ITEMS: ParallaxDockItem[] = [
+  { title: 'Start', href: '/' },
+  { title: 'Immobilien', href: '/p' },
+  { title: 'Experts', href: '/experts' },
+  { title: 'Community', href: '/community' },
+];
+
+export function FloatingDockParallax({
+  items = DEFAULT_PARALLAX_ITEMS,
+  className = '',
+}: { items?: ParallaxDockItem[]; className?: string } = {}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <>
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-0 z-[35] bg-white/10 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+      />
+      <motion.div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        whileHover={{ scale: 1.06 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className="fixed bottom-6 left-1/2 z-40 mx-auto w-fit -translate-x-1/2 rounded-full p-[1px] shadow-xl sm:bottom-8"
+        style={{
+          background: 'linear-gradient(90deg, rgba(255,255,255,0.9), #C4D32A, rgba(255,255,255,0.9), #C4D32A)',
+          backgroundSize: '200% 100%',
+        }}
+      >
+        <div className={`flex h-12 items-center gap-1.5 rounded-full bg-black px-2.5 py-1.5 ${className}`}>
+          {items.map((item, i) => (
+            <Link
+              key={item.href + i}
+              href={item.href}
+              className="relative flex h-9 min-w-0 shrink-0 items-center justify-center rounded-full px-3 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              aria-label={item.title}
+              title={item.title}
+            >
+              <motion.span whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+                {item.title}
+              </motion.span>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+    </>
+  );
+}
 import {
   ChevronDown,
   Home,

@@ -232,7 +232,7 @@ export default function AdminPage() {
     name: '', description: '', price_display: '', price_period: '€/Monat', price_min: '', price_once: '', product_type: 'single', subline: '', features: [], sort_order: 0, for_package: '',
   });
   /** Digitale Produkte (Ablefy-Modul): Kurse, Downloads, Mitglieder */
-  type DpProduct = { id: string; tenant_id: string; type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string | null; price_cents: number; image_url: string | null; is_published: boolean; sort_order: number; created_at: string; updated_at: string; landing_page_sections?: import('@/types/landing-section').LandingSection[] | null };
+  type DpProduct = { id: string; tenant_id: string; type: 'course' | 'download' | 'membership'; title: string; slug: string; description: string | null; price_cents: number; image_url: string | null; is_published: boolean; sort_order: number; created_at: string; updated_at: string; landing_page_sections?: import('@/types/landing-section').LandingSection[] | null; theme_primary_color?: string | null; theme_secondary_color?: string | null; landing_template?: 'standard' | 'parallax' | null };
   type DpProductFile = { id: string; product_id: string; title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string | null; sort_order: number };
   const [dpProducts, setDpProducts] = useState<DpProduct[]>([]);
   const [dpMigrationRequired, setDpMigrationRequired] = useState(false);
@@ -244,6 +244,9 @@ export default function AdminPage() {
     type: 'course', title: '', slug: '', description: '', price_cents: 0, image_url: '', is_published: false, sort_order: 0,
   });
   const [dpFileForm, setDpFileForm] = useState<{ title: string; file_type: 'file' | 'video_url' | 'lesson'; file_url: string }>({ title: '', file_type: 'file', file_url: '' });
+  type DpPixel = { id: string; provider: string; pixel_id: string | null; name: string | null; created_at?: string };
+  const [dpPixels, setDpPixels] = useState<DpPixel[]>([]);
+  const [dpPixelForm, setDpPixelForm] = useState<{ provider: string; pixel_id: string; name: string; script_content: string }>({ provider: 'facebook', pixel_id: '', name: '', script_content: '' });
   const [dpProductSubmitting, setDpProductSubmitting] = useState(false);
   /** Digitale Produkte: Sub-Nav (nur in dieser Rubrik) – Produkte vs. Zugänge (freigeschaltete Kunden) */
   type DpEnrollment = { id: string; product_id: string; customer_email: string; access_until: string | null; created_at: string; product_title: string };
@@ -896,6 +899,7 @@ export default function AdminPage() {
       case '11880': return '11880';
       case 'google_places': return 'Google';
       case 'website_form': case 'quiz': return 'Website';
+      case 'product_quiz': return 'Produkt-Quiz';
       default: return source;
     }
   };
@@ -2182,8 +2186,19 @@ export default function AdminPage() {
                             setDpEditProduct(j.data);
                             setDpProductForm({ type: j.data.type, title: j.data.title, slug: j.data.slug, description: j.data.description || '', price_cents: j.data.price_cents ?? 0, image_url: j.data.image_url || '', is_published: j.data.is_published ?? false, sort_order: j.data.sort_order ?? 0 });
                             setDpProductDialogOpen(true);
+                            const px = await fetch(`/api/admin/digital-products/${j.data.id}/pixels`, { credentials: 'include' }).then((res) => res.json()).catch(() => ({ data: [] }));
+                            setDpPixels(px.data ?? []);
+                            setDpPixelForm({ provider: 'facebook', pixel_id: '', name: '', script_content: '' });
                           }
                         }}>Bearbeiten</Button>
+                        <Button type="button" variant="outline" size="sm" className="mr-1" onClick={async () => {
+                          const r = await fetch(`/api/admin/digital-products/${p.id}`, { credentials: 'include' });
+                          const j = await r.json();
+                          if (j.data) {
+                            setDpEditProduct(j.data);
+                            setDpLandingBuilderOpen(true);
+                          }
+                        }}>Website</Button>
                         <Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDpDeleteId(p.id)}>Löschen</Button>
                       </TableCell>
                     </TableRow>
@@ -2332,12 +2347,7 @@ export default function AdminPage() {
                   )}
                 </div>
                 <DialogFooter className="flex-wrap gap-2">
-                  {dpEditProduct && (
-                    <Button type="button" variant="outline" className="mr-auto" onClick={() => setDpLandingBuilderOpen(true)}>
-                      Landingpage gestalten
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={() => { setDpProductDialogOpen(false); setDpEditProduct(null); }} disabled={dpProductSubmitting}>Abbrechen</Button>
+                  <Button variant="outline" onClick={() => { setDpProductDialogOpen(false); setDpEditProduct(null); setDpPixels([]); }} disabled={dpProductSubmitting}>Abbrechen</Button>
                   <Button
                     className="bg-[#cb530a] hover:bg-[#a84308]"
                     disabled={dpProductSubmitting}
@@ -2358,6 +2368,7 @@ export default function AdminPage() {
                             setDpProducts(prev => prev.map(x => x.id === j.data.id ? j.data : x));
                             setDpProductDialogOpen(false);
                             setDpEditProduct(null);
+                            setDpPixels([]);
                           } else {
                             alert(j.error || 'Fehler beim Speichern.');
                           }
@@ -2371,6 +2382,7 @@ export default function AdminPage() {
                             setDpProducts(prev => [...prev, j.data]);
                             setDpProductDialogOpen(false);
                             setDpEditProduct(null);
+                            setDpPixels([]);
                           } else {
                             alert(j.error || 'Fehler beim Anlegen.');
                           }
@@ -2396,7 +2408,10 @@ export default function AdminPage() {
                 productSlug={dpEditProduct.slug}
                 productTitle={dpEditProduct.title}
                 initialSections={dpEditProduct.landing_page_sections ?? null}
-                onSaved={(sections) => setDpEditProduct(prev => prev ? { ...prev, landing_page_sections: sections } : null)}
+                initialThemePrimary={dpEditProduct.theme_primary_color ?? undefined}
+                initialThemeSecondary={dpEditProduct.theme_secondary_color ?? undefined}
+                initialLandingTemplate={dpEditProduct.landing_template ?? undefined}
+                onSaved={(sections, theme, template) => setDpEditProduct(prev => prev ? { ...prev, landing_page_sections: sections, ...(theme && { theme_primary_color: theme.theme_primary_color, theme_secondary_color: theme.theme_secondary_color }), ...(template !== undefined && { landing_template: template }) } : null)}
               />
             )}
 

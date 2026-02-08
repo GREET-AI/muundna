@@ -8,13 +8,34 @@ const HERO_BACKGROUND = '/images/Handwerker%20(2).png';
 
 export interface JetonStyleHeroSectionProps {
   headline?: string;
+  /** Zweite Zeile der Überschrift (z. B. „Unsere Expertise.“) */
+  headlineLine2?: string;
+  /** Dritte Zeile (Parallax: „finanzielle Freiheit.“ – font-bold) */
+  headlineLine3?: string;
   ctaText?: string;
   ctaHref?: string;
   secondaryCtaText?: string;
   secondaryCtaHref?: string;
+  backgroundImageUrl?: string;
+  /** Site-Logo (optional); wenn leer, wird kein Logo angezeigt */
+  logoUrl?: string;
+  /** Overlay über dem Hintergrundbild (z. B. #cb530a oder rgba) */
+  overlayColor?: string;
+  /** Farbe Haupt-Button (Hintergrund + Rahmen) */
+  buttonPrimaryColor?: string;
+  /** Farbe Sekundär-Button (Rahmen + Text) */
+  buttonSecondaryColor?: string;
+  /** Farbe Überschrift */
+  headlineColor?: string;
+  /** Schriftgröße: small | medium | large */
+  headlineFontSize?: string;
+  /** Schriftart: default | serif | sans */
+  headlineFontFamily?: string;
+  /** Parallax/ImmoSparplan-Style: grüner Gradient, Go Expert schwarz mit Shimmer */
+  variant?: 'default' | 'parallax';
 }
 
-const DEFAULT_HEADLINE_LINE1 = 'Ihr Büro. Ihr Geschäft.';
+const DEFAULT_HEADLINE_LINE1 = 'Deine Immobilien.';
 const DEFAULT_HEADLINE_LINE2 = 'Unsere Expertise.';
 const DEFAULT_CTA = 'Jetzt Anfragen';
 const DEFAULT_SECONDARY_CTA = 'Mehr erfahren';
@@ -25,94 +46,151 @@ const DEFAULT_SECONDARY_CTA = 'Mehr erfahren';
  * – Orange-Overlay und Orbs in unseren Orangetönen
  * – Headline links unten, CTA-Buttons
  */
+const OVERLAY_DEFAULT = '#cb530a';
+const BTN_PRIMARY_DEFAULT = '#cb530a';
+const BTN_SECONDARY_DEFAULT = 'rgba(255,255,255,0.9)';
+const HEADLINE_COLOR_DEFAULT = '#ffffff';
+
 export function JetonStyleHeroSection({
   headline,
+  headlineLine2,
+  headlineLine3,
   ctaText,
   ctaHref = getRoute('Quiz'),
   secondaryCtaText,
   secondaryCtaHref = getRoute('Dienstleistungen'),
+  backgroundImageUrl,
+  logoUrl,
+  overlayColor,
+  buttonPrimaryColor,
+  buttonSecondaryColor,
+  headlineColor,
+  headlineFontSize,
+  headlineFontFamily,
+  variant = 'default',
 }: JetonStyleHeroSectionProps = {}) {
+  const isParallax = variant === 'parallax';
   const line1 = headline ?? DEFAULT_HEADLINE_LINE1;
-  const line2 = DEFAULT_HEADLINE_LINE2;
-  const cta = ctaText ?? DEFAULT_CTA;
-  const secondaryCta = secondaryCtaText ?? DEFAULT_SECONDARY_CTA;
+  const line2 = headlineLine2 ?? DEFAULT_HEADLINE_LINE2;
+  const line3 = isParallax && headlineLine3 !== undefined && String(headlineLine3).trim() ? String(headlineLine3).trim() : null;
+  const cta = ctaText ?? (isParallax ? 'Go Expert' : DEFAULT_CTA);
+  const secondaryCta = secondaryCtaText ?? (isParallax ? 'Log in' : DEFAULT_SECONDARY_CTA);
+  const bgSrc = (backgroundImageUrl && backgroundImageUrl.trim()) ? backgroundImageUrl.trim() : (isParallax ? '/images/slider2/1.png' : HERO_BACKGROUND);
+  const overlay = (overlayColor && overlayColor.trim()) ? overlayColor.trim() : (isParallax ? '#60A917' : OVERLAY_DEFAULT);
+  const btnPrimary = (buttonPrimaryColor && buttonPrimaryColor.trim()) ? buttonPrimaryColor.trim() : BTN_PRIMARY_DEFAULT;
+  const btnSecondary = (buttonSecondaryColor && buttonSecondaryColor.trim()) ? buttonSecondaryColor.trim() : BTN_SECONDARY_DEFAULT;
+  const titleColor = (headlineColor && headlineColor.trim()) ? headlineColor.trim() : (isParallax ? '#000000' : HEADLINE_COLOR_DEFAULT);
+  const size = headlineFontSize === 'small' ? 'small' : headlineFontSize === 'large' ? 'large' : 'medium';
+  const fontFamily = headlineFontFamily === 'serif' ? 'var(--font-serif, Georgia, serif)' : headlineFontFamily === 'sans' ? 'var(--font-sans, system-ui, sans-serif)' : 'inherit';
+
+  const overlayStyle = isParallax
+    ? { background: `linear-gradient(to bottom right, #C4D32A, #9BCB6B, #60A917)` }
+    : { background: `linear-gradient(to bottom right, ${overlay}80, ${overlay}66, rgba(0,0,0,0.6))` };
+  const titleSizeClass = size === 'small' ? 'text-[2rem] md:text-[2.5rem] lg:text-[3rem] xl:text-[3.5rem] 2xl:text-[4rem]' : size === 'large' ? 'text-[3rem] md:text-[4rem] lg:text-[5rem] xl:text-[5.5rem] 2xl:text-[6.5rem]' : 'text-[2.5rem] md:text-[3rem] lg:text-[4rem] xl:text-[4.5rem] 2xl:text-[5.5rem]';
+  const titleSizeClassLine2 = size === 'small' ? 'text-[1.1em] md:text-[2.5rem] lg:text-[3rem]' : size === 'large' ? 'text-[1.3em] md:text-[4rem] lg:text-[5rem]' : 'text-[1.2em] md:text-[3.25rem] lg:text-[4.25rem] xl:text-[4.75rem] 2xl:text-[5.75rem]';
 
   return (
     <section className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden md:min-h-screen">
-      {/* Ebene 1 (z-0): Statisches Hintergrundbild Handwerker (2) */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src={HERO_BACKGROUND}
-          alt=""
-          fill
-          className="object-cover object-center"
-          priority
-          unoptimized
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#cb530a]/50 via-[#a84308]/40 to-black/60" />
+        {isParallax ? (
+          <>
+            <div className="absolute inset-0" style={overlayStyle} aria-hidden />
+            <div className="absolute inset-0 opacity-10" aria-hidden>
+              <Image src={bgSrc} alt="" fill className="object-cover object-center" priority unoptimized />
+            </div>
+          </>
+        ) : (
+          <>
+            <Image src={bgSrc} alt="" fill className="object-cover object-center" priority unoptimized />
+            <div className="absolute inset-0" style={overlayStyle} />
+          </>
+        )}
       </div>
 
-      {/* Schwebende Orbs – dezenter, damit Bilder besser durchscheinen */}
+      {/* Schwebende Orbs – dezenter, Theme-Farbe nutzen */}
       <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
         <div className="absolute left-[15%] top-[20%] h-64 w-64 rounded-full bg-white/10 shadow-2xl blur-xl" />
-        <div className="absolute right-[20%] top-[30%] h-48 w-48 rounded-full bg-[#cb530a]/15 shadow-xl blur-lg" />
+        <div className="absolute right-[20%] top-[30%] h-48 w-48 rounded-full shadow-xl blur-lg" style={{ backgroundColor: `${overlay}26` }} />
         <div className="absolute bottom-[25%] left-[40%] h-56 w-56 rounded-full bg-white/8 shadow-2xl blur-xl" />
-        <div className="absolute right-[10%] bottom-[20%] h-32 w-32 rounded-full bg-[#cb530a]/12 shadow-lg blur-md" />
+        <div className="absolute right-[10%] bottom-[20%] h-32 w-32 rounded-full shadow-lg blur-md" style={{ backgroundColor: `${overlay}1f` }} />
       </div>
 
-      {/* Top-Bar: Logo links, Buttons rechts – mobil/tablet kompakter, weniger gedrückt */}
+      {/* Top-Bar: Logo links (nur wenn logoUrl gesetzt), Buttons rechts */}
       <header className="relative z-20 flex w-full items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-4 md:px-8 md:py-4 md:gap-4 lg:px-12 lg:py-5 xl:px-16">
-        <Link href="/" className="flex shrink-0 items-center min-w-0 cursor-pointer" aria-label="Muckenfuss & Nagel Startseite">
-          <Image
-            src="/logotransparent.png"
-            alt="Muckenfuss & Nagel"
-            width={200}
-            height={64}
-            className="h-10 w-auto max-w-[120px] object-contain object-left drop-shadow-md sm:h-12 md:h-14 lg:h-16 xl:h-20"
-            priority
-            unoptimized
-          />
-        </Link>
+        <div className="flex shrink-0 items-center min-w-0">
+          {logoUrl?.trim() ? (
+            <Link href="/" className="cursor-pointer" aria-label="Startseite">
+              <Image
+                src={logoUrl.trim()}
+                alt="Logo"
+                width={200}
+                height={64}
+                className="h-10 w-auto max-w-[120px] object-contain object-left drop-shadow-md sm:h-12 md:h-14 lg:h-16 xl:h-20"
+                priority
+                unoptimized
+              />
+            </Link>
+          ) : null}
+        </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
           <Link
-            href={secondaryCtaHref}
-            className="rounded-lg border-2 border-white/80 bg-white/10 px-2.5 py-2 text-[11px] font-medium text-white backdrop-blur-sm hover:bg-white/20 hover:border-white sm:rounded-xl sm:px-3 sm:py-2.5 sm:text-xs md:px-4 md:py-2.5 md:text-sm lg:px-5 lg:py-3 lg:text-base cursor-pointer transition-colors"
+            href={secondaryCtaHref || '#'}
+            className="rounded-lg border-2 px-2.5 py-2 text-[11px] font-medium backdrop-blur-sm hover:bg-white/25 sm:rounded-xl sm:px-3 sm:py-2.5 sm:text-xs md:px-4 md:py-2.5 md:text-sm lg:px-5 lg:py-3 lg:text-base cursor-pointer transition-colors"
+            style={isParallax ? { borderColor: 'rgba(0,0,0,0.5)', color: 'inherit', backgroundColor: 'rgba(255,255,255,0.15)' } : { borderColor: btnSecondary, color: btnSecondary, backgroundColor: 'rgba(255,255,255,0.1)' }}
           >
             {secondaryCta}
           </Link>
           <Link
             href={ctaHref}
-            className="rounded-lg border-2 border-[#cb530a] bg-[#cb530a] px-2.5 py-2 text-[11px] font-semibold text-white shadow-lg hover:bg-[#a84308] hover:border-[#a84308] sm:rounded-xl sm:px-3 sm:py-2.5 sm:text-xs md:px-4 md:py-2.5 md:text-sm lg:px-5 lg:py-3 lg:text-base cursor-pointer transition-colors"
+            className={`rounded-lg border-2 px-2.5 py-2 text-[11px] font-semibold shadow-lg sm:rounded-xl sm:px-3 sm:py-2.5 sm:text-xs md:px-4 md:py-2.5 md:text-sm lg:px-5 lg:py-3 lg:text-base cursor-pointer transition-colors ${isParallax ? 'group relative overflow-hidden border-black/50 bg-black hover:bg-gray-900' : 'hover:opacity-90'}`}
+            style={isParallax ? { color: btnPrimary, borderColor: 'rgba(0,0,0,0.5)' } : { backgroundColor: btnPrimary, borderColor: btnPrimary, color: 'white' }}
           >
-            {cta}
+            {isParallax && <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden />}
+            <span className="relative z-10">{cta}</span>
           </Link>
         </div>
       </header>
 
-      {/* Hauptbereich: Headline + CTA – Tablet/Querformat: kleinere Schrift & Buttons, weniger gedrückt */}
+      {/* Hauptbereich: Headline + CTA – Parallax: 3 Zeilen, Zeile 1+2 font-medium, Zeile 3 font-bold */}
       <div className="relative z-10 flex flex-1 flex-col items-start justify-end px-4 pb-12 pt-2 sm:px-5 sm:pb-16 sm:pt-4 md:px-8 md:pb-20 md:-translate-y-8 lg:px-12 lg:pb-28 lg:-translate-y-12 xl:px-16 xl:pb-32 xl:-translate-y-[75px]">
         <div className="w-full max-w-full min-w-0">
-          <h1 className="text-white text-left font-bold drop-shadow-lg leading-[1.15] sm:leading-[1.2] md:leading-tight">
-            {/* Mobile: kompakt, Zeilenumbruch nach jedem Punkt */}
-            <span className="block text-[1.75rem] sm:text-[2.25rem] sm:hidden">Ihr Büro.</span>
-            <span className="block text-[1.75rem] sm:text-[2.25rem] sm:hidden">Ihr Geschäft.</span>
-            <span className="block text-[1.4rem] -mt-0.5 sm:text-[1.8rem] sm:hidden">Unsere Expertise.</span>
-            {/* Tablet (md) + Desktop: abgestufte Größen – Tablet nicht zu groß */}
-            <span className="hidden sm:block text-[2.5rem] md:text-[3rem] lg:text-[4rem] xl:text-[4.5rem] 2xl:text-[5.5rem]">{line1}</span>
-            <span className="hidden sm:block text-[1.2em] -mt-0.5 md:text-[3.25rem] lg:text-[4.25rem] xl:text-[4.75rem] 2xl:text-[5.75rem]">{line2}</span>
+          <h1
+            className={`text-left drop-shadow-lg leading-[1.15] sm:leading-[1.2] md:leading-tight ${isParallax && line3 ? 'font-medium' : 'font-bold'} ${titleSizeClass}`}
+            style={{ color: titleColor, fontFamily }}
+          >
+            {isParallax && line3 ? (
+              <>
+                <span className="block font-medium sm:hidden" style={{ fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' }}>{line1}</span>
+                <span className="block font-medium -mt-0.5 sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line2}</span>
+                <span className="block font-bold sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line3}</span>
+                <span className={`hidden sm:block font-medium ${titleSizeClass}`}>{line1}</span>
+                <span className={`hidden sm:block font-medium -mt-0.5 ${titleSizeClassLine2}`}>{line2}</span>
+                <span className={`hidden sm:block font-bold -mt-0.5 ${titleSizeClassLine2}`}>{line3}</span>
+              </>
+            ) : (
+              <>
+                <span className="block sm:hidden" style={{ fontSize: size === 'small' ? '1.5rem' : size === 'large' ? '2rem' : '1.75rem' }}>{line1}</span>
+                <span className="block -mt-0.5 sm:hidden" style={{ fontSize: size === 'small' ? '1.2rem' : size === 'large' ? '1.6rem' : '1.4rem' }}>{line2}</span>
+                <span className={`hidden sm:block ${titleSizeClass}`}>{line1}</span>
+                <span className={`hidden sm:block -mt-0.5 ${titleSizeClassLine2}`}>{line2}</span>
+              </>
+            )}
           </h1>
           <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:gap-3 sm:mt-6 md:mt-6 md:gap-4">
             <Link
-              href={secondaryCtaHref}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-white/80 bg-white/10 py-2.5 px-3.5 text-xs font-medium text-white backdrop-blur-sm hover:bg-white/20 hover:border-white sm:rounded-xl sm:py-3 sm:px-4 sm:text-sm md:py-3 md:px-5 md:text-sm lg:px-6 lg:py-3.5 lg:text-base transition-colors cursor-pointer"
+              href={secondaryCtaHref || '#'}
+              className="inline-flex items-center justify-center rounded-lg border-2 py-2.5 px-3.5 text-xs font-medium backdrop-blur-sm hover:bg-white/25 sm:rounded-xl sm:py-3 sm:px-4 sm:text-sm md:py-3 md:px-5 md:text-sm lg:px-6 lg:py-3.5 lg:text-base transition-colors cursor-pointer"
+              style={isParallax ? { borderColor: 'rgba(0,0,0,0.5)', color: 'inherit', backgroundColor: 'rgba(255,255,255,0.1)' } : { borderColor: btnSecondary, color: btnSecondary, backgroundColor: 'rgba(255,255,255,0.1)' }}
             >
               {secondaryCta}
             </Link>
             <Link
               href={ctaHref}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-[#cb530a] bg-[#cb530a] py-2.5 px-3.5 text-xs font-semibold text-white shadow-lg hover:bg-[#a84308] hover:border-[#a84308] sm:rounded-xl sm:py-3 sm:px-4 sm:text-sm md:py-3 md:px-5 md:text-sm lg:px-6 lg:py-3.5 lg:text-base transition-colors cursor-pointer"
+              className={`inline-flex items-center justify-center rounded-lg border-2 py-2.5 px-3.5 text-xs font-semibold shadow-lg sm:rounded-xl sm:py-3 sm:px-4 sm:text-sm md:py-3 md:px-5 md:text-sm lg:px-6 lg:py-3.5 lg:text-base transition-colors cursor-pointer group ${isParallax ? 'relative overflow-hidden border-black/50 bg-black hover:bg-gray-900' : 'hover:opacity-90'}`}
+              style={isParallax ? { color: btnPrimary, borderColor: 'rgba(0,0,0,0.5)' } : { backgroundColor: btnPrimary, borderColor: btnPrimary, color: 'white' }}
             >
-              {cta}
+              {isParallax && <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden />}
+              <span className="relative z-10">{cta}</span>
             </Link>
           </div>
         </div>

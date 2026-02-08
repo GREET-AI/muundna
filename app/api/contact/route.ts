@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       company: body.company || null,
       quiz_data: body.quizData || null,
       status: 'neu',
-      source: 'website_form',
+      source: (body.quizData && body.quizData.source === 'product_quiz') ? 'product_quiz' : 'website_form',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>;
