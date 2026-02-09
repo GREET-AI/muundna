@@ -5,6 +5,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const BUCKET = 'dp-product-images';
 
+/** Max. Dateigröße für Bild-Uploads (5 MB). */
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
 async function requireDigitalProductsAccess(request: NextRequest) {
   const session = getAdminSession(request);
   if (!session) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
@@ -32,8 +36,17 @@ export async function POST(request: NextRequest) {
     if (!file || !file.size) {
       return NextResponse.json({ error: 'Keine Datei' }, { status: 400 });
     }
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'Nur Bilder erlaubt' }, { status: 400 });
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'Nur JPG, PNG, GIF oder WebP erlaubt.' },
+        { status: 400 }
+      );
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: `Datei zu groß. Max. ${MAX_FILE_SIZE_BYTES / (1024 * 1024)} MB.` },
+        { status: 400 }
+      );
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';

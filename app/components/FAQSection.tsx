@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RichTextBlock } from './ui/RichTextBlock';
+import type { FaqItem } from '@/types/landing-section';
 
 const DEFAULT_PRIMARY = '#cb530a';
 
@@ -29,10 +31,11 @@ const COACHING_FAQS = [
   { question: 'Wie funktioniert der Zugang zum Mitgliederbereich?', answer: 'Nach deiner Buchung erhältst du Zugang zum geschützten Mitgliederbereich mit allen Inhalten, dem Netzwerk und der Community. Der Login erfolgt über die Login-Seite mit deinen Zugangsdaten.' },
 ];
 
-export default function FAQSection({ primaryColor = DEFAULT_PRIMARY, secondaryColor, sectionTitle, sectionSubtitle }: { primaryColor?: string; secondaryColor?: string; sectionTitle?: string; sectionSubtitle?: string } = {}) {
+export default function FAQSection({ primaryColor = DEFAULT_PRIMARY, secondaryColor, sectionTitle, sectionSubtitle, faqs: faqsProp }: { primaryColor?: string; secondaryColor?: string; sectionTitle?: string; sectionSubtitle?: string; faqs?: FaqItem[] } = {}) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const isWebsite = sectionTitle === undefined && sectionSubtitle === undefined;
-  const faqs = isWebsite ? WEBSITE_FAQS : COACHING_FAQS;
+  const isWebsite = sectionTitle === undefined && sectionSubtitle === undefined && (faqsProp == null || faqsProp.length === 0);
+  const fallbackFaqs = isWebsite ? WEBSITE_FAQS : COACHING_FAQS;
+  const faqs = Array.isArray(faqsProp) && faqsProp.length > 0 ? faqsProp : fallbackFaqs;
   const faqTitle = sectionTitle ?? DEFAULT_FAQ_TITLE;
   const faqSubtitle = sectionSubtitle ?? (isWebsite ? DEFAULT_FAQ_SUBTITLE : 'Sind bei dir noch Fragen offen?');
 
@@ -42,10 +45,10 @@ export default function FAQSection({ primaryColor = DEFAULT_PRIMARY, secondaryCo
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 break-words">
-              {faqTitle}
+              <RichTextBlock html={faqTitle} tag="span" />
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 break-words">
-              {faqSubtitle}
+              <RichTextBlock html={faqSubtitle} tag="span" />
             </p>
           </div>
 

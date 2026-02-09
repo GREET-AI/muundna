@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { getRoute } from '../utils/routes';
+import { RichTextBlock } from './ui/RichTextBlock';
 
 export type ProcessStep = {
   number: string;
@@ -62,18 +63,18 @@ export default function ProcessSection({ steps: customSteps, primaryColor = DEFA
   const defaultSubtitle = isCoaching ? COACHING_PROCESS_SUBTITLE : BUSINESS_PROCESS_SUBTITLE;
   const badge = badgeColor ?? primaryColor;
   return (
-    <section className="py-20 bg-gray-50 relative">
+    <section className="@container py-20 bg-gray-50 relative">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
-            {sectionTitle ?? defaultTitle}
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 md:mb-4 text-center break-words">
+            <RichTextBlock html={sectionTitle ?? defaultTitle} tag="span" />
           </h2>
           {!hideSubtitle && (
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto text-center mb-12">
-            {sectionSubtitle ?? defaultSubtitle}
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto text-center mb-8 md:mb-12 break-words">
+            <RichTextBlock html={sectionSubtitle ?? defaultSubtitle} tag="span" />
           </p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 @[640px]:grid-cols-2 @[1024px]:grid-cols-4 gap-6 md:gap-8">
             {steps.map((step, index) => (
               <motion.div
                 key={index}
@@ -87,13 +88,13 @@ export default function ProcessSection({ steps: customSteps, primaryColor = DEFA
                   {step.number}
                 </div>
                 <div
-                  className={step.number === '4' && expertCardParallaxStyle ? 'pt-8 pb-6 px-6 rounded-lg border-2 border-[#60A917] text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl shadow-md' : step.number === '4' ? 'pt-8 pb-6 px-6 rounded-lg border-2 border-gray-200 bg-white text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl shadow-md' : 'bg-white pt-8 pb-6 px-6 rounded-lg shadow-md border border-gray-200 text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl'}
+                  className={step.number === '4' && expertCardParallaxStyle ? 'pt-6 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-lg border-2 border-[#60A917] text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl shadow-md' : step.number === '4' ? 'pt-6 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-lg border-2 border-gray-200 bg-white text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl shadow-md' : 'bg-white pt-6 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6 rounded-lg shadow-md border border-gray-200 text-center h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-xl'}
                   style={step.number === '4' && expertCardParallaxStyle ? { background: 'linear-gradient(to bottom, #C4D32A, #9BCB6B, #60A917)' } : undefined}
                 >
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 md:mb-3 break-words">
                     {step.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 break-words">
                     {step.description}
                   </p>
                   {step.number === '4' && (

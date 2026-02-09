@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import NumberTicker from './ui/NumberTicker';
+import { RichTextBlock } from './ui/RichTextBlock';
 
 interface Stat {
   value: number;
@@ -27,12 +28,12 @@ export default function StatsSection({ stats, title, description, primaryColor =
             <div className="text-center mb-12">
               {title && (
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                  {title}
+                  <RichTextBlock html={title} tag="span" />
                 </h2>
               )}
               {description && (
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                  {description}
+                  <RichTextBlock html={description} tag="span" />
                 </p>
               )}
             </div>

@@ -212,11 +212,12 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>;
 
-    if (supabaseAdmin) {
+    const tenantSlug = (process.env.DEFAULT_TENANT_SLUG || process.env.NEXT_PUBLIC_TENANT_SLUG || body.tenant || '').trim();
+    if (supabaseAdmin && tenantSlug) {
       const { data: defaultTenant } = await supabaseAdmin
         .from('tenants')
         .select('id')
-        .eq('slug', process.env.DEFAULT_TENANT_SLUG || 'muckenfuss-nagel')
+        .eq('slug', tenantSlug)
         .limit(1)
         .maybeSingle();
       if (defaultTenant?.id) insertPayload.tenant_id = defaultTenant.id;

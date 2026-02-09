@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { getRoute } from '../utils/routes';
 import AnimatedCard3D from './ui/AnimatedCard3D';
+import { RichTextBlock } from './ui/RichTextBlock';
+import type { PricingCardItem } from '@/types/landing-section';
 
 const DEFAULT_PRIMARY = '#cb530a';
 const DEFAULT_SECONDARY = '#a84308';
@@ -67,10 +69,10 @@ const WEBSITE_PACKAGES = [
   },
 ];
 
-const COACHING_PACKAGES = [
-  { name: 'Einstieg', description: 'Systematischer Start in Immobilien als Kapitalanlage', price: 'auf Anfrage', period: '', subline: 'Ideal für Quereinsteiger', features: ['Zugang zu exklusiven Strategien und der Methodik', 'Deal-Flow & Einführung ins Netzwerk', 'Strukturierte Schritte: richtige Immobilie finden, bewerten, sichern', '1:1-Coaching-Sessions', 'Zufriedenheitsgarantie'], popular: false },
-  { name: 'Komplett-System', description: 'Alles von Strategie bis Kauf & Vermietung', price: 'auf Anfrage', period: '', includedNote: 'Empfohlen für ernsthafte Einstiege', optionalAddons: [] as { label: string; price: string; detail: string }[], features: ['Volles System: Deal-Flow, Due Diligence, Kauf, Vermietung', 'Exklusiver Zugang zu Off-Market-Deals und Netzwerk', '1:1-Betreuung und maßgeschneiderte Umsetzung', 'Community und laufender Austausch', 'Zufriedenheitsgarantie'], popular: true },
-  { name: 'Premium', description: 'Maximale Betreuung und exklusive Inhalte', price: 'auf Anfrage', period: '', features: ['Alles aus dem Komplett-System', 'Intensivere 1:1-Betreuung und Prioritätszugang', 'Individuelle Strategie und Deal-Begleitung', 'Langfristige Begleitung beim Portfolio-Aufbau', 'Zufriedenheitsgarantie'], popular: false },
+const COACHING_PACKAGES: PricingCardItem[] = [
+  { title: 'Einstieg', description: 'Systematischer Start in Immobilien als Kapitalanlage', price: 'auf Anfrage', recommendation: 'Ideal für Quereinsteiger', bulletPoints: ['Zugang zu exklusiven Strategien und der Methodik', 'Deal-Flow & Einführung ins Netzwerk', 'Strukturierte Schritte: richtige Immobilie finden, bewerten, sichern', '1:1-Coaching-Sessions', 'Zufriedenheitsgarantie'], buttonText: 'Jetzt Platz sichern', popular: false },
+  { title: 'Komplett-System', description: 'Alles von Strategie bis Kauf & Vermietung', price: 'auf Anfrage', recommendation: 'Empfohlen für ernsthafte Einstiege', bulletPoints: ['Volles System: Deal-Flow, Due Diligence, Kauf, Vermietung', 'Exklusiver Zugang zu Off-Market-Deals und Netzwerk', '1:1-Betreuung und maßgeschneiderte Umsetzung', 'Community und laufender Austausch', 'Zufriedenheitsgarantie'], buttonText: 'Jetzt Platz sichern', popular: true },
+  { title: 'Premium', description: 'Maximale Betreuung und exklusive Inhalte', price: 'auf Anfrage', recommendation: '', bulletPoints: ['Alles aus dem Komplett-System', 'Intensivere 1:1-Betreuung und Prioritätszugang', 'Individuelle Strategie und Deal-Begleitung', 'Langfristige Begleitung beim Portfolio-Aufbau', 'Zufriedenheitsgarantie'], buttonText: 'Jetzt Platz sichern', popular: false },
 ];
 
 export default function PricingSection({
@@ -78,25 +80,31 @@ export default function PricingSection({
   secondaryColor = DEFAULT_SECONDARY,
   sectionTitle,
   sectionSubtitle,
-}: { primaryColor?: string; secondaryColor?: string; sectionTitle?: string; sectionSubtitle?: string } = {}) {
-  const isWebsite = sectionTitle === undefined;
+  pricingCards: pricingCardsProp,
+}: { primaryColor?: string; secondaryColor?: string; sectionTitle?: string; sectionSubtitle?: string; pricingCards?: PricingCardItem[] } = {}) {
+  const isWebsite = sectionTitle === undefined && !pricingCardsProp?.length;
   const title = sectionTitle ?? (isWebsite ? WEBSITE_TITLE : COACHING_TITLE);
   const subtitle = sectionSubtitle ?? (isWebsite ? WEBSITE_SUBTITLE : COACHING_SUBTITLE);
-  const packages = isWebsite ? WEBSITE_PACKAGES : COACHING_PACKAGES;
+  const useBuilderCards = Array.isArray(pricingCardsProp) && pricingCardsProp.length > 0;
+  const packages = useBuilderCards
+    ? pricingCardsProp.map((c) => ({ name: c.title, description: c.description, price: c.price, period: '' as string, subline: c.recommendation ?? '', features: c.bulletPoints ?? [], popular: c.popular ?? false, buttonText: c.buttonText }))
+    : isWebsite
+      ? WEBSITE_PACKAGES
+      : COACHING_PACKAGES.map((c) => ({ name: c.title, description: c.description, price: c.price, period: '', subline: c.recommendation ?? '', features: c.bulletPoints, popular: c.popular ?? false, buttonText: c.buttonText }));
 
   return (
-    <section id="pricing" className="py-20 bg-white bg-dot-pattern relative">
+    <section id="pricing" className="@container py-20 bg-white bg-dot-pattern relative">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            {title}
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-3 md:mb-4 break-words">
+            <RichTextBlock html={title} tag="span" />
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {subtitle}
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto break-words">
+            <RichTextBlock html={subtitle} tag="span" />
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 @[640px]:grid-cols-2 @[1024px]:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
           {packages.map((pkg, index) => (
             <motion.div
               key={index}
@@ -113,15 +121,15 @@ export default function PricingSection({
               )}
               <AnimatedCard3D>
                 <div className={`bg-white rounded-lg shadow-xl border-2 h-full flex flex-col ${pkg.popular ? '' : 'border-gray-200'}`} style={pkg.popular ? { borderColor: primaryColor } : undefined}>
-                  <div className="p-8 flex-grow">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  <div className="p-4 sm:p-6 md:p-8 flex-grow">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 break-words">
                       {pkg.name}
                     </h3>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 text-sm sm:text-base mb-4 md:mb-6 break-words">
                       {pkg.description}
                     </p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold text-gray-800">
+                    <div className="mb-4 md:mb-6">
+                      <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
                         {pkg.price}
                       </span>
                       {pkg.period && (
@@ -132,9 +140,9 @@ export default function PricingSection({
                       {'subline' in pkg && pkg.subline && (
                         <p className="text-sm text-gray-500 mt-2">{pkg.subline}</p>
                       )}
-                      {'includedNote' in pkg && pkg.includedNote && (
-                        <p className="text-sm text-gray-600 mt-2">{pkg.includedNote}</p>
-                      )}
+                      {'includedNote' in pkg && pkg.includedNote ? (
+                        <p className="text-sm text-gray-600 mt-2">{String(pkg.includedNote)}</p>
+                      ) : null}
                       {'optionalAddons' in pkg && Array.isArray(pkg.optionalAddons) && pkg.optionalAddons.length > 0 && (
                         <div className="mt-2 text-xs">
                           <p className="text-gray-500 font-medium mb-1">Zusätzlich buchbar:</p>
@@ -158,7 +166,11 @@ export default function PricingSection({
                     </ul>
                   </div>
                   <div className="p-8 pt-0">
-                    {isWebsite ? (
+                    {'buttonText' in pkg && pkg.buttonText ? (
+                      <Link href="#" className="block w-full text-center px-6 py-3 text-white font-semibold rounded-lg shadow-lg transition-colors hover:opacity-90" style={{ backgroundColor: primaryColor }}>
+                        {pkg.buttonText}
+                      </Link>
+                    ) : isWebsite ? (
                       index === 2 ? (
                         <Link href="/kontakt/enterprise-konfigurator" className="block w-full text-center px-6 py-3 text-white font-semibold rounded-lg shadow-lg transition-colors hover:opacity-90" style={{ backgroundColor: primaryColor }}>
                           Jetzt zusammenstellen
@@ -203,13 +215,15 @@ export default function PricingSection({
               </p>
             </>
           )}
-          <p className="text-gray-600 text-sm">
-            {isWebsite ? 'Individuelle Kombinationen möglich. ' : ''}
-            <Link href={getRoute('Kontakt')} className="hover:underline ml-1" style={{ color: primaryColor }}>
-              {isWebsite ? 'Kontaktieren Sie uns' : 'Kontakt aufnehmen'}
-            </Link>
-            {isWebsite ? ' für ein maßgeschneidertes Angebot.' : ' für ein maßgeschneidertes Coaching-Angebot.'}
-          </p>
+          {isWebsite && (
+            <p className="text-gray-600 text-sm">
+              Individuelle Kombinationen möglich.{' '}
+              <Link href={getRoute('Kontakt')} className="hover:underline ml-1" style={{ color: primaryColor }}>
+                Kontaktieren Sie uns
+              </Link>
+              {' '}für ein maßgeschneidertes Angebot.
+            </p>
+          )}
         </div>
       </div>
     </section>

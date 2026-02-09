@@ -10,7 +10,8 @@ import {
   MessageSquare, TrendingUp, BarChart3, User,
   Contact, Euro, Target, Briefcase, FolderKanban, ChevronRight, ChevronLeft,
   Globe, ExternalLink, Loader2, ChevronDown, ChevronUp, Star, Upload, History,
-  Flame, AtSign, UserCircle, LogOut, BookOpen, Trash2, GraduationCap, Download, KeyRound, Package, Plus
+  Flame, AtSign, UserCircle, LogOut, BookOpen, Trash2, GraduationCap, Download, KeyRound, Package, Plus,
+  Eye, FileEdit
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -1576,6 +1577,19 @@ export default function AdminPage() {
                 <span className="text-[10px] leading-tight text-center font-medium">Start</span>
               </button>
             </div>
+            {/* Create – Meine Homepage (gleiches Styling wie andere Blöcke) */}
+            <div className="w-full rounded-xl border border-neutral-300 bg-white px-2 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">Create</p>
+              <button
+                type="button"
+                onClick={() => setActiveNav('create-homepage')}
+                className={`w-full flex flex-col items-center gap-0.5 py-2 px-1 rounded-md transition-transform duration-200 ${activeNav === 'create-homepage' ? 'text-[#cb530a]' : 'text-neutral-700 hover:scale-105'}`}
+                title="Startseite bearbeiten"
+              >
+                <Globe className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] leading-tight text-center font-medium max-w-full truncate px-0.5">Meine Homepage</span>
+              </button>
+            </div>
             {/* 2. CRM – angenehmes Hellgrau */}
             <div className="w-full rounded-xl border border-neutral-300 bg-neutral-100 px-2 py-4">
               <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-700 text-center py-1.5">CRM</p>
@@ -1776,8 +1790,47 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Content: Startseite (nach Login), dann Team, Kalender, Digitale Produkte, … */}
-        {activeNav === 'start' ? (
+        {/* Content: Startseite (nach Login), Create Homepage, Team, Kalender, Digitale Produkte, … */}
+        {activeNav === 'create-homepage' ? (
+          <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
+            <div className="max-w-2xl">
+              <h2 className="text-lg font-semibold text-foreground mb-1">Meine Homepage</h2>
+              <p className="text-sm text-muted-foreground mb-4">Deine aktuelle Homepage bearbeiten, Vorschau anzeigen und veröffentlichen.</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-[#cb530a]/50 text-[#cb530a] hover:bg-[#cb530a]/10 h-9"
+                  onClick={() => window.open('/', '_blank')}
+                >
+                  <Eye className="w-4 h-4 mr-1.5" />
+                  Vorschau
+                </Button>
+                <Link href="/admin/create/homepage/edit">
+                  <Button size="sm" className="bg-[#cb530a] hover:bg-[#a84308] h-9">
+                    <FileEdit className="w-4 h-4 mr-1.5" />
+                    Bearbeiten
+                  </Button>
+                </Link>
+                <Button
+                  size="sm"
+                  className="bg-[#cb530a] hover:bg-[#a84308] h-9"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/admin/homepage', { method: 'GET', credentials: 'include' });
+                      const { data } = await res.json();
+                      if (!data?.json_data) return;
+                      await fetch('/api/admin/homepage', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, is_published: true }) });
+                    } catch {}
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-1.5" />
+                  Veröffentlichen
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : activeNav === 'start' ? (
           <div className="min-h-[calc(100vh-4rem)] flex flex-col">
             {/* Hero-Banner (ohne Bild, nur Verlauf) */}
             <div className="shrink-0 mx-4 sm:mx-6 mt-4 rounded-2xl overflow-hidden shadow-lg">

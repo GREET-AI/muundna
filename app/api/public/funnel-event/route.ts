@@ -45,7 +45,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'sessionId fehlt' }, { status: 400 });
     }
 
-    const tenantSlug = process.env.NEXT_PUBLIC_TENANT_SLUG || 'muckenfuss-nagel';
+    // Tenant aus Body (z. B. Frontend sendet tenant mit) oder Env – kein Hardcode.
+    const tenantSlug = (body as { tenant?: string }).tenant?.trim() || process.env.NEXT_PUBLIC_TENANT_SLUG || null;
+    if (!tenantSlug) {
+      return NextResponse.json({ error: 'tenant fehlt' }, { status: 400 });
+    }
     const { data: tenant } = await supabaseAdmin
       .from('tenants')
       .select('id')

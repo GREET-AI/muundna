@@ -11,7 +11,8 @@ export async function GET(
     if (!slug) return NextResponse.json({ error: 'Slug fehlt' }, { status: 400 });
     if (!supabaseAdmin) return NextResponse.json({ error: 'Nicht konfiguriert' }, { status: 500 });
 
-    const tenantSlug = process.env.NEXT_PUBLIC_TENANT_SLUG || 'muckenfuss-nagel';
+    const tenantSlug = request.nextUrl.searchParams.get('tenant')?.trim() || process.env.NEXT_PUBLIC_TENANT_SLUG || null;
+    if (!tenantSlug) return NextResponse.json({ error: 'tenant fehlt' }, { status: 400 });
     const { data: tenant } = await supabaseAdmin.from('tenants').select('id').eq('slug', tenantSlug).single();
     if (!tenant) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 

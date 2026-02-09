@@ -24,6 +24,7 @@ import {
   Heading1,
   Heading2,
   Palette,
+  PaintBucket,
   ImageIcon,
   Image as ImageLucide,
   AlignLeft,
@@ -32,6 +33,7 @@ import {
   Highlighter,
   FileEdit,
   Plus,
+  LayoutGrid,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -42,11 +44,12 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/app/components/ui/dialog';
-import type { LandingSection, LandingSectionType, LandingTemplate, TestimonialItem } from '@/types/landing-section';
+import type { LandingSection, LandingSectionType, LandingTemplate, TestimonialItem, TargetGroupItem, ServiceItem, BenefitItem, PricingCardItem, ProcessStepItem, FaqItem, BeratungProcessStepItem, StatItem } from '@/types/landing-section';
 import { LANDING_ELEMENT_DEFINITIONS, SECTION_PREVIEW_IMAGES, SECTION_PREVIEW_IMAGES_PARALLAX, SECTION_TYPES_BY_TEMPLATE, getSectionLabel, getEditablePropsForSection, getDefaultPropsForSection, getElementKindsForProps, getPropsByKind, ELEMENT_KIND_LABELS, type EditablePropDef, type ElementKindId } from '@/types/landing-section';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
+import { RichTextEditor } from '@/app/components/ui/RichTextEditor';
 import { BarChart3 } from 'lucide-react';
 
 /** Icons pro Element-Kategorie (Toolbar beim Bearbeiten einer Sektion). */
@@ -58,16 +61,26 @@ const ELEMENT_KIND_ICONS: Record<ElementKindId, typeof LayoutTemplate> = {
   section_title: Heading2,
   section_subtitle: AlignLeft,
   marquee: Layers,
+  marquee_style: PaintBucket,
+  target_groups_cards: LayoutGrid,
+  services_cards: LayoutGrid,
+  benefits_cards: LayoutGrid,
+  pricing_cards: LayoutGrid,
+  process_cards: ListOrdered,
+  faq_items: HelpCircle,
   cta: MousePointerClick,
   testimonials: MessageSquare,
   testimonials_slider_images: ImageLucide,
   copyright: Copyright,
   highlight: Highlighter,
+  beratung_headline: Heading1,
+  beratung_process: ListOrdered,
+  beratung_stats: BarChart3,
   other: FileEdit,
 };
 
-/** Claim Parallax: Nur 2 Headlines + CTA, dann pro Card eigene Felder */
-const CLAIM_PARALLAX_HEADLINE_KEYS = ['claimHeadlineLine1', 'claimHeadlineLine2', 'ctaText'] as const;
+/** Claim Parallax: Nur 2 Headlines + CTA + Sidebar-Text, dann pro Card eigene Felder */
+const CLAIM_PARALLAX_HEADLINE_KEYS = ['claimHeadlineLine1', 'claimHeadlineLine2', 'ctaText', 'listPhaseSidebarText'] as const;
 const CLAIM_PARALLAX_CARD_KEYS: readonly (readonly string[])[] = [
   ['card1ImageUrl', 'cardLabel1', 'card1TrustText', 'card1ButtonText', 'card1TextColor', 'card1TextSize', 'card1Icon', 'card1IconColor'],
   ['cardLabel2', 'card2Line1', 'card2Line2', 'card2StatusText', 'card2TextColor', 'card2TextSize', 'card2Icon', 'card2IconColor'],
@@ -96,6 +109,19 @@ const ELEMENT_ICONS: Record<LandingSectionType, typeof LayoutTemplate> = {
   website_stacked_sheets: LayoutTemplate,
   website_images_slider: Eye,
 };
+
+/** Bild-Upload: max. Größe und erlaubte Formate (wie API). */
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const IMAGE_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp';
+const IMAGE_UPLOAD_HINT = 'JPG, PNG, GIF oder WebP · max. 5 MB';
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+function validateImageFile(file: File): string | null {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return 'Nur JPG, PNG, GIF oder WebP erlaubt.';
+  if (file.size > MAX_IMAGE_SIZE_BYTES) return `Datei zu groß. Max. ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)} MB.`;
+  return null;
+}
 
 function getSectionPreviewSrc(type: LandingSectionType, template: LandingTemplate): string | undefined {
   return (template === 'parallax' && SECTION_PREVIEW_IMAGES_PARALLAX[type]) ? SECTION_PREVIEW_IMAGES_PARALLAX[type] : SECTION_PREVIEW_IMAGES[type];
@@ -157,14 +183,16 @@ function SectionRowPreview({ type, template, fullHeight = false }: { type: Landi
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  productId: string;
-  productSlug: string;
-  productTitle: string;
+  productId?: string | null;
+  productSlug?: string | null;
+  productTitle?: string | null;
   initialSections: LandingSection[] | null;
   initialThemePrimary?: string | null;
   initialThemeSecondary?: string | null;
   initialLandingTemplate?: LandingTemplate | null;
   onSaved: (sections: LandingSection[], theme?: { theme_primary_color: string | null; theme_secondary_color: string | null }, template?: LandingTemplate) => void;
+  /** Homepage-Modus: Laden/Speichern über /api/admin/homepage, Vorschau = /. Kein Pixel-Tab. */
+  homepageMode?: boolean;
 };
 
 const DEFAULT_PRIMARY = '#cb530a';
@@ -183,7 +211,7 @@ function inferTemplate(sections: LandingSection[]): LandingTemplate {
 export function LandingPageBuilder({
   open,
   onOpenChange,
-  productId,
+  productId: productIdProp,
   productSlug,
   productTitle,
   initialSections,
@@ -191,7 +219,9 @@ export function LandingPageBuilder({
   initialThemeSecondary,
   initialLandingTemplate,
   onSaved,
+  homepageMode = false,
 }: Props) {
+  const productId = homepageMode ? null : (productIdProp ?? null);
   const [sections, setSections] = useState<LandingSection[]>(() =>
     Array.isArray(initialSections) && initialSections.length > 0
       ? initialSections
@@ -209,6 +239,14 @@ export function LandingPageBuilder({
   const [selectedElementKind, setSelectedElementKind] = useState<ElementKindId | null>(null);
   const [selectedClaimParallaxCard, setSelectedClaimParallaxCard] = useState<number | null>(null);
   const [selectedTestimonialIndex, setSelectedTestimonialIndex] = useState<number | null>(null);
+  const [selectedTargetGroupIndex, setSelectedTargetGroupIndex] = useState<number | null>(null);
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null);
+  const [selectedBenefitIndex, setSelectedBenefitIndex] = useState<number | null>(null);
+  const [selectedPricingIndex, setSelectedPricingIndex] = useState<number | null>(null);
+  const [selectedProcessStepIndex, setSelectedProcessStepIndex] = useState<number | null>(null);
+  const [selectedFaqIndex, setSelectedFaqIndex] = useState<number | null>(null);
+  const [selectedBeratungProcessStepIndex, setSelectedBeratungProcessStepIndex] = useState<number | null>(null);
+  const [selectedBeratungStatIndex, setSelectedBeratungStatIndex] = useState<number | null>(null);
   const optionsPanelRef = useRef<HTMLDivElement>(null);
   const pipelineListRef = useRef<HTMLDivElement>(null);
 
@@ -226,11 +264,17 @@ export function LandingPageBuilder({
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [selectedSectionIndex]);
 
-  /** Beim Wechsel der Sektion: Element-Kategorie, Claim-Card und Testimonial zurücksetzen */
+  /** Beim Wechsel der Sektion: Element-Kategorie, Claim-Card, Testimonial und Zielgruppen-Card zurücksetzen */
   useEffect(() => {
     setSelectedElementKind(null);
     setSelectedClaimParallaxCard(null);
     setSelectedTestimonialIndex(null);
+    setSelectedTargetGroupIndex(null);
+    setSelectedServiceIndex(null);
+    setSelectedBenefitIndex(null);
+    setSelectedPricingIndex(null);
+    setSelectedProcessStepIndex(null);
+    setSelectedFaqIndex(null);
   }, [selectedSectionIndex]);
   type PixelRow = { id: string; provider: string; pixel_id: string | null; name: string | null };
   const [pixels, setPixels] = useState<PixelRow[]>([]);
@@ -323,6 +367,27 @@ export function LandingPageBuilder({
   const save = async () => {
     setSaving(true);
     try {
+      if (homepageMode) {
+        const res = await fetch('/api/admin/homepage', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Startseite',
+            json_data: { title: 'Startseite', components: sections },
+          }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (j.data) {
+          const comp = (j.data.json_data && (j.data.json_data as { components?: LandingSection[] }).components) ?? sections;
+          onSaved(Array.isArray(comp) ? comp : sections);
+          setHasSavedOnce(true);
+        } else {
+          alert(j.error || 'Speichern fehlgeschlagen.');
+        }
+        setSaving(false);
+        return;
+      }
       const res = await fetch(`/api/admin/digital-products/${productId}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -360,21 +425,27 @@ export function LandingPageBuilder({
     }
   };
 
-  /** Vorschau in neuem Tab öffnen – echte Seite, Scroll funktioniert immer (wie bei anderen Buildern). */
+  /** Vorschau in neuem Tab öffnen – echte Seite. Homepage: /, sonst Landing-Vorschau. */
   const openPreview = useCallback(() => {
+    if (homepageMode) {
+      window.open('/', '_blank', 'noopener,noreferrer');
+      return;
+    }
     if (!productSlug?.trim()) return;
     const url = `/admin/preview-landing/${encodeURIComponent(productSlug)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
-  }, [productSlug]);
+  }, [productSlug, homepageMode]);
 
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Landingpage gestalten</DialogTitle>
+          <DialogTitle>{homepageMode ? 'Homepage gestalten' : 'Landingpage gestalten'}</DialogTitle>
           <DialogDescription>
-            Elemente auswählen und per Drag &amp; Drop anordnen. Die Vorschau zeigt die öffentliche Seite für „{productTitle}“.
+            {homepageMode
+              ? 'Elemente auswählen und per Drag & Drop anordnen. Die Vorschau zeigt Ihre Startseite (/).'
+              : `Elemente auswählen und per Drag &amp; Drop anordnen. Die Vorschau zeigt die öffentliche Seite für „${productTitle ?? ''}“.`}
           </DialogDescription>
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className="text-xs font-medium text-muted-foreground">Vorlage:</span>
@@ -454,12 +525,12 @@ export function LandingPageBuilder({
               <p className="text-[11px] text-muted-foreground">Eine Änderung gilt für die gesamte Landingpage (Buttons, Akzente).</p>
                 <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <Label className="text-[10px] shrink-0">{template === 'parallax' ? 'Primary' : 'Primär'}</Label>
+                  <Label className="text-[10px] font-semibold shrink-0">{template === 'parallax' ? 'Primary' : 'Primär'}</Label>
                   <input type="color" value={themePrimary} onChange={(e) => setThemePrimary(e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
                   <Input value={themePrimary} onChange={(e) => setThemePrimary(e.target.value)} className="w-24 h-8 text-xs font-mono" placeholder={template === 'parallax' ? '#C4D32A' : '#cb530a'} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label className="text-[10px] shrink-0">{template === 'parallax' ? 'Primary Dark' : 'Sekundär'}</Label>
+                  <Label className="text-[10px] font-semibold shrink-0">{template === 'parallax' ? 'Primary Dark' : 'Sekundär'}</Label>
                   <input type="color" value={themeSecondary} onChange={(e) => setThemeSecondary(e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
                   <Input value={themeSecondary} onChange={(e) => setThemeSecondary(e.target.value)} className="w-24 h-8 text-xs font-mono" placeholder={template === 'parallax' ? '#60A917' : '#f0e6e0'} />
                 </div>
@@ -561,14 +632,14 @@ export function LandingPageBuilder({
                           {/* Claim Parallax: Headline (2 Zeilen) + 4 Card-Buttons, dann Card-Felder */}
                           {sec.type === 'website_claim_parallax' ? (
                             <>
-                              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Headline (2 Zeilen) &amp; CTA</p>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Headline (2 Zeilen) &amp; CTA</p>
                               <div className="space-y-2">
                                 {editableProps.filter((f) => (CLAIM_PARALLAX_HEADLINE_KEYS as readonly string[]).includes(f.key)).map((field: EditablePropDef) => {
                                   const rawValue = sec.props[field.key];
                                   const value = (rawValue as string) ?? '';
                                   return (
                                     <div key={field.key}>
-                                      <Label className="text-[10px]">{field.label}</Label>
+                                      <Label className="text-[10px] font-semibold">{field.label}</Label>
                                       {field.type === 'textarea' ? (
                                         <Textarea value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} rows={2} className="mt-0.5 text-xs h-16" />
                                       ) : (
@@ -578,7 +649,7 @@ export function LandingPageBuilder({
                                   );
                                 })}
                               </div>
-                              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider pt-2 border-t border-neutral-100">Card wählen</p>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider pt-2 border-t border-neutral-100">Card wählen</p>
                               <div className="flex flex-wrap gap-1.5">
                                 {[0, 1, 2, 3].map((cardIdx) => (
                                   <button
@@ -602,7 +673,7 @@ export function LandingPageBuilder({
                                       if (field.type === 'textarea') {
                                         return (
                                           <div key={field.key}>
-                                            <Label className="text-[10px]">{field.label}</Label>
+                                            <Label className="text-[10px] font-semibold">{field.label}</Label>
                                             <Textarea value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} rows={2} className="mt-0.5 text-xs h-16" />
                                           </div>
                                         );
@@ -610,7 +681,7 @@ export function LandingPageBuilder({
                                       if (field.type === 'color') {
                                         return (
                                           <div key={field.key} className="flex items-center gap-2">
-                                            <Label className="text-[10px] w-28 shrink-0">{field.label}</Label>
+                                            <Label className="text-[10px] font-semibold w-28 shrink-0">{field.label}</Label>
                                             <input type="color" value={value || '#000000'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
                                             <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="flex-1 h-8 text-xs font-mono" placeholder="#000000" />
                                           </div>
@@ -619,7 +690,7 @@ export function LandingPageBuilder({
                                       if (field.type === 'image') {
                                         return (
                                           <div key={field.key}>
-                                            <Label className="text-[10px]">{field.label}</Label>
+                                            <Label className="text-[10px] font-semibold">{field.label}</Label>
                                             <div className="mt-0.5 flex flex-wrap items-center gap-2">
                                               {value ? (
                                                 <div className="flex items-center gap-2">
@@ -630,11 +701,13 @@ export function LandingPageBuilder({
                                               <label className="cursor-pointer">
                                                 <input
                                                   type="file"
-                                                  accept="image/*"
+                                                  accept={IMAGE_ACCEPT}
                                                   className="sr-only"
                                                   onChange={async (e) => {
                                                     const file = e.target.files?.[0];
                                                     if (!file) return;
+                                                    const err = validateImageFile(file);
+                                                    if (err) { alert(err); e.target.value = ''; return; }
                                                     const fd = new FormData();
                                                     fd.append('file', file);
                                                     try {
@@ -651,12 +724,13 @@ export function LandingPageBuilder({
                                                 </span>
                                               </label>
                                             </div>
+                                            <p className="mt-1 text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
                                           </div>
                                         );
                                       }
                                       return (
                                         <div key={field.key}>
-                                          <Label className="text-[10px]">{field.label}</Label>
+                                          <Label className="text-[10px] font-semibold">{field.label}</Label>
                                           <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 text-xs" />
                                         </div>
                                       );
@@ -667,16 +741,144 @@ export function LandingPageBuilder({
                             </>
                           ) : (
                             <>
-                          {/* Icon-Toolbar: nur Kategorien, die in dieser Sektion vorkommen */}
+                          {/* Icon-Toolbar: nur Kategorien, die in dieser Sektion vorkommen. Zielgruppen: 4 Card-Buttons direkt. */}
                           <div className="flex flex-wrap items-center gap-1.5">
-                            {getElementKindsForProps(editableProps).map((kind) => {
+                            {getElementKindsForProps(editableProps, sec.type as LandingSectionType).map((kind) => {
+                              if (sec.type === 'website_target_groups' && kind === 'target_groups_cards') {
+                                return [0, 1, 2, 3].map((cardIdx) => {
+                                  const isActive = selectedElementKind === 'target_groups_cards' && selectedTargetGroupIndex === cardIdx;
+                                  return (
+                                    <button
+                                      key={`card-${cardIdx}`}
+                                      type="button"
+                                      onClick={() => { setSelectedElementKind('target_groups_cards'); setSelectedTargetGroupIndex(isActive ? null : cardIdx); setSelectedTestimonialIndex(null); setSelectedServiceIndex(null); setSelectedBenefitIndex(null); setSelectedPricingIndex(null); setSelectedProcessStepIndex(null); setSelectedFaqIndex(null); }}
+                                      title={`Card ${cardIdx + 1}`}
+                                      className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                    >
+                                      Card {cardIdx + 1}
+                                    </button>
+                                  );
+                                });
+                              }
+                              if (sec.type === 'website_services' && kind === 'services_cards') {
+                                return [0, 1, 2, 3, 4, 5].map((cardIdx) => {
+                                  const isActive = selectedElementKind === 'services_cards' && selectedServiceIndex === cardIdx;
+                                  return (
+                                    <button
+                                      key={`service-card-${cardIdx}`}
+                                      type="button"
+                                      onClick={() => { setSelectedElementKind('services_cards'); setSelectedServiceIndex(isActive ? null : cardIdx); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedBenefitIndex(null); setSelectedPricingIndex(null); setSelectedProcessStepIndex(null); setSelectedFaqIndex(null); }}
+                                      title={`Card ${cardIdx + 1}`}
+                                      className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                    >
+                                      Card {cardIdx + 1}
+                                    </button>
+                                  );
+                                });
+                              }
+                              if (sec.type === 'website_benefits' && kind === 'benefits_cards') {
+                                return [0, 1, 2, 3, 4, 5].map((cardIdx) => {
+                                  const isActive = selectedElementKind === 'benefits_cards' && selectedBenefitIndex === cardIdx;
+                                  return (
+                                    <button
+                                      key={`benefit-card-${cardIdx}`}
+                                      type="button"
+                                      onClick={() => { setSelectedElementKind('benefits_cards'); setSelectedBenefitIndex(isActive ? null : cardIdx); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedServiceIndex(null); setSelectedPricingIndex(null); setSelectedProcessStepIndex(null); setSelectedFaqIndex(null); }}
+                                      title={`Card ${cardIdx + 1}`}
+                                      className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                    >
+                                      Card {cardIdx + 1}
+                                    </button>
+                                  );
+                                });
+                              }
+                              if (sec.type === 'website_pricing' && kind === 'pricing_cards') {
+                                return [0, 1, 2].map((cardIdx) => {
+                                  const isActive = selectedElementKind === 'pricing_cards' && selectedPricingIndex === cardIdx;
+                                  return (
+                                    <button
+                                      key={`pricing-card-${cardIdx}`}
+                                      type="button"
+                                      onClick={() => { setSelectedElementKind('pricing_cards'); setSelectedPricingIndex(isActive ? null : cardIdx); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedServiceIndex(null); setSelectedBenefitIndex(null); setSelectedProcessStepIndex(null); setSelectedFaqIndex(null); }}
+                                      title={`Card ${cardIdx + 1}`}
+                                      className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                    >
+                                      Card {cardIdx + 1}
+                                    </button>
+                                  );
+                                });
+                              }
+                              if (sec.type === 'website_process' && kind === 'process_cards') {
+                                return [0, 1, 2, 3].map((cardIdx) => {
+                                  const isActive = selectedElementKind === 'process_cards' && selectedProcessStepIndex === cardIdx;
+                                  return (
+                                    <button
+                                      key={`process-card-${cardIdx}`}
+                                      type="button"
+                                      onClick={() => { setSelectedElementKind('process_cards'); setSelectedProcessStepIndex(isActive ? null : cardIdx); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedServiceIndex(null); setSelectedBenefitIndex(null); setSelectedPricingIndex(null); setSelectedFaqIndex(null); }}
+                                      title={`Card ${cardIdx + 1}`}
+                                      className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                    >
+                                      Card {cardIdx + 1}
+                                    </button>
+                                  );
+                                });
+                              }
+                              if (sec.type === 'website_faq' && kind === 'faq_items') {
+                                const rawFaqs = (Array.isArray(sec.props.faqs) ? sec.props.faqs : []) as FaqItem[];
+                                return (
+                                  <div key="faq-tabs" className="flex flex-wrap items-center gap-1">
+                                    {rawFaqs.map((faq, faqIdx) => {
+                                      const isActive = selectedElementKind === 'faq_items' && selectedFaqIndex === faqIdx;
+                                      return (
+                                        <div key={`faq-${faqIdx}`} className="flex items-center gap-0.5 shrink-0">
+                                          <button
+                                            type="button"
+                                            onClick={() => { setSelectedElementKind('faq_items'); setSelectedFaqIndex(isActive ? null : faqIdx); setSelectedProcessStepIndex(null); setSelectedPricingIndex(null); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedServiceIndex(null); setSelectedBenefitIndex(null); }}
+                                            title={faq.question?.slice(0, 40) || `Frage ${faqIdx + 1}`}
+                                            className={`max-w-[100px] truncate px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}
+                                          >
+                                            {faq.question?.trim() ? faq.question.slice(0, 12) + '…' : `Frage ${faqIdx + 1}`}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            title="Frage löschen"
+                                            className="p-1 rounded border border-neutral-200 text-neutral-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                            onClick={() => {
+                                              const next = rawFaqs.filter((_, j) => j !== faqIdx);
+                                              updateSectionProp(index, 'faqs', next);
+                                              setSelectedFaqIndex(selectedFaqIndex === faqIdx ? (next.length > 0 ? Math.min(faqIdx, next.length - 1) : null) : selectedFaqIndex !== null && selectedFaqIndex > faqIdx ? selectedFaqIndex - 1 : selectedFaqIndex);
+                                            }}
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                    <button
+                                      type="button"
+                                      title="Neue Frage hinzufügen"
+                                      className="shrink-0 p-1.5 rounded-md border border-dashed border-neutral-300 bg-white text-neutral-500 hover:bg-[#cb530a]/10 hover:border-[#cb530a]/50 hover:text-[#cb530a]"
+                                      onClick={() => {
+                                        const next = [...rawFaqs, { question: 'Neue Frage', answer: '' }];
+                                        updateSectionProp(index, 'faqs', next);
+                                        setSelectedElementKind('faq_items');
+                                        setSelectedFaqIndex(next.length - 1);
+                                        setSelectedProcessStepIndex(null); setSelectedPricingIndex(null); setSelectedTestimonialIndex(null); setSelectedTargetGroupIndex(null); setSelectedServiceIndex(null); setSelectedBenefitIndex(null);
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                );
+                              }
                               const Icon = ELEMENT_KIND_ICONS[kind];
                               const isActive = selectedElementKind === kind;
                               return (
                                 <button
                                   key={kind}
                                   type="button"
-                                  onClick={() => { setSelectedElementKind(isActive ? null : kind); if (kind !== 'testimonials') setSelectedTestimonialIndex(null); }}
+                                  onClick={() => { setSelectedElementKind(isActive ? null : kind); if (kind !== 'testimonials') setSelectedTestimonialIndex(null); if (kind !== 'target_groups_cards') setSelectedTargetGroupIndex(null); if (kind !== 'services_cards') setSelectedServiceIndex(null); if (kind !== 'benefits_cards') setSelectedBenefitIndex(null); if (kind !== 'pricing_cards') setSelectedPricingIndex(null); if (kind !== 'process_cards') setSelectedProcessStepIndex(null); if (kind !== 'faq_items') setSelectedFaqIndex(null); if (kind !== 'beratung_process') setSelectedBeratungProcessStepIndex(null); if (kind !== 'beratung_stats') setSelectedBeratungStatIndex(null); }}
                                   title={ELEMENT_KIND_LABELS[kind]}
                                   className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:border-[#cb530a]/40'}`}
                                 >
@@ -689,7 +891,7 @@ export function LandingPageBuilder({
                           {selectedElementKind ? (
                             <div className="space-y-2 pt-1 border-t border-neutral-100">
                               <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{ELEMENT_KIND_LABELS[selectedElementKind]}</p>
+                                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{ELEMENT_KIND_LABELS[selectedElementKind]}</p>
                                 <Button
                                   type="button"
                                   variant="outline"
@@ -707,15 +909,28 @@ export function LandingPageBuilder({
                                   Auf Standard zurücksetzen
                                 </Button>
                               </div>
-                              {getPropsByKind(editableProps, selectedElementKind).map((field: EditablePropDef) => {
+                              {(() => {
+                            const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                            return getPropsByKind(editableProps, selectedElementKind, sec.type as LandingSectionType).map((field: EditablePropDef) => {
                             const rawValue = sec.props[field.key];
+                            const fallback = (sectionDefaults[field.key] as string) ?? '';
                             const value = (field.key === 'customQuotes' && Array.isArray(rawValue))
                               ? (rawValue as string[]).join('\n')
-                              : (rawValue as string) ?? '';
+                              : (field.key === 'highlightWords' && Array.isArray(rawValue))
+                              ? (rawValue as string[]).join(', ')
+                              : (rawValue !== undefined && rawValue !== null ? (rawValue as string) : fallback) ?? '';
+                            if (field.key === 'highlightWords' && sec.type === 'website_beratung') {
+                              return (
+                                <div key={field.key}>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
+                                  <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} className="mt-0.5 h-8 text-xs" placeholder="finanzielle Freiheit, 8 Wochen, ersten, Immobilie" />
+                                </div>
+                              );
+                            }
                             if (field.key === 'customQuotes') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <Textarea
                                     value={value}
                                     onChange={(e) => updateSectionProp(index, field.key, e.target.value.split('\n').filter(Boolean))}
@@ -729,15 +944,28 @@ export function LandingPageBuilder({
                             if (field.type === 'textarea') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <Textarea value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} rows={2} className="mt-0.5 text-xs h-16" />
+                                </div>
+                              );
+                            }
+                            if (field.type === 'richtext') {
+                              return (
+                                <div key={field.key}>
+                                  <RichTextEditor
+                                    value={value}
+                                    onChange={(html) => updateSectionProp(index, field.key, html)}
+                                    label={field.label}
+                                    placeholder="Text eingeben – Wörter markieren und oben Fett, Kursiv, Farbe oder Größe anwenden."
+                                    minHeight="140px"
+                                  />
                                 </div>
                               );
                             }
                             if (field.type === 'color') {
                               return (
                                 <div key={field.key} className="flex items-center gap-2">
-                                  <Label className="text-[10px] w-28 shrink-0">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold w-28 shrink-0">{field.label}</Label>
                                   <input type="color" value={value || '#cb530a'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
                                   <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="flex-1 h-8 text-xs font-mono" placeholder="#cb530a" />
                                 </div>
@@ -748,7 +976,7 @@ export function LandingPageBuilder({
                               const setUrls = (next: string[]) => updateSectionProp(index, field.key, next);
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <div className="mt-0.5 flex flex-wrap gap-2">
                                     {urls.map((url, i) => (
                                       <div key={i} className="flex flex-col items-center gap-1">
@@ -759,9 +987,11 @@ export function LandingPageBuilder({
                                       </div>
                                     ))}
                                     <label className="cursor-pointer flex flex-col items-center justify-center h-14 w-20 rounded border border-dashed border-neutral-300 bg-neutral-50 hover:bg-neutral-100">
-                                      <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                      <input type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
+                                        const err = validateImageFile(file);
+                                        if (err) { alert(err); e.target.value = ''; return; }
                                         const fd = new FormData();
                                         fd.append('file', file);
                                         try {
@@ -776,13 +1006,14 @@ export function LandingPageBuilder({
                                       <span className="text-[10px] text-neutral-500">Bild</span>
                                     </label>
                                   </div>
+                                  <p className="mt-1 text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
                                 </div>
                               );
                             }
                             if (field.type === 'image') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <div className="mt-0.5 flex flex-wrap items-center gap-2">
                                     {value ? (
                                       <div className="flex items-center gap-2">
@@ -793,11 +1024,13 @@ export function LandingPageBuilder({
                                     <label className="cursor-pointer">
                                       <input
                                         type="file"
-                                        accept="image/*"
+                                        accept={IMAGE_ACCEPT}
                                         className="sr-only"
                                         onChange={async (e) => {
                                           const file = e.target.files?.[0];
                                           if (!file) return;
+                                          const err = validateImageFile(file);
+                                          if (err) { alert(err); e.target.value = ''; return; }
                                           const fd = new FormData();
                                           fd.append('file', file);
                                           try {
@@ -814,6 +1047,7 @@ export function LandingPageBuilder({
                                       </span>
                                     </label>
                                   </div>
+                                  <p className="mt-1 text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
                                 </div>
                               );
                             }
@@ -821,7 +1055,7 @@ export function LandingPageBuilder({
                               const num = typeof rawValue === 'number' || (typeof rawValue === 'string' && /^\d+$/.test(rawValue as string)) ? Number(rawValue) : (field.key === 'headlineFontSizeDesktop' ? 48 : field.key === 'headlineFontSizeTablet' ? 32 : 20);
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <Input type="number" min={8} max={120} value={num} onChange={(e) => updateSectionProp(index, field.key, e.target.value === '' ? undefined : Number(e.target.value))} className="mt-0.5 h-8 text-xs" placeholder="px" />
                                 </div>
                               );
@@ -829,7 +1063,7 @@ export function LandingPageBuilder({
                             if (field.type === 'fontsize') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <select value={value || 'medium'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
                                     <option value="small">Klein</option>
                                     <option value="medium">Mittel</option>
@@ -841,7 +1075,7 @@ export function LandingPageBuilder({
                             if (field.type === 'fontfamily') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <select value={value || 'default'} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
                                     <option value="default">Standard</option>
                                     <option value="serif">Serif</option>
@@ -857,7 +1091,7 @@ export function LandingPageBuilder({
                               const editingIndex = sel !== null && sel >= 0 && sel < items.length ? sel : null;
                               return (
                                 <div key={field.key} className="space-y-2">
-                                  <Label className="text-[10px]">{field.label}</Label>
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
                                   <div className="flex flex-wrap items-center gap-1.5">
                                     {items.map((item, i) => (
                                       <button
@@ -881,7 +1115,7 @@ export function LandingPageBuilder({
                                   {editingIndex !== null && (
                                     <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
                                       <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-medium">Stimme {editingIndex + 1} bearbeiten</span>
+                                        <span className="text-[10px] font-semibold">Stimme {editingIndex + 1} bearbeiten</span>
                                         <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0 text-red-600" onClick={() => { setItems(items.filter((_, j) => j !== editingIndex)); setSelectedTestimonialIndex(null); }}>× Löschen</Button>
                                       </div>
                                       <Textarea value={items[editingIndex]?.quote || ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex] || {}, quote: e.target.value }; setItems(n); }} placeholder="Testimonial-Text" rows={2} className="text-xs h-12" />
@@ -897,9 +1131,11 @@ export function LandingPageBuilder({
                                           </div>
                                         ) : (
                                           <label className="cursor-pointer">
-                                            <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                            <input type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={async (e) => {
                                               const file = e.target.files?.[0];
                                               if (!file) return;
+                                              const err = validateImageFile(file);
+                                              if (err) { alert(err); e.target.value = ''; return; }
                                               const fd = new FormData();
                                               fd.append('file', file);
                                               try {
@@ -913,7 +1149,433 @@ export function LandingPageBuilder({
                                           </label>
                                         )}
                                       </div>
+                                      <p className="text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
                                     </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'target_groups') {
+                              const items = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as TargetGroupItem[];
+                              const setItems = (next: TargetGroupItem[]) => updateSectionProp(index, field.key, next);
+                              const sel = selectedTargetGroupIndex;
+                              const editingIndex = sel !== null && sel >= 0 && sel < items.length ? sel : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  <Label className="text-[10px] font-semibold">{field.label}</Label>
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    {items.map((_, i) => (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSelectedTargetGroupIndex(editingIndex === i ? null : i)}
+                                        className={`shrink-0 px-2.5 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${editingIndex === i ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 hover:border-[#cb530a]/50'}`}
+                                      >
+                                        Card {i + 1}
+                                      </button>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      onClick={() => { setItems([...items, { title: '', description: '', image: '', imageSlogan: '' }]); setSelectedTargetGroupIndex(items.length); }}
+                                      className="shrink-0 w-8 h-8 rounded-md border border-dashed border-neutral-300 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 hover:border-[#cb530a]/40"
+                                      title="Neue Card"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  {editingIndex !== null && items[editingIndex] && (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Card {editingIndex + 1} bearbeiten</span>
+                                        <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0 text-red-600" onClick={() => { setItems(items.filter((_, j) => j !== editingIndex)); setSelectedTargetGroupIndex(null); }}>× Löschen</Button>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Bild</Label>
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                                          {items[editingIndex].image ? (
+                                            <div className="flex items-center gap-2">
+                                              <img src={items[editingIndex].image} alt="" className="h-14 w-20 rounded border object-cover" />
+                                              <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => { const n = [...items]; n[editingIndex] = { ...n[editingIndex], image: '' }; setItems(n); }}>Entfernen</Button>
+                                            </div>
+                                          ) : null}
+                                          <label className="cursor-pointer">
+                                            <input type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (!file) return;
+                                              const err = validateImageFile(file);
+                                              if (err) { alert(err); e.target.value = ''; return; }
+                                              const fd = new FormData();
+                                              fd.append('file', file);
+                                              try {
+                                                const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                                                const j = await res.json();
+                                                if (j.url) { const n = [...items]; n[editingIndex] = { ...n[editingIndex], image: j.url }; setItems(n); }
+                                              } catch { alert('Upload fehlgeschlagen.'); }
+                                              e.target.value = '';
+                                            }} />
+                                            <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2 py-1.5 h-8 text-[10px] font-medium hover:bg-muted/50">Bild hochladen</span>
+                                          </label>
+                                        </div>
+                                        <p className="mt-1 text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Slogan auf dem Bild (oben)</Label>
+                                        <Input value={items[editingIndex].imageSlogan ?? ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex], imageSlogan: e.target.value }; setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z. B. Quereinsteiger" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Überschrift (unter dem Bild)</Label>
+                                        <Input value={items[editingIndex].title ?? ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex], title: e.target.value }; setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Titel der Card" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Text</Label>
+                                        <Textarea value={items[editingIndex].description ?? ''} onChange={(e) => { const n = [...items]; n[editingIndex] = { ...n[editingIndex], description: e.target.value }; setItems(n); }} rows={3} className="mt-0.5 text-xs" placeholder="Beschreibung" />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'services') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultServices = (Array.isArray(sectionDefaults.services) ? sectionDefaults.services : []) as ServiceItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as ServiceItem[];
+                              const setItems = (next: ServiceItem[]) => updateSectionProp(index, field.key, next);
+                              const sel = selectedServiceIndex;
+                              const emptyService = (): ServiceItem => ({ title: '', description: '', image: '', imageSlogan: '', buttonText: 'Mehr erfahren', href: '#' });
+                              const padded: ServiceItem[] = rawItems.length >= 6
+                                ? rawItems
+                                : rawItems.length > 0
+                                  ? [...rawItems, ...Array.from({ length: 6 - rawItems.length }, emptyService)]
+                                  : (defaultServices.length >= 6 ? defaultServices : [...defaultServices, ...Array.from({ length: Math.max(0, 6 - defaultServices.length) }, emptyService)]);
+                              const editingIndex = sel !== null && sel >= 0 && sel < padded.length ? sel : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Card {editingIndex + 1} bearbeiten</span>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Bild</Label>
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                                          {padded[editingIndex].image ? (
+                                            <div className="flex items-center gap-2">
+                                              <img src={padded[editingIndex].image} alt="" className="h-14 w-20 rounded border object-cover" />
+                                              <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, image: '' } : item)); setItems(n); }}>Entfernen</Button>
+                                            </div>
+                                          ) : null}
+                                          <label className="cursor-pointer">
+                                            <input type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (!file) return;
+                                              const err = validateImageFile(file);
+                                              if (err) { alert(err); e.target.value = ''; return; }
+                                              const fd = new FormData();
+                                              fd.append('file', file);
+                                              try {
+                                                const res = await fetch('/api/admin/digital-products/upload-image', { method: 'POST', credentials: 'include', body: fd });
+                                                const j = await res.json();
+                                                if (j.url) { const n = padded.map((item, idx) => (idx === editingIndex ? { ...item, image: j.url } : item)); setItems(n); }
+                                              } catch { alert('Upload fehlgeschlagen.'); }
+                                              e.target.value = '';
+                                            }} />
+                                            <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2 py-1.5 h-8 text-[10px] font-medium hover:bg-muted/50">Bild hochladen</span>
+                                          </label>
+                                        </div>
+                                        <p className="mt-1 text-[9px] text-muted-foreground">{IMAGE_UPLOAD_HINT}</p>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Slogan auf dem Bild</Label>
+                                        <Input value={padded[editingIndex].imageSlogan ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, imageSlogan: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z. B. Deal-Flow" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Überschrift (Headline)</Label>
+                                        <Input value={padded[editingIndex].title ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, title: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Titel der Card" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Icon (Emoji)</Label>
+                                        <Input value={padded[editingIndex].icon ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, icon: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="🔑" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Text (Beschreibung)</Label>
+                                        <Textarea value={padded[editingIndex].description ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, description: e.target.value } : item)); setItems(n); }} rows={3} className="mt-0.5 text-xs" placeholder="Beschreibung" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Button-Text</Label>
+                                        <Input value={padded[editingIndex].buttonText ?? 'Mehr erfahren'} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, buttonText: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Mehr erfahren" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Card in der Toolbar (Card 1–6) auswählen.</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'benefits') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultBenefits = (Array.isArray(sectionDefaults.benefits) ? sectionDefaults.benefits : []) as BenefitItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as BenefitItem[];
+                              const setItems = (next: BenefitItem[]) => updateSectionProp(index, field.key, next);
+                              const sel = selectedBenefitIndex;
+                              const emptyBenefit = (): BenefitItem => ({ icon: 'MapPin', iconColor: '#cb530a', title: '', description: '' });
+                              const padded: BenefitItem[] = rawItems.length >= 6
+                                ? rawItems
+                                : rawItems.length > 0
+                                  ? [...rawItems, ...Array.from({ length: 6 - rawItems.length }, emptyBenefit)]
+                                  : (defaultBenefits.length >= 6 ? defaultBenefits : [...defaultBenefits, ...Array.from({ length: Math.max(0, 6 - defaultBenefits.length) }, emptyBenefit)]);
+                              const editingIndex = sel !== null && sel >= 0 && sel < padded.length ? sel : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Card {editingIndex + 1} bearbeiten</span>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Icon (Lucide-Name)</Label>
+                                        <Input value={padded[editingIndex].icon ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, icon: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z.B. MapPin, CheckCircle2, Zap" />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Label className="text-[10px] font-semibold w-28 shrink-0">Icon-Farbe</Label>
+                                        <input type="color" value={padded[editingIndex].iconColor || '#cb530a'} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, iconColor: e.target.value } : item)); setItems(n); }} className="h-8 w-10 rounded border cursor-pointer shrink-0" />
+                                        <Input value={padded[editingIndex].iconColor ?? '#cb530a'} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, iconColor: e.target.value } : item)); setItems(n); }} className="flex-1 h-8 text-xs font-mono" placeholder="#cb530a" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Headline</Label>
+                                        <Input value={padded[editingIndex].title ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, title: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Überschrift" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Text</Label>
+                                        <Textarea value={padded[editingIndex].description ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, description: e.target.value } : item)); setItems(n); }} rows={3} className="mt-0.5 text-xs" placeholder="Beschreibung" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Card in der Toolbar (Card 1–6) auswählen.</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'pricing_cards') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultCards = (Array.isArray(sectionDefaults.pricingCards) ? sectionDefaults.pricingCards : []) as PricingCardItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as PricingCardItem[];
+                              const setItems = (next: PricingCardItem[]) => updateSectionProp(index, field.key, next);
+                              const sel = selectedPricingIndex;
+                              const emptyPricing = (): PricingCardItem => ({ title: '', description: '', price: '', recommendation: '', bulletPoints: [], buttonText: 'Jetzt Platz sichern', popular: false });
+                              const padded: PricingCardItem[] = rawItems.length >= 3 ? rawItems : rawItems.length > 0 ? [...rawItems, ...Array.from({ length: 3 - rawItems.length }, emptyPricing)] : (defaultCards.length >= 3 ? defaultCards : [...defaultCards, ...Array.from({ length: Math.max(0, 3 - defaultCards.length) }, emptyPricing)]);
+                              const editingIndex = sel !== null && sel >= 0 && sel < padded.length ? sel : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Card {editingIndex + 1} bearbeiten</span>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Beschreibung (z. B. Einstieg)</Label>
+                                        <Input value={padded[editingIndex].title ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, title: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Einstieg" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Unterbeschreibung</Label>
+                                        <Textarea value={padded[editingIndex].description ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, description: e.target.value } : item)); setItems(n); }} rows={2} className="mt-0.5 text-xs" placeholder="Systematischer Start in Immobilien als Kapitalanlage" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Preis</Label>
+                                        <Input value={padded[editingIndex].price ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, price: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="auf Anfrage" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Empfehlung (unter dem Preis)</Label>
+                                        <Input value={padded[editingIndex].recommendation ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, recommendation: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z. B. Ideal für Quereinsteiger" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Bullet Points (ein Punkt pro Zeile)</Label>
+                                        <Textarea value={(padded[editingIndex].bulletPoints ?? []).join('\n')} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, bulletPoints: e.target.value.split('\n').filter(Boolean) } : item)); setItems(n); }} rows={5} className="mt-0.5 text-xs font-mono" placeholder="Ein Punkt pro Zeile" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Button-Text (Verlinkung intern)</Label>
+                                        <Input value={padded[editingIndex].buttonText ?? 'Jetzt Platz sichern'} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, buttonText: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Jetzt Platz sichern" />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <input type="checkbox" id={`pricing-popular-${editingIndex}`} checked={!!padded[editingIndex].popular} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, popular: e.target.checked } : item)); setItems(n); }} className="rounded border-input" />
+                                        <Label htmlFor={`pricing-popular-${editingIndex}`} className="text-[10px] font-semibold">„Stolz empfohlen“-Badge anzeigen</Label>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Card in der Toolbar (Card 1–3) auswählen.</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'process_steps') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultSteps = (Array.isArray(sectionDefaults.processSteps) ? sectionDefaults.processSteps : []) as ProcessStepItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as ProcessStepItem[];
+                              const setItems = (next: ProcessStepItem[]) => updateSectionProp(index, field.key, next);
+                              const emptyStep = (): ProcessStepItem => ({ number: '1', title: '', description: '', ctaText: '', href: '' });
+                              const padded: ProcessStepItem[] = rawItems.length >= 4 ? rawItems.slice(0, 4) : rawItems.length > 0 ? [...rawItems, ...Array.from({ length: 4 - rawItems.length }, (_, i) => ({ ...emptyStep(), number: String(rawItems.length + i + 1) }))] : (defaultSteps.length >= 4 ? defaultSteps : [...defaultSteps, ...Array.from({ length: Math.max(0, 4 - defaultSteps.length) }, (_, i) => ({ ...emptyStep(), number: String(defaultSteps.length + i + 1) }))]);
+                              const editingIndex = selectedProcessStepIndex !== null && selectedProcessStepIndex >= 0 && selectedProcessStepIndex < padded.length ? selectedProcessStepIndex : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Card {editingIndex + 1} (Nummer-Badge, Headline, Text{editingIndex === 3 ? ', Button' : ''})</span>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Nummer (Badge)</Label>
+                                        <Input value={padded[editingIndex].number ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, number: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="1" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Headline</Label>
+                                        <Input value={padded[editingIndex].title ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, title: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z. B. Kennenlernen" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Text</Label>
+                                        <Textarea value={padded[editingIndex].description ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, description: e.target.value } : item)); setItems(n); }} rows={3} className="mt-0.5 text-xs" placeholder="Beschreibung des Schritts" />
+                                      </div>
+                                      {editingIndex === 3 && (
+                                        <>
+                                          <div>
+                                            <Label className="text-[10px] font-semibold">Button-Text (nur Card 4)</Label>
+                                            <Input value={padded[editingIndex].ctaText ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, ctaText: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Jetzt Platz sichern" />
+                                          </div>
+                                          <div>
+                                            <Label className="text-[10px] font-semibold">Button-Link (z. B. /quiz oder #section-xy)</Label>
+                                            <Input value={padded[editingIndex].href ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, href: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="/quiz" />
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Card unten auswählen (Schritt 1–4).</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'beratung_process_steps') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultSteps = (Array.isArray(sectionDefaults.processSteps) ? sectionDefaults.processSteps : []) as BeratungProcessStepItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as BeratungProcessStepItem[];
+                              const setItems = (next: BeratungProcessStepItem[]) => updateSectionProp(index, field.key, next);
+                              const emptyStep = (): BeratungProcessStepItem => ({ number: '1', title: '', description: '', icon: '', ctaText: '', href: '' });
+                              const padded: BeratungProcessStepItem[] = rawItems.length >= 4 ? rawItems.slice(0, 4) : rawItems.length > 0 ? [...rawItems, ...Array.from({ length: 4 - rawItems.length }, (_, i) => ({ ...emptyStep(), number: String(rawItems.length + i + 1) }))] : (defaultSteps.length >= 4 ? defaultSteps : [...defaultSteps, ...Array.from({ length: Math.max(0, 4 - defaultSteps.length) }, (_, i) => ({ ...emptyStep(), number: String(defaultSteps.length + i + 1) }))]);
+                              const editingIndex = selectedBeratungProcessStepIndex !== null && selectedBeratungProcessStepIndex >= 0 && selectedBeratungProcessStepIndex < padded.length ? selectedBeratungProcessStepIndex : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  <div className="flex flex-wrap gap-1">
+                                    {[0, 1, 2, 3].map((cardIdx) => {
+                                      const isActive = editingIndex === cardIdx;
+                                      return (
+                                        <button key={cardIdx} type="button" onClick={() => { setSelectedBeratungProcessStepIndex(isActive ? null : cardIdx); }} title={`Schritt ${cardIdx + 1}`} className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}>
+                                          Schritt {cardIdx + 1}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Nummer (Badge)</Label>
+                                        <Input value={padded[editingIndex].number ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, number: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="1" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Icon (Emoji)</Label>
+                                        <Input value={padded[editingIndex].icon ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, icon: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="💬" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Headline</Label>
+                                        <Input value={padded[editingIndex].title ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, title: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="z. B. Individuelle Beratung" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Text</Label>
+                                        <Textarea value={padded[editingIndex].description ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, description: e.target.value } : item)); setItems(n); }} rows={3} className="mt-0.5 text-xs" placeholder="Beschreibung" />
+                                      </div>
+                                      {editingIndex === 3 && (
+                                        <>
+                                          <div>
+                                            <Label className="text-[10px] font-semibold">Button-Text (nur Schritt 4)</Label>
+                                            <Input value={padded[editingIndex].ctaText ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, ctaText: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Zum Experten-Bereich" />
+                                          </div>
+                                          <div>
+                                            <Label className="text-[10px] font-semibold">Button-Link</Label>
+                                            <Input value={padded[editingIndex].href ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, href: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="/experts" />
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Schritt 1–4 oben auswählen.</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'beratung_stats') {
+                              const sectionDefaults = getDefaultPropsForSection(sec.type as LandingSectionType, template);
+                              const defaultStats = (Array.isArray(sectionDefaults.stats) ? sectionDefaults.stats : []) as StatItem[];
+                              const rawItems = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as StatItem[];
+                              const setItems = (next: StatItem[]) => updateSectionProp(index, field.key, next);
+                              const emptyStat = (): StatItem => ({ value: 0, label: '', suffix: '', icon: '' });
+                              const padded: StatItem[] = rawItems.length >= 4 ? rawItems.slice(0, 4) : rawItems.length > 0 ? [...rawItems, ...Array.from({ length: 4 - rawItems.length }, () => emptyStat())] : (defaultStats.length >= 4 ? defaultStats : [...defaultStats, ...Array.from({ length: Math.max(0, 4 - defaultStats.length) }, () => emptyStat())]);
+                              const editingIndex = selectedBeratungStatIndex !== null && selectedBeratungStatIndex >= 0 && selectedBeratungStatIndex < padded.length ? selectedBeratungStatIndex : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  <div className="flex flex-wrap gap-1">
+                                    {[0, 1, 2, 3].map((cardIdx) => {
+                                      const isActive = editingIndex === cardIdx;
+                                      return (
+                                        <button key={cardIdx} type="button" onClick={() => { setSelectedBeratungStatIndex(isActive ? null : cardIdx); }} title={`Card ${cardIdx + 1}`} className={`shrink-0 px-2 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${isActive ? 'bg-[#cb530a] text-white border-[#cb530a]' : 'bg-white border-neutral-200 text-neutral-600 hover:border-[#cb530a]/50'}`}>
+                                          Card {cardIdx + 1}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {editingIndex !== null && padded[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Icon (Emoji)</Label>
+                                        <Input value={padded[editingIndex].icon ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, icon: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="🏠" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Zahl (Wert)</Label>
+                                        <Input type="number" value={padded[editingIndex].value ?? 0} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, value: parseInt(e.target.value, 10) || 0 } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="230" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Suffix (z. B. +)</Label>
+                                        <Input value={padded[editingIndex].suffix ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, suffix: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="+" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Label (Beschreibung)</Label>
+                                        <Input value={padded[editingIndex].label ?? ''} onChange={(e) => { const n = padded.map((item, j) => (j === editingIndex ? { ...item, label: e.target.value } : item)); setItems(n); }} className="mt-0.5 h-8 text-xs" placeholder="Zufriedene Kunden" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Card 1–4 oben auswählen.</p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (field.type === 'faq_items') {
+                              const rawFaqs = (Array.isArray(sec.props[field.key]) ? sec.props[field.key] : []) as FaqItem[];
+                              const setFaqs = (next: FaqItem[]) => updateSectionProp(index, field.key, next);
+                              const editingIndex = selectedFaqIndex !== null && selectedFaqIndex >= 0 && selectedFaqIndex < rawFaqs.length ? selectedFaqIndex : null;
+                              return (
+                                <div key={field.key} className="space-y-2">
+                                  {editingIndex !== null && rawFaqs[editingIndex] ? (
+                                    <div className="p-2 rounded border border-neutral-200 bg-neutral-50 space-y-1.5">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-semibold">Frage {editingIndex + 1} bearbeiten</span>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Frage</Label>
+                                        <Input value={rawFaqs[editingIndex].question ?? ''} onChange={(e) => { const n = rawFaqs.map((item, j) => (j === editingIndex ? { ...item, question: e.target.value } : item)); setFaqs(n); }} className="mt-0.5 h-8 text-xs" placeholder="Frage eingeben" />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-semibold">Antwort</Label>
+                                        <Textarea value={rawFaqs[editingIndex].answer ?? ''} onChange={(e) => { const n = rawFaqs.map((item, j) => (j === editingIndex ? { ...item, answer: e.target.value } : item)); setFaqs(n); }} rows={4} className="mt-0.5 text-xs" placeholder="Antwort eingeben" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">Tab (+) für neue Frage, bestehende Tabs anklicken zum Bearbeiten, Papierkorb zum Löschen.</p>
                                   )}
                                 </div>
                               );
@@ -921,7 +1583,7 @@ export function LandingPageBuilder({
                             if (field.key === 'secondaryCtaHref' && sec.type === 'website_jeton_hero') {
                               return (
                                 <div key={field.key}>
-                                  <Label className="text-[10px]">Mehr erfahren führt zu (Sektion)</Label>
+                                  <Label className="text-[10px] font-semibold">Mehr erfahren führt zu (Sektion)</Label>
                                   <select value={value || ''} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
                                     <option value="">— Keine (externer Link) —</option>
                                     {sections.map((s) => {
@@ -938,11 +1600,12 @@ export function LandingPageBuilder({
                             }
                             return (
                               <div key={field.key}>
-                                <Label className="text-[10px]">{field.label}</Label>
+                                <Label className="text-[10px] font-semibold">{field.label}</Label>
                                 <Input value={value} onChange={(e) => updateSectionProp(index, field.key, e.target.value)} className="mt-0.5 h-8 text-xs" placeholder={field.type === 'url' ? 'https://…' : ''} />
                               </div>
                             );
-                          })}
+                          });
+                            })()}
                             </div>
                           ) : (
                             <p className="text-[11px] text-muted-foreground">Element oben anklicken (z. B. Überschrift, Logo) zum Bearbeiten.</p>
@@ -959,7 +1622,8 @@ export function LandingPageBuilder({
           </div>
         </div>
 
-        {/* Tracking & Pixel – nur in diesem Editor */}
+        {/* Tracking & Pixel – nur bei Produkt-Landing, nicht bei Homepage */}
+        {!homepageMode && (
         <div className="flex-shrink-0 border-t border-neutral-200 px-1 py-3">
           <button type="button" onClick={() => setTrackingOpen((o) => !o)} className="flex items-center gap-2 w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground">
             {trackingOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -1006,6 +1670,7 @@ export function LandingPageBuilder({
             </div>
           )}
         </div>
+        )}
 
         <DialogFooter className="flex-shrink-0 border-t pt-4">
           <Button

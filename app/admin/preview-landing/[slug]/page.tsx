@@ -27,7 +27,6 @@ import {
   ProductLandingImagesSlider,
 } from '@/app/components/product-landing';
 import { FloatingDockParallax } from '@/app/components/FloatingDock';
-
 type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ embed?: string }> };
 
 type LandingSection = { id: string; type: string; props: Record<string, unknown> };
@@ -71,9 +70,7 @@ function ProductLandingSections({
   const isParallax = landingTemplate === 'parallax';
   const primary = isParallax ? PARALLAX_PRIMARY : (themePrimary || DEFAULT_PRIMARY);
   const secondary = isParallax ? PARALLAX_SECONDARY : (themeSecondary || DEFAULT_SECONDARY);
-  return (
-    <>
-      {sections.map((sec, index) => {
+  const elements = sections.map((sec, index) => {
         if (sec.type === 'website_jeton_hero') {
           const p = sec.props || {};
           const headline = (p.headline as string) || (isParallax ? 'Mit vermieteten' : product.title);
@@ -84,6 +81,7 @@ function ProductLandingSections({
             <section key={sec.id} id={`section-${sec.id}`}>
               <ProductLandingHero
                 variant={isParallax ? 'parallax' : 'default'}
+                scrollDrivenHorizontalPan={false}
                 headline={headline}
                 headlineLine2={headlineLine2}
                 headlineLine3={headlineLine3}
@@ -95,10 +93,7 @@ function ProductLandingSections({
                 overlayColor={(p.overlayColor as string) || primary}
                 buttonPrimaryColor={primary}
                 buttonSecondaryColor={secondary}
-                headlineColor={p.headlineColor as string | undefined}
                 logoUrl={p.logoUrl as string | undefined}
-                headlineFontSize={p.headlineFontSize as string | undefined}
-                headlineFontFamily={p.headlineFontFamily as string | undefined}
               />
             </section>
           );
@@ -107,55 +102,82 @@ function ProductLandingSections({
           const text = sec.props?.text as string | undefined;
           const customQuotes = sec.props?.customQuotes as string[] | undefined;
           const backgroundColor = (sec.props?.backgroundColor as string) || undefined;
+          const textColor = (sec.props?.textColor as string) || undefined;
+          const bg = backgroundColor || (isParallax ? '#000000' : primary);
+          const color = textColor || '#ffffff';
           if (isParallax && (!Array.isArray(customQuotes) || customQuotes.length === 0)) {
-            return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customQuotes={MARQUEE_QUOTES_PARALLAX} backgroundColor={backgroundColor || '#000000'} /></section>;
+            return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customQuotes={MARQUEE_QUOTES_PARALLAX} backgroundColor={bg} textColor={color} /></section>;
           }
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customText={text} customQuotes={customQuotes} backgroundColor={backgroundColor || (isParallax ? '#000000' : primary)} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingMarquee customText={text} customQuotes={customQuotes} backgroundColor={bg} textColor={color} /></section>;
         }
         if (sec.type === 'website_target_groups') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTargetGroups variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          const targetGroups = Array.isArray(p.targetGroups) ? p.targetGroups as import('@/types/landing-section').TargetGroupItem[] : undefined;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTargetGroups variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} targetGroups={targetGroups} /></section>;
         }
         if (sec.type === 'website_testimonials') {
           const p = sec.props || {};
           return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTestimonials primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} testimonials={p.testimonials as import('@/types/landing-section').TestimonialItem[] | undefined} /></section>;
         }
-        if (sec.type === 'website_quiz_cta') return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingQuizCta productSlug={productSlug} primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_quiz_cta') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingQuizCta productSlug={productSlug} primaryColor={primary} secondaryColor={secondary} title={p.title as string | undefined} subtitle={p.subtitle as string | undefined} buttonText={p.buttonText as string | undefined} /></section>;
+        }
         if (sec.type === 'website_services') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingServices variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingServices variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} services={p.services as import('@/types/landing-section').ServiceItem[] | undefined} /></section>;
         }
         if (sec.type === 'website_benefits') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBenefits variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBenefits variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} benefits={p.benefits as import('@/types/landing-section').BenefitItem[] | undefined} /></section>;
         }
         if (sec.type === 'website_pricing') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingPricing primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingPricing primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} pricingCards={p.pricingCards as import('@/types/landing-section').PricingCardItem[] | undefined} /></section>;
         }
         if (sec.type === 'website_trust') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTrust primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTrust primaryColor={primary} secondaryColor={secondary} sealText={p.sealText as string | undefined} sectionTitle={p.sectionTitle as string | undefined} bodyHtml={p.bodyHtml as string | undefined} buttonText={p.buttonText as string | undefined} /></section>;
         }
         if (sec.type === 'website_process') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingProcess variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          const processSteps = (Array.isArray(p.processSteps) ? p.processSteps : []) as import('@/types/landing-section').ProcessStepItem[];
+          const steps = processSteps.length >= 4
+            ? processSteps.slice(0, 4).map((s, i) => ({ ...s, icon: ['💬', '📋', '✅', '🚀'][i] ?? '🚀' }))
+            : undefined;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingProcess variant="coaching" primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} steps={steps} /></section>;
         }
         if (sec.type === 'website_faq') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFaq primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} /></section>;
+          const faqs = (Array.isArray(p.faqs) ? p.faqs : []) as import('@/types/landing-section').FaqItem[];
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFaq primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} faqs={faqs.length > 0 ? faqs : undefined} /></section>;
         }
         if (sec.type === 'website_footer') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFooter primaryColor={primary} secondaryColor={secondary} copyrightText={p.copyrightText as string | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingFooter variant="coaching" primaryColor={primary} secondaryColor={secondary} copyrightText={p.copyrightText as string | undefined} sublineText={p.sublineText as string | undefined} logoUrl={p.logoUrl as string | undefined} /></section>;
         }
         if (sec.type === 'website_testimonials_infinite') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTestimonialsInfinite primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} testimonials={p.testimonials as import('@/types/landing-section').TestimonialItem[] | undefined} /></section>;
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingTestimonialsInfinite primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} sectionSubtitle={p.sectionSubtitle as string | undefined} testimonials={p.testimonials as import('@/types/landing-section').TestimonialItem[] | undefined} backgroundSliderImages={Array.isArray(p.backgroundSliderImages) ? p.backgroundSliderImages as string[] : undefined} /></section>;
         }
         if (sec.type === 'website_beratung') {
           const p = sec.props || {};
-          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingBeratung primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} /></section>;
+          return (
+            <section key={sec.id} id={`section-${sec.id}`}>
+              <ProductLandingBeratung
+                primaryColor={primary}
+                secondaryColor={secondary}
+                sectionTitle={p.sectionTitle as string | undefined}
+                highlightWords={p.highlightWords as string[] | string | undefined}
+                processHeadline={p.processHeadline as string | undefined}
+                processBadgeColor={p.processBadgeColor as string | undefined}
+                processSteps={p.processSteps as import('@/types/landing-section').BeratungProcessStepItem[] | undefined}
+                statsHeadline={p.statsHeadline as string | undefined}
+                statsSubheadline={p.statsSubheadline as string | undefined}
+                stats={p.stats as import('@/types/landing-section').StatItem[] | undefined}
+              />
+            </section>
+          );
         }
         if (sec.type === 'website_claim_parallax') {
           const p = sec.props || {};
@@ -167,6 +189,7 @@ function ProductLandingSections({
                 claimHeadlineLine1={p.claimHeadlineLine1 as string | undefined}
                 claimHeadlineLine2={p.claimHeadlineLine2 as string | undefined}
                 ctaText={p.ctaText as string | undefined}
+                listPhaseSidebarText={p.listPhaseSidebarText as string | undefined}
                 cardLabel1={p.cardLabel1 as string | undefined}
                 cardLabel2={p.cardLabel2 as string | undefined}
                 cardLabel3={p.cardLabel3 as string | undefined}
@@ -202,16 +225,21 @@ function ProductLandingSections({
             </section>
           );
         }
-        if (sec.type === 'website_words_parallax') return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingWordsParallax primaryColor={primary} secondaryColor={secondary} /></section>;
-        if (sec.type === 'website_stacked_sheets') return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingStackedSheets primaryColor={primary} secondaryColor={secondary} /></section>;
+        if (sec.type === 'website_words_parallax') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`} className="relative" style={{ zIndex: index }}><ProductLandingWordsParallax primaryColor={primary} secondaryColor={secondary} word1={p.word1 as string | undefined} word2={p.word2 as string | undefined} word3={p.word3 as string | undefined} /></section>;
+        }
+        if (sec.type === 'website_stacked_sheets') {
+          const p = sec.props || {};
+          return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingStackedSheets primaryColor={primary} secondaryColor={secondary} sheet1Title={p.sheet1Title as string | undefined} sheet1Body={p.sheet1Body as string | undefined} sheet2Title={p.sheet2Title as string | undefined} sheet2Body={p.sheet2Body as string | undefined} sheet3Title={p.sheet3Title as string | undefined} sheet3Body={p.sheet3Body as string | undefined} /></section>;
+        }
         if (sec.type === 'website_images_slider') {
           const p = sec.props || {};
           return <section key={sec.id} id={`section-${sec.id}`}><ProductLandingImagesSlider primaryColor={primary} secondaryColor={secondary} sectionTitle={p.sectionTitle as string | undefined} ctaText={p.ctaText as string | undefined} ctaHref={(p.ctaHref as string) || '/experts'} /></section>;
         }
         return null;
-      })}
-    </>
-  );
+  });
+  return <>{elements}</>;
 }
 
 export default async function AdminPreviewLandingPage({ params, searchParams }: Props) {
@@ -232,27 +260,11 @@ export default async function AdminPreviewLandingPage({ params, searchParams }: 
     ? (product as { landing_page_sections: LandingSection[] }).landing_page_sections
     : [];
   const useBuilderLayout = sections.length > 0;
-  const isDraft = !(product as { is_published?: boolean }).is_published;
-  const firstIsJetonHero = useBuilderLayout && sections[0]?.type === 'website_jeton_hero';
   const hasFooterSection = sections.some((s) => s.type === 'website_footer');
   const isParallax = (product as { landing_template?: string | null }).landing_template === 'parallax';
 
   const content = (
     <div className={`min-h-screen bg-neutral-50 ${isEmbed ? '' : ''}`}>
-      {!isEmbed && (
-        <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 text-center text-sm text-amber-900">
-          Vorschau (Admin) {isDraft && '– Entwurf, für Besucher nicht sichtbar'}
-        </div>
-      )}
-      {!firstIsJetonHero && (
-        <header className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-            <span className="text-lg font-semibold text-[#182c30]">{tenant.name}</span>
-            <span className="rounded-lg bg-neutral-200 px-4 py-2 text-sm text-neutral-600">Kontakt</span>
-          </div>
-        </header>
-      )}
-
       <main className={useBuilderLayout ? 'w-full' : 'mx-auto max-w-4xl px-4 py-10 sm:py-16'}>
         {useBuilderLayout ? (
           <ProductLandingSections

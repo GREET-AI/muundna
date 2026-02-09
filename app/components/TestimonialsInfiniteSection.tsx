@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { ImagesSlider } from '@/app/components/ui/ImagesSlider';
 import { InfiniteMovingCards, type InfiniteMovingCardsItem } from '@/app/components/ui/InfiniteMovingCards';
+import { RichTextBlock } from '@/app/components/ui/RichTextBlock';
 
 /** Wie immosparplan-experts: Bilder aus images/slider1 als Hintergrund */
 const SLIDER_IMAGES = [
@@ -25,8 +26,11 @@ const DEFAULT_TESTIMONIALS: InfiniteMovingCardsItem[] = [
 
 import type { TestimonialItem } from '@/types/landing-section';
 
+const DEFAULT_SUBTITLE = 'Echte Erfahrungen aus dem Immobiliencoaching.';
+
 interface TestimonialsInfiniteSectionProps {
   sectionTitle?: string;
+  sectionSubtitle?: string;
   primaryColor?: string;
   secondaryColor?: string;
   testimonials?: TestimonialItem[];
@@ -36,12 +40,14 @@ interface TestimonialsInfiniteSectionProps {
 
 export default function TestimonialsInfiniteSection({
   sectionTitle = 'Bereits mehr als 230 Kunden freuen sich über den Kauf ihrer Immobilie',
+  sectionSubtitle = DEFAULT_SUBTITLE,
   primaryColor = '#cb530a',
   testimonials: customTestimonials,
   backgroundSliderImages,
 }: TestimonialsInfiniteSectionProps) {
   const testimonials = (Array.isArray(customTestimonials) && customTestimonials.length > 0) ? customTestimonials : DEFAULT_TESTIMONIALS;
   const sliderImages = (Array.isArray(backgroundSliderImages) && backgroundSliderImages.length > 0) ? backgroundSliderImages : SLIDER_IMAGES;
+  const subtitle = (sectionSubtitle ?? '').trim() || DEFAULT_SUBTITLE;
   return (
     <section className="relative w-full overflow-hidden min-h-[48rem] md:min-h-[54rem]">
       <div className="absolute inset-0 z-0">
@@ -61,8 +67,13 @@ export default function TestimonialsInfiniteSection({
           className="z-50 flex flex-col justify-center items-center px-4 pb-8 md:pb-12"
         >
           <motion.p className="font-bold text-xl md:text-5xl lg:text-6xl text-center py-4 max-w-4xl mx-auto leading-tight bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-            {sectionTitle}
+            <RichTextBlock html={sectionTitle} tag="span" />
           </motion.p>
+          {subtitle && (
+            <p className="text-lg text-neutral-300 max-w-2xl mx-auto text-center mt-2">
+              <RichTextBlock html={subtitle} tag="span" />
+            </p>
+          )}
         </motion.div>
         <div className="flex-1 py-6 md:py-8">
           <InfiniteMovingCards

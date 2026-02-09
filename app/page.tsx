@@ -1,3 +1,6 @@
+import { getPublishedHomepage } from '@/lib/homepage-public';
+import { ProductLandingSections } from '@/app/p/[slug]/page';
+import type { LandingSection } from '@/types/landing-section';
 import { JetonStyleHeroSection } from './components/JetonStyleHeroSection';
 import MarqueeBanner from './components/MarqueeBanner';
 import ServicesOverview from './components/ServicesOverview';
@@ -12,9 +15,51 @@ import CookieBanner from './components/CookieBanner';
 import ExpertiseCTABanner from './components/ExpertiseCTABanner';
 import ProcessSection from './components/ProcessSection';
 
-/** Startseite Muckenfuss & Nagel – Bürodienstleistungen für Handwerksbetriebe (Original).
- *  Der Builder für Online-Kurse betrifft nur die Produkt-Landingpages unter /p/[slug], nicht diese Homepage. */
-export default function Home() {
+type HomeProps = { searchParams?: Promise<{ tenant?: string }> };
+
+/**
+ * Startseite: Wenn tenant (Query oder NEXT_PUBLIC_TENANT_SLUG) gesetzt und eine
+ * veröffentlichte Homepage existiert → Rendering aus dem Builder (pages.json_data).
+ * Sonst → statische Startseite (bestehendes Design).
+ * tenant_id wird nur serverseitig aus Tenant-Slug ermittelt – keine Session.
+ */
+export default async function Home({ searchParams }: HomeProps) {
+  const sp = await searchParams;
+  const tenantSlug = (sp?.tenant && typeof sp.tenant === 'string' ? sp.tenant : process.env.NEXT_PUBLIC_TENANT_SLUG) ?? '';
+
+  if (tenantSlug) {
+    const page = await getPublishedHomepage(tenantSlug);
+    const components = (page?.json_data?.components ?? []) as LandingSection[];
+    if (page && Array.isArray(components) && components.length > 0) {
+      const product = { title: page.title || 'Startseite', description: null as string | null, price_cents: 0, image_url: null as string | null, type: 'course' as const };
+      const tenant = { name: page.title || 'Startseite' };
+      return (
+        <div className="min-h-screen bg-neutral-50">
+          <main className="w-full">
+            <ProductLandingSections
+              product={product}
+              tenant={tenant}
+              sections={components}
+              productSlug=""
+              themePrimary={null}
+              themeSecondary={null}
+              landingTemplate="standard"
+            />
+          </main>
+          <footer className="border-t border-neutral-200 py-6">
+            <div className="mx-auto max-w-4xl px-4 text-center text-sm text-neutral-500">
+              <a href="/impressum" className="hover:text-[#cb530a]">Impressum</a>
+              {' · '}
+              <a href="/datenschutz" className="hover:text-[#cb530a]">Datenschutz</a>
+            </div>
+          </footer>
+          <CookieBanner />
+        </div>
+      );
+    }
+  }
+
+  /** Statische Startseite (Legacy): kundenspezifisch, kein Builder. */
   return (
     <div className="min-h-screen">
       <main>

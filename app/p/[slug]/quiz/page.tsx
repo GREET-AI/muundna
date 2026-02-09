@@ -6,37 +6,41 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import QuizFunnelClient from './QuizFunnelClient';
 import LandingPixelsInjector from '@/app/components/LandingPixelsInjector';
 
-const DEFAULT_TENANT_SLUG = process.env.NEXT_PUBLIC_TENANT_SLUG || 'muckenfuss-nagel';
+const DEFAULT_TENANT_SLUG = process.env.NEXT_PUBLIC_TENANT_SLUG ?? '';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ tenant?: string }> };
 
-async function getProduct(slug: string) {
-  if (!supabaseAdmin) return null;
-  const { data: tenant } = await supabaseAdmin.from('tenants').select('id, name').eq('slug', DEFAULT_TENANT_SLUG).single();
+async function getProduct(tenantSlug: string, productSlug: string) {
+  if (!supabaseAdmin || !tenantSlug) return null;
+  const { data: tenant } = await supabaseAdmin.from('tenants').select('id, name').eq('slug', tenantSlug).single();
   if (!tenant) return null;
   const { data: product } = await supabaseAdmin
     .from('dp_products')
     .select('id, title, slug, is_published')
     .eq('tenant_id', tenant.id)
-    .eq('slug', slug.toLowerCase().trim())
+    .eq('slug', productSlug.toLowerCase().trim())
     .single();
   return product ? { product, tenant } : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getProduct(slug);
+  const tenantSlug = DEFAULT_TENANT_SLUG;
+  if (!tenantSlug) return { title: 'Quiz' };
+  const data = await getProduct(tenantSlug, slug);
   if (!data) return { title: 'Quiz' };
   return {
     title: `Anfrage – ${data.product.title} | ${data.tenant.name}`,
   };
 }
 
-export default async function ProductQuizPage({ params }: Props) {
+export default async function ProductQuizPage({ params, searchParams }: Props) {
   const { slug } = await params;
   if (!slug) notFound();
-
-  const data = await getProduct(slug);
+  const sp = await searchParams;
+  const tenantSlug = (sp?.tenant && typeof sp.tenant === 'string' ? sp.tenant : DEFAULT_TENANT_SLUG) || '';
+  if (!tenantSlug) notFound();
+  const data = await getProduct(tenantSlug, slug);
   if (!data) notFound();
   const { product, tenant } = data;
   const isPublished = (product as { is_published?: boolean }).is_published;

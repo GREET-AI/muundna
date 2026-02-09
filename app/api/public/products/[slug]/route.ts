@@ -10,8 +10,10 @@ export async function GET(
     const { slug } = await params;
     if (!slug) return NextResponse.json({ error: 'Slug fehlt' }, { status: 400 });
 
-    const tenantSlug = request.nextUrl.searchParams.get('tenant') || process.env.NEXT_PUBLIC_TENANT_SLUG || 'muckenfuss-nagel';
-
+    const tenantSlug = request.nextUrl.searchParams.get('tenant')?.trim() || process.env.NEXT_PUBLIC_TENANT_SLUG || null;
+    if (!tenantSlug) {
+      return NextResponse.json({ error: 'tenant fehlt (Query oder NEXT_PUBLIC_TENANT_SLUG)' }, { status: 400 });
+    }
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Nicht konfiguriert' }, { status: 500 });
     }

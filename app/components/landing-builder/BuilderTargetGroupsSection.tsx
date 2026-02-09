@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimatedCard3D from '../ui/AnimatedCard3D';
+import { RichTextBlock } from '../ui/RichTextBlock';
+import type { TargetGroupItem } from '@/types/landing-section';
 
 const DEFAULT_PRIMARY = '#cb530a';
 const BUSINESS_TITLE = 'Für wen arbeiten wir?';
@@ -21,11 +23,26 @@ const BUSINESS_GROUPS = [
 ];
 
 const COACHING_GROUPS = [
-  { title: 'Quereinsteiger', description: 'Du willst systematisch in Immobilien als Kapitalanlage einsteigen? Mit klarer Strategie, Deal-Flow und 1:1-Betreuung – ohne Trial and Error.', icon: '🚀', href: '#', image: '/images/Handwerker.png' },
-  { title: 'Erste Kapitalanlage', description: 'Du suchst die erste richtige Immobilie zum Kaufen und Vermieten? Wir begleiten dich von der Auswahl bis zur Vermietung.', icon: '🏡', href: '#', image: '/images/Bauunternehmen.png' },
-  { title: 'Portfolio ausbauen', description: 'Du hast bereits Erfahrung und willst skalieren? Exklusiver Deal-Flow und Netzwerk unterstützen dich beim nächsten Schritt.', icon: '📈', href: '#', image: '/images/Brückenbau.png' },
-  { title: 'Exklusive Strategien', description: 'Zugang zu Methoden und Deals, die nicht jeder kennt. Off-Market, Netzwerk und erprobte Systeme.', icon: '🔐', href: '#', image: '/images/Renovierung.png' },
+  { title: 'Quereinsteiger', description: 'Du willst systematisch in Immobilien als Kapitalanlage einsteigen? Mit klarer Strategie, Deal-Flow und 1:1-Betreuung – ohne Trial and Error.', icon: '🚀', href: '#', image: '/images/Landingpage-Coaching/Immobilien/1.png' },
+  { title: 'Erste Kapitalanlage', description: 'Du suchst die erste richtige Immobilie zum Kaufen und Vermieten? Wir begleiten dich von der Auswahl bis zur Vermietung.', icon: '🏡', href: '#', image: '/images/Landingpage-Coaching/Immobilien/2.png' },
+  { title: 'Portfolio ausbauen', description: 'Du hast bereits Erfahrung und willst skalieren? Exklusiver Deal-Flow und Netzwerk unterstützen dich beim nächsten Schritt.', icon: '📈', href: '#', image: '/images/Landingpage-Coaching/Immobilien/3.png' },
+  { title: 'Exklusive Strategien', description: 'Zugang zu Methoden und Deals, die nicht jeder kennt. Off-Market, Netzwerk und erprobte Systeme.', icon: '🔐', href: '#', image: '/images/Landingpage-Coaching/Immobilien/4.png' },
 ];
+
+/** Alte Handwerker-Bilder (gespeichert in älteren Landings) → Immobilien-Defaults für Coaching. */
+const OLD_HANDWERK_TO_IMMOBILIEN: Record<string, string> = {
+  '/images/Handwerker.png': '/images/Landingpage-Coaching/Immobilien/1.png',
+  '/images/Bauunternehmen.png': '/images/Landingpage-Coaching/Immobilien/2.png',
+  '/images/Brückenbau.png': '/images/Landingpage-Coaching/Immobilien/3.png',
+  '/images/Renovierung.png': '/images/Landingpage-Coaching/Immobilien/4.png',
+};
+
+function coachingImageUrl(url: string | undefined, index: number): string {
+  if (!url) return COACHING_GROUPS[index]?.image ?? '/images/Landingpage-Coaching/Immobilien/1.png';
+  const normalized = OLD_HANDWERK_TO_IMMOBILIEN[url];
+  if (normalized) return normalized;
+  return url;
+}
 
 const CARD_WIDTH = 380;
 const GAP = 24;
@@ -35,16 +52,24 @@ export default function BuilderTargetGroupsSection({
   secondaryColor,
   sectionTitle,
   sectionSubtitle,
+  targetGroups: targetGroupsProp,
   variant = 'business',
 }: {
   primaryColor?: string;
   secondaryColor?: string;
   sectionTitle?: string;
   sectionSubtitle?: string;
+  targetGroups?: TargetGroupItem[];
   variant?: 'business' | 'coaching';
 } = {}) {
   const isCoaching = variant === 'coaching';
-  const targetGroups = isCoaching ? COACHING_GROUPS : BUSINESS_GROUPS;
+  const fallbackGroups = isCoaching ? COACHING_GROUPS : BUSINESS_GROUPS;
+  const rawGroups = Array.isArray(targetGroupsProp) && targetGroupsProp.length > 0
+    ? targetGroupsProp.filter((g) => g && (g.image || g.title))
+    : fallbackGroups;
+  const targetGroups = isCoaching
+    ? rawGroups.map((g, i) => ({ ...g, image: coachingImageUrl(g.image, i) }))
+    : rawGroups;
   const defaultTitle = isCoaching ? COACHING_TITLE : BUSINESS_TITLE;
   const defaultSubtitle = isCoaching ? COACHING_SUBTITLE : BUSINESS_SUBTITLE;
 
@@ -82,8 +107,8 @@ export default function BuilderTargetGroupsSection({
     <section className="w-full py-20 bg-white bg-dot-pattern relative" style={{ ['--primary']: primaryColor } as React.CSSProperties}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">{sectionTitle ?? defaultTitle}</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">{sectionSubtitle ?? defaultSubtitle}</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"><RichTextBlock html={sectionTitle ?? defaultTitle} tag="span" /></h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto"><RichTextBlock html={sectionSubtitle ?? defaultSubtitle} tag="span" /></p>
         </div>
 
         <div className="relative">
@@ -130,18 +155,23 @@ export default function BuilderTargetGroupsSection({
                 className="flex-shrink-0 w-[320px] sm:w-[360px] md:w-[380px] snap-center snap-always"
               >
                 <AnimatedCard3D>
-                  <Link href={group.href} className="block h-full">
+                  <Link href={group.href ?? '#'} className="block h-full">
                     <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden h-full group hover:shadow-xl transition-all" style={{ ['--primary']: primaryColor } as React.CSSProperties}>
                       <div className="relative h-52 md:h-56 overflow-hidden bg-gray-100">
-                        <Image src={group.image} alt={group.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="380px" />
+                        <Image src={group.image || (isCoaching ? '/images/Landingpage-Coaching/Immobilien/1.png' : '/images/Handwerker.png')} alt={group.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="380px" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        {(group as { imageSlogan?: string }).imageSlogan?.trim() ? (
+                          <div className="absolute top-3 left-3 right-3">
+                            <span className="text-white text-sm font-semibold drop-shadow-md">{(group as { imageSlogan?: string }).imageSlogan}</span>
+                          </div>
+                        ) : null}
                         <div className="absolute bottom-3 left-3 right-3">
                           <span className="text-white text-sm font-semibold drop-shadow-md">{group.title}</span>
                         </div>
                       </div>
                       <div className="p-6 md:p-8">
                         <div className="flex items-center mb-3">
-                          <span className="text-3xl mr-3">{group.icon}</span>
+                          {group.icon ? <span className="text-3xl mr-3">{group.icon}</span> : null}
                           <h3 className="text-xl font-bold text-gray-800 transition-colors group-hover:text-[var(--primary)]">{group.title}</h3>
                         </div>
                         <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">{group.description}</p>

@@ -25,10 +25,13 @@ async function bootstrapAdminUser(password: string): Promise<{ userId: string; t
   const { data: existing } = await supabaseAdmin.from('users').select('id').limit(1);
   if (existing && existing.length > 0) return null;
 
+  // Bootstrap-Tenant: BOOTSTRAP_TENANT_SLUG oder NEXT_PUBLIC_TENANT_SLUG (kein Hardcode).
+  const bootstrapSlug = process.env.BOOTSTRAP_TENANT_SLUG || process.env.NEXT_PUBLIC_TENANT_SLUG;
+  if (!bootstrapSlug) return null;
   const { data: tenant } = await supabaseAdmin
     .from('tenants')
     .select('id')
-    .eq('slug', 'muckenfuss-nagel')
+    .eq('slug', bootstrapSlug.trim().toLowerCase())
     .limit(1)
     .single();
   if (!tenant?.id) return null;

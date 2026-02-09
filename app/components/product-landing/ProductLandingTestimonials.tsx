@@ -8,6 +8,7 @@
 import { motion } from 'framer-motion';
 import { ImagesSlider } from '../ui/ImagesSlider';
 import { InfiniteMovingCards } from '../ui/InfiniteMovingCards';
+import { RichTextBlock } from '../ui/RichTextBlock';
 import type { TestimonialItem } from '@/types/landing-section';
 
 const TRUST_SLIDER_IMAGES = ['/images/trust/13.png', '/images/trust/14.png', '/images/trust/15.png'];
@@ -47,8 +48,8 @@ export default function ProductLandingTestimonials(props: ProductLandingTestimon
       </div>
       <div className="relative z-10 flex min-h-[48rem] md:min-h-[54rem] flex-col pt-24 md:pt-32 pb-12 md:pb-16">
         <motion.div initial={{ opacity: 0, y: -80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="z-50 flex flex-col justify-center items-center px-4 pb-8 md:pb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center">{title}</h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto text-center">{subtitle}</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center"><RichTextBlock html={title} tag="span" /></h2>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto text-center"><RichTextBlock html={subtitle} tag="span" /></p>
         </motion.div>
         <div className="flex-1 py-6 md:py-8 container mx-auto px-4 w-full">
           <InfiniteMovingCards items={testimonials} direction="left" speed="slower" pauseOnHover primaryColor={primaryColor} />

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import type { MotionValue } from 'framer-motion';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValue } from 'framer-motion';
 import { MessageCircle, ClipboardList, Home, TrendingUp } from 'lucide-react';
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 
@@ -26,8 +26,10 @@ const LIST_Y_DESKTOP = (() => {
   return [start, start + LIST_STEP_DESKTOP, start + 2 * LIST_STEP_DESKTOP, start + 3 * LIST_STEP_DESKTOP];
 })();
 const CTA_Y_DESKTOP = LIST_Y_DESKTOP[3] + 150;
+/** Sidebar-Text: gleiche Y-Höhe wie Card 3 und Card 4 (zwischen den beiden zentriert). */
+const SIDEBAR_Y_DESKTOP = (LIST_Y_DESKTOP[2] + LIST_Y_DESKTOP[3]) / 2;
 /** In der Listenphase den Block nach oben verschieben, damit CTA im Viewport bleibt. */
-const LIST_PHASE_VIEW_OFFSET = -(CTA_Y_DESKTOP - 180);
+const LIST_PHASE_VIEW_OFFSET = -(CTA_Y_DESKTOP - 80);
 /** Scroll-Progress-Bereiche für Desktop: Fly-in (entspricht animProgress 0.32..0.55) dann Liste. */
 const DESKTOP_FLY_IN_SCROLL = [0.145, 0.289] as const;
 const FLY_IN_OFFSCREEN_MOBILE = 380;
@@ -42,9 +44,9 @@ const MOBILE_CARD_GAP = 24;
 const DESKTOP_ANIM_START = 0.32;
 const DESKTOP_ANIM_END = 0.55;
 
-/** Tablet: 768–1023px, Mobile: <768px. Cards Tablet +100% (2x), Mobile +50% (1.5x). */
+/** Tablet: 768–1023px, Mobile: <768px. Tablet 30 % kleiner als zuvor (1.4x), Mobile +50% (1.5x). */
 const TABLET_MIN_WIDTH = 768;
-const TABLET_CARD_MULTIPLIER = 2;
+const TABLET_CARD_MULTIPLIER = 1.4;
 const MOBILE_CARD_MULTIPLIER = 1.5;
 
 /** Mobile/Tablet: Card-Höhe und Y-Positionen; Tablet 2x, Mobile 1.5x größer. */
@@ -105,6 +107,24 @@ function useFlyInOffscreen() {
     return () => window.removeEventListener('resize', update);
   }, []);
   return flyInOffscreen;
+}
+
+/** Desktop: Auf kleinen Viewports (z. B. 13") Cards etwas kleiner, auf großem Monitor 1:1. */
+function useDesktopCardScale() {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const update = () => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1920;
+      if (w >= 1600) setScale(1);
+      else if (w >= 1440) setScale(0.95);
+      else if (w >= 1280) setScale(0.88);
+      else setScale(0.82);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return scale;
 }
 
 export type ParallaxCardConfig = {
@@ -320,6 +340,7 @@ function getMobileCards(cardY: number[]) {
 const DEFAULT_CTA_TEXT = 'Jetzt unverbindlich beraten lassen – Ihr Traumhaus beginnt hier.';
 const DEFAULT_HEADLINE_LINE1 = 'Ihre Immobilie.';
 const DEFAULT_HEADLINE_LINE2 = 'Ihr Vermögen.';
+const DEFAULT_LIST_PHASE_SIDEBAR_TEXT = 'Von der ersten Beratung bis zur Schlüsselübergabe – wir begleiten Sie in jeder Phase Ihres Projekts.';
 
 interface ClaimParallaxSectionProps {
   primaryColor?: string;
@@ -327,6 +348,8 @@ interface ClaimParallaxSectionProps {
   claimHeadlineLine1?: string;
   claimHeadlineLine2?: string;
   ctaText?: string;
+  /** Text rechts neben den Cards, wenn sie vertikal stehen (Listenphase). */
+  listPhaseSidebarText?: string;
   cardLabel1?: string;
   cardLabel2?: string;
   cardLabel3?: string;
@@ -381,6 +404,7 @@ function ClaimParallaxDesktop({
   headlineLine1 = DEFAULT_HEADLINE_LINE1,
   headlineLine2 = DEFAULT_HEADLINE_LINE2,
   ctaText = DEFAULT_CTA_TEXT,
+  listPhaseSidebarText,
   cardConfigs,
 }: {
   sectionRef: React.RefObject<HTMLElement | null>;
@@ -389,9 +413,11 @@ function ClaimParallaxDesktop({
   headlineLine1?: string;
   headlineLine2?: string;
   ctaText?: string;
+  listPhaseSidebarText?: string;
   cardConfigs: ParallaxCardConfig[];
 }) {
   const flyInOffscreen = useFlyInOffscreen();
+  const desktopCardScale = useDesktopCardScale();
   const desktopCards = getDesktopCards(flyInOffscreen);
   const DOT_PATTERN = dotPatternUrl(DOT_PATTERN_COLOR);
   const animProgress = useTransform(scrollYProgress, [0, 0.02, 0.32, 0.98, 1], [0, 0.12, 0.6, 0.6, 0.6]);
@@ -399,8 +425,11 @@ function ClaimParallaxDesktop({
   const headlineScale = useTransform(animProgress, [0, 0.06, 0.24, 0.32, 0.55], [1.4, 1.75, 1.75, 1.75, 0.45]);
   const headlineY = useTransform(animProgress, [0, 0.24], [220, 0]);
   const ctaOpacity = useTransform(scrollYProgress, [0.48, 0.56, 0.58, 0.66], [0, 1, 1, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.52, 0.58, 0.66], [0, 0, CTA_Y_DESKTOP]);
+  const ctaY = useTransform(scrollYProgress, [0.52, LIST_PHASE_SCROLL[0], LIST_PHASE_SCROLL[1]], [0, 0, CTA_Y_DESKTOP]);
   const listPhaseViewOffset = useTransform(scrollYProgress, [0, LIST_PHASE_SCROLL[0], LIST_PHASE_SCROLL[1]], [0, 0, LIST_PHASE_VIEW_OFFSET]);
+  /** Sidebar-Text erscheint erst, wenn die Cards in der vertikalen Anordnung fest stehen. */
+  const listPhaseSidebarOpacity = useTransform(scrollYProgress, [LIST_PHASE_SCROLL[0] + 0.05, LIST_PHASE_SCROLL[0] + 0.12], [0, 1]);
+  const sidebarText = listPhaseSidebarText ?? DEFAULT_LIST_PHASE_SIDEBAR_TEXT;
   return (
     <div className="hidden lg:flex absolute inset-0 items-center justify-center overflow-visible [contain:layout] [transform:translateZ(0)]">
       <div className="relative w-full h-full overflow-visible">
@@ -409,8 +438,8 @@ function ClaimParallaxDesktop({
           <h2 className="font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-center tracking-tight max-w-[min(90vw,64rem)] leading-tight py-2 sm:py-4 bg-clip-text text-transparent bg-gradient-to-b from-emerald-50 to-[#60A917]">{headlineLine1}<br />{headlineLine2}</h2>
         </motion.div>
         <motion.div className="absolute inset-0 flex items-center justify-center overflow-visible z-10 pointer-events-none" style={{ y: listPhaseViewOffset }}>
-          {/* Gleiche 4 Cards: erst waagerecht zentriert, dann Parallax-Phase 2 = senkrecht links */}
-          <div className="absolute inset-0 flex items-center justify-center overflow-visible pointer-events-none">
+          {/* Gleiche 4 Cards: erst waagerecht zentriert, dann Parallax-Phase 2 = senkrecht links; auf kleinen Viewports skaliert */}
+          <div className="absolute inset-0 flex items-center justify-center overflow-visible pointer-events-none" style={{ transform: `scale(${desktopCardScale})`, transformOrigin: '50% 50%' }}>
             <div className="relative w-full h-full" aria-hidden>
               {desktopCards.map((card, i) => (
                 <ParallaxStepCard
@@ -430,6 +459,21 @@ function ClaimParallaxDesktop({
               ))}
             </div>
           </div>
+          {/* Text rechts neben den Cards in der Listenphase – Y-Höhe wie Card 3 & 4 */}
+          {sidebarText && (
+            <motion.div
+              className="absolute left-1/2 z-10 max-w-md pl-16 pr-8"
+              style={{ top: `calc(50% + ${SIDEBAR_Y_DESKTOP + 40}px)`, transform: 'translateY(-50%)', opacity: listPhaseSidebarOpacity }}
+            >
+              <p className="text-lg md:text-xl text-neutral-700 leading-relaxed pointer-events-none">{sidebarText}</p>
+              <a
+                href="/kontakt"
+                className="mt-4 inline-block rounded-xl bg-black px-6 py-3 text-base font-semibold text-white transition hover:bg-neutral-800 pointer-events-auto"
+              >
+                Experte werden
+              </a>
+            </motion.div>
+          )}
           <motion.div
             className="absolute left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 text-center pointer-events-none z-10"
             style={{ top: 'calc(50% + 125px)', opacity: ctaOpacity, y: ctaY }}
@@ -473,22 +517,35 @@ function useMobileCardXOffscreen() {
   return xOffscreen;
 }
 
+/** Mobile/Tablet: Zuerst Text sichtbar (scroll 0), dann Text wird kleiner, ab ~0.22 fliegen Cards nacheinander rein. */
+const MOBILE_TEXT_PHASE_END = 0.22;
+const MOBILE_CARD_0_START = 0.22;
+const MOBILE_CARD_0_END = 0.40;
+const MOBILE_CARD_1_START = 0.40;
+const MOBILE_CARD_1_END = 0.58;
+const MOBILE_CARD_2_START = 0.58;
+const MOBILE_CARD_2_END = 0.76;
+const MOBILE_CARD_3_START = 0.76;
+const MOBILE_CARD_3_END = 0.98;
+
 function ClaimParallaxMobile({ scrollYProgress, headlineLine1 = DEFAULT_HEADLINE_LINE1, headlineLine2 = DEFAULT_HEADLINE_LINE2, cardConfigs }: { sectionRef: React.RefObject<HTMLElement | null>; scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress']; primaryColor: string; headlineLine1?: string; headlineLine2?: string; cardConfigs: ParallaxCardConfig[] }) {
   const mobileLayout = useMobileCardLayout();
   const cardXOffscreen = useMobileCardXOffscreen();
   const DOT_PATTERN = dotPatternUrl(DOT_PATTERN_COLOR);
-  const headlineOpacity = useTransform(scrollYProgress, [0, 0.06, 0.24, 0.55, 0.6], [0, 1, 1, 0, 0]);
-  const headlineScale = useTransform(scrollYProgress, [0, 0.06, 0.24, 0.32, 0.55], [1.4, 1.75, 1.75, 1.75, 0.45]);
-  const headlineY = useTransform(scrollYProgress, [0, 0.24], [220, 0]);
-  const mobileX0 = useTransform(scrollYProgress, [0, 0.08, 0.125, 0.25], [-cardXOffscreen, -80, 0, 0]);
-  const mobileX1 = useTransform(scrollYProgress, [0.25, 0.315, 0.375, 0.5], [cardXOffscreen, 80, 0, 0]);
-  const mobileX2 = useTransform(scrollYProgress, [0.5, 0.565, 0.625, 0.75], [-cardXOffscreen, -80, 0, 0]);
-  const mobileX3 = useTransform(scrollYProgress, [0.75, 0.815, 0.875, 1], [cardXOffscreen, 80, 0, 0]);
+  /* Text von Anfang sichtbar, wird kleiner beim Scrollen, blendet aus wenn Cards kommen */
+  const headlineOpacity = useTransform(scrollYProgress, [0, 0.02, MOBILE_TEXT_PHASE_END, 0.42, 0.52], [1, 1, 1, 0.4, 0]);
+  const headlineScale = useTransform(scrollYProgress, [0, 0.08, MOBILE_TEXT_PHASE_END, 0.38], [1.5, 1.25, 1, 0.5]);
+  const headlineY = useTransform(scrollYProgress, [0, MOBILE_TEXT_PHASE_END], [0, -20]);
+  /* Cards starten erst nach der Text-Phase */
+  const mobileX0 = useTransform(scrollYProgress, [MOBILE_CARD_0_START, MOBILE_CARD_0_START + 0.05, MOBILE_CARD_0_START + 0.1, MOBILE_CARD_0_END], [-cardXOffscreen, -80, 0, 0]);
+  const mobileX1 = useTransform(scrollYProgress, [MOBILE_CARD_1_START, MOBILE_CARD_1_START + 0.05, MOBILE_CARD_1_START + 0.1, MOBILE_CARD_1_END], [cardXOffscreen, 80, 0, 0]);
+  const mobileX2 = useTransform(scrollYProgress, [MOBILE_CARD_2_START, MOBILE_CARD_2_START + 0.05, MOBILE_CARD_2_START + 0.1, MOBILE_CARD_2_END], [-cardXOffscreen, -80, 0, 0]);
+  const mobileX3 = useTransform(scrollYProgress, [MOBILE_CARD_3_START, MOBILE_CARD_3_START + 0.05, MOBILE_CARD_3_START + 0.1, MOBILE_CARD_3_END], [cardXOffscreen, 80, 0, 0]);
   const mobileXs = [mobileX0, mobileX1, mobileX2, mobileX3];
-  const mobileY0 = useTransform(scrollYProgress, [0, 0.065, 0.125, 0.185, 0.25], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
-  const mobileY1 = useTransform(scrollYProgress, [0.25, 0.315, 0.375, 0.435, 0.5], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
-  const mobileY2 = useTransform(scrollYProgress, [0.5, 0.565, 0.625, 0.685, 0.75], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
-  const mobileY3 = useTransform(scrollYProgress, [0.75, 0.815, 0.875, 0.935, 1], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
+  const mobileY0 = useTransform(scrollYProgress, [MOBILE_CARD_0_START, MOBILE_CARD_0_START + 0.04, MOBILE_CARD_0_START + 0.08, MOBILE_CARD_0_START + 0.12, MOBILE_CARD_0_END], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
+  const mobileY1 = useTransform(scrollYProgress, [MOBILE_CARD_1_START, MOBILE_CARD_1_START + 0.04, MOBILE_CARD_1_START + 0.08, MOBILE_CARD_1_START + 0.12, MOBILE_CARD_1_END], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
+  const mobileY2 = useTransform(scrollYProgress, [MOBILE_CARD_2_START, MOBILE_CARD_2_START + 0.04, MOBILE_CARD_2_START + 0.08, MOBILE_CARD_2_START + 0.12, MOBILE_CARD_2_END], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
+  const mobileY3 = useTransform(scrollYProgress, [MOBILE_CARD_3_START, MOBILE_CARD_3_START + 0.04, MOBILE_CARD_3_START + 0.08, MOBILE_CARD_3_START + 0.12, MOBILE_CARD_3_END], [MOBILE_CARD_Y_OFFSCREEN, MOBILE_CARD_Y_NEAR, 0, -MOBILE_CARD_Y_NEAR, -MOBILE_CARD_Y_OFFSCREEN]);
   const mobileYs = [mobileY0, mobileY1, mobileY2, mobileY3];
   return (
     <div className="flex lg:hidden absolute inset-0 items-center justify-center overflow-hidden [contain:layout] [transform:translateZ(0)]">
@@ -565,6 +622,28 @@ function buildCardConfig(p: ClaimParallaxSectionProps, i: number): ParallaxCardC
 const SECTION_HEIGHT_BASE_MOBILE = 380;
 const SECTION_HEIGHT_BASE_DESKTOP = 460;
 
+/** Gedämpfte Scroll-Progress: folgt dem echten Scroll weich (wie Jeton), wirkt mit Mausrad weniger ruckartig. */
+function useSmoothScrollProgress(
+  sectionRef: React.RefObject<HTMLElement | null>,
+  smoothing = 0.11
+): MotionValue<number> {
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const smoothed = useMotionValue(0);
+  useEffect(() => {
+    smoothed.set(scrollYProgress.get());
+    let raf = 0;
+    const update = () => {
+      const target = scrollYProgress.get();
+      const current = smoothed.get();
+      smoothed.set(current + (target - current) * smoothing);
+      raf = requestAnimationFrame(update);
+    };
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, [smoothing, scrollYProgress]);
+  return smoothed;
+}
+
 function useParallaxSectionHeight() {
   const [heightVh, setHeightVh] = useState(SECTION_HEIGHT_BASE_MOBILE);
   useEffect(() => {
@@ -590,12 +669,12 @@ export default function ClaimParallaxSection({
 }: ClaimParallaxSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const sectionHeightVh = useParallaxSectionHeight();
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const scrollYProgress = useSmoothScrollProgress(sectionRef, 0.11);
   const cardConfigs: ParallaxCardConfig[] = [0, 1, 2, 3].map((i) => buildCardConfig({ ...rest, claimHeadlineLine1, claimHeadlineLine2, ctaText }, i));
   return (
     <section ref={sectionRef} className="relative w-full bg-white" style={{ height: `${sectionHeightVh}vh` }}>
       <div className="sticky top-0 left-0 right-0 h-screen w-full overflow-visible">
-        <ClaimParallaxDesktop sectionRef={sectionRef} scrollYProgress={scrollYProgress} primaryColor={primaryColor} headlineLine1={claimHeadlineLine1} headlineLine2={claimHeadlineLine2} ctaText={ctaText} cardConfigs={cardConfigs} />
+        <ClaimParallaxDesktop sectionRef={sectionRef} scrollYProgress={scrollYProgress} primaryColor={primaryColor} headlineLine1={claimHeadlineLine1} headlineLine2={claimHeadlineLine2} ctaText={ctaText} listPhaseSidebarText={rest.listPhaseSidebarText} cardConfigs={cardConfigs} />
         <ClaimParallaxMobile sectionRef={sectionRef} scrollYProgress={scrollYProgress} primaryColor={primaryColor} headlineLine1={claimHeadlineLine1} headlineLine2={claimHeadlineLine2} cardConfigs={cardConfigs} />
       </div>
     </section>
